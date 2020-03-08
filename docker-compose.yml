@@ -4,12 +4,15 @@ services:
   reverse-proxy:
     image: traefik:v2.1
     command: 
+    #      - --log.level=DEBUG
       - --api.insecure=true 
       - --providers.docker
+      - --entrypoints.http.address=:80
+      - --entrypoints.mongo.address=:27017
       - --entrypoints.redis.address=:6379
     ports:
-      - "80:80"
-      - "8080:8080"
+      - 80:80
+      - 8080:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./traefik/log:/var/log
@@ -17,7 +20,6 @@ services:
   coog:
     image: coopengo/coog:coog-2.7.17
     command: ["server", "1"]
-    network_mode: bridge
     depends_on:
       - redis
     env_file:
@@ -27,7 +29,6 @@ services:
 
   redis:
     image: redis
-    network_mode: bridge
     env_file:
       - var.env
     environment:
@@ -37,8 +38,6 @@ services:
       - "traefik.tcp.routers.redis.entrypoints=redis"
       - "traefik.tcp.routers.redis.service=redis"
       - "traefik.tcp.services.redis.loadbalancer.server.port=6379"
-    ports:
-      - 6379:6379
 
   mongo:
     image: mongo
@@ -51,18 +50,15 @@ services:
       - ./mongo-volume:/data/db
     labels:
       - "traefik.enable=true"
-      - "traefik.tcp.routers.mongo.entrypoints=https-entry"
-      - "traefik.tcp.routers.mongo.rule=Host(`mongo.localhost`)"
-      - "traefik.tcp.routers.mongo.service=mongo-service"
-      - "traefik.tcp.services.mongo-service.loadbalancer.server.port=27017"
-    ports:
-      - 27017:27017
+      - "traefik.tcp.routers.mongo.entrypoints=mongo"
+      - "traefik.tcp.routers.mongo.rule=HostSNI(`mongo.localhost`)"
+      - "traefik.tcp.routers.mongo.service=mongo"
+      - "traefik.tcp.services.mongo.loadbalancer.server.port=27017"
  
   gateway:
     image: coopengo/gateway:coog-2.7.17
     env_file:
-    - var.env
-    network_mode: bridge
+    - gateway.env
     depends_on:
       - mongo
     labels:
@@ -71,8 +67,7 @@ services:
   web:
     image: coopengo/web:coog-2.7.17
     env_file:
-      - var.env
-    network_mode: bridge
+      - web.env
     command: ["server", "1"]
     depends_on:
       - redis
@@ -84,22 +79,11 @@ services:
     command: ["server", "1"]
     env_file:
       - var.env
-    network_mode: bridge
     labels:
       - "traefik.http.routers.portal.rule=Host(`coog.localhost`) && PathPrefix(`/portal`)"
 
   static:
     image: coopengo/static:coog-2.7.17
-    network_mode: bridge
     labels:
       - "traefik.http.routers.static.rule=Host(`coog.localhost`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )"
-
-networks:
-  - external-proxy
-  - internal-proxy
-networks:
-  external-proxy:
-    external: true
-  internal-proxy:
-    external: false
 
