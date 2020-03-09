@@ -3,20 +3,12 @@ version: '3'
 services:
   reverse-proxy:
     image: traefik:v2.1
-    command: 
-    #      - --log.level=DEBUG
-      - --api.insecure=true 
-      - --providers.docker
-      - --entrypoints.http.address=:80
-      - --entrypoints.mongo.address=:27017
-      - --entrypoints.redis.address=:6379
     ports:
       - 80:80
       - 8080:8080
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./traefik/log:/var/log
-
+      - ./traefik.toml:/etc/traefik/traefik.toml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
   coog:
     image: coopengo/coog:coog-2.7.17
     command: ["server", "1"]
@@ -25,7 +17,7 @@ services:
     env_file:
       - var.env
     labels:
-      -  "traefik.http.routers.coog.rule=Host(`coog.localhost`)"
+      -  "traefik.http.routers.coogz.rule=Host(`coog.localhost`)"
 
   redis:
     image: redis
@@ -34,9 +26,8 @@ services:
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     labels:
-      - "traefik.tcp.routers.redis.rule=HostSNI(`redis.localhost`)"
+      - "traefik.tcp.routers.redis.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.redis.entrypoints=redis"
-      - "traefik.tcp.routers.redis.service=redis"
       - "traefik.tcp.services.redis.loadbalancer.server.port=6379"
 
   mongo:
@@ -49,10 +40,8 @@ services:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       - ./mongo-volume:/data/db
     labels:
-      - "traefik.enable=true"
+      - "traefik.tcp.routers.mongo.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.mongo.entrypoints=mongo"
-      - "traefik.tcp.routers.mongo.rule=HostSNI(`mongo.localhost`)"
-      - "traefik.tcp.routers.mongo.service=mongo"
       - "traefik.tcp.services.mongo.loadbalancer.server.port=27017"
  
   gateway:
@@ -61,8 +50,18 @@ services:
     - gateway.env
     depends_on:
       - mongo
+      - reverse-proxy
     labels:
       - "traefik.http.routers.gateway.rule=Host(`coog.localhost`) && PathPrefix(`/gateway`)"
+
+  busybox:
+    image: busybox
+    command: tail -f /dev/null
+
+  centos:
+    image: centos
+    command: tail -f /dev/null
+
 
   web:
     image: coopengo/web:coog-2.7.17

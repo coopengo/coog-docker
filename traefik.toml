@@ -1,0 +1,40 @@
+[global]
+  sendAnonymousUsage = false
+
+[log]
+  level = "INFO"
+  format = "common"
+
+[providers]
+  [providers.docker]
+    endpoint = "unix:///var/run/docker.sock"
+    watch = true
+    exposedByDefault = true
+    swarmMode = false
+
+[api]
+  dashboard = true
+  debug = false
+  insecure = true
+
+[entryPoints]
+  [entryPoints.insecure]
+    address = ":80"
+  [entryPoints.secure]
+    address = ":443"
+  [entryPoints.redis]
+    address = ":6379"
+    [entryPoints.redis.forwardedHeaders]
+      insecure = true
+  [entryPoints.mongo]
+    address = ":27017"
+    [entryPoints.mongo.forwardedHeaders]
+      insecure = true
+
+[certificatesResolvers.letsencrypt.acme]
+  email = "julien.gourmelen@coopengo.com"
+  storage = "acme.json"
+  caServer = "https://acme-v02.api.letsencrypt.org/directory"
+  keyType = "EC256"
+  [certificatesResolvers.letsencrypt.acme.httpChallenge]
+    entryPoint = "http"
