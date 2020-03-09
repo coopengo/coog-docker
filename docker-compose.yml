@@ -20,15 +20,11 @@ services:
       -  "traefik.http.routers.coogz.rule=Host(`coog.localhost`)"
 
   redis:
-    image: redis
-    env_file:
-      - var.env
+    image: redis:5.0.7-alpine
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
-    labels:
-      - "traefik.tcp.routers.redis.rule=HostSNI(`*`)"
-      - "traefik.tcp.routers.redis.entrypoints=redis"
-      - "traefik.tcp.services.redis.loadbalancer.server.port=6379"
+      - REDIS_PORT=6379
+    container_name: redis
 
   mongo:
     image: mongo
@@ -39,10 +35,6 @@ services:
     volumes:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       - ./mongo-volume:/data/db
-    labels:
-      - "traefik.tcp.routers.mongo.rule=HostSNI(`*`)"
-      - "traefik.tcp.routers.mongo.entrypoints=mongo"
-      - "traefik.tcp.services.mongo.loadbalancer.server.port=27017"
  
   gateway:
     image: coopengo/gateway:coog-2.7.17
@@ -64,7 +56,7 @@ services:
 
 
   web:
-    image: coopengo/web:coog-2.7.17
+    image: coopengo/web:2.6.8
     env_file:
       - web.env
     command: ["server", "1"]
