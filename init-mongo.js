@@ -1,10 +1,12 @@
-db.createUser({
-  user: 'admin',
-  pwd: 'coog',
-  roles: [
-    {
-      role: 'readWrite',
-      db: 'coogdb'
-    }
-  ]
-})
+db.createUser(
+  {
+      user: "coog",
+      pwd: "coog",
+      roles: [
+          {
+              role: "readWrite",
+              db: "coog"
+          }
+      ]
+  }
+);

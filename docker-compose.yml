@@ -34,34 +34,53 @@ services:
 
   mongo:
     image: mongo
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=coog
-      - MONGO_INITDB_DATABASE=coogdb
+    env_file:
+    - var.env
     volumes:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-      - ./mongo-volume:/data/db
+     # - ./mongo-volume:/data/db
  
   gateway:
-    image: coopengo/gateway:coog-2.7.17
+    image: coopengo/gateway:coog-2.6.13
     env_file:
-    - gateway.env
+    - var.env
     depends_on:
       - mongo
       - reverse-proxy
     labels:
       - "traefik.http.routers.gateway.rule=Host(`coog.localhost`) && PathPrefix(`/gateway`)"
 
-  busybox:
-    image: busybox
-    command: tail -f /dev/null
+  api:
+    image: coopengo/api:coog-2.6.13
+    env_file:
+      - var.env
+    depends_on:
+      - mongo
 
-  centos:
-    image: centos
-    command: tail -f /dev/null
+  api-b2b-config:
+    image: coopengo/api-b2b-config:coog-2.6.13
+    env_file:
+      - var.env
+    depends_on:
+      - mongo
+
+  api-referential:
+    image: coopengo/api-referential:coog-2.6.13
+    env_file:
+      - var.env
+    depends_on:
+      - mongo
+
+  api-identity-manager:
+    image: coopengo/api-identity-manager:coog-2.6.13
+    env_file:
+      - var.env
+    depends_on:
+      - mongo
+      - api
 
   web:
-    image: coopengo/web:coog-2.7.17
+    image: coopengo/web:coog-2.6.13
     env_file:
       - web.env
     command: ["server", "1"]
@@ -71,16 +90,25 @@ services:
       - "traefik.http.routers.web.rule=Host(`web.localhost`)"
 
   portal:
-    image: coopengo/portal:coog-2.7.17
+    image: coopengo/portal-prevere:prevere-coog-2.6.13
     command: ["server", "1"]
     env_file:
       - var.env
     labels:
       - "traefik.http.routers.portal.rule=Host(`coog.localhost`) && PathPrefix(`/portal`)"
-
+      - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=/portal(/|$$)(.*)"
+      - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=/portal/$${2}"
 
   static:
-    image: coopengo/static:coog-2.7.17
+    image: coopengo/static:coog-2.6.13
     labels:
       - "traefik.http.routers.static.rule=Host(`coog.localhost`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )"
+
+  busybox:
+    image: busybox
+    command: tail -f /dev/null
+
+  centos:
+    image: centos
+    command: tail -f /dev/null
 
