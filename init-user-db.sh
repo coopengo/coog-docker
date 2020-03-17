@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+	CREATE USER coog WITH ENCRYPTED PASSWORD 'coog';
+	CREATE DATABASE coog;
+	GRANT ALL PRIVILEGES ON DATABASE coog TO coog;
+    CREATE EXTENSION unaccent;
+    ALTER DATABASE coog OWNER TO coog;
+EOSQL
