@@ -10,15 +10,15 @@ services:
       - ./traefik.toml:/etc/traefik/traefik.toml
       - /var/run/docker.sock:/var/run/docker.sock:ro
   coog:
-    image: coopengo/coog:coog-2.7.17
+    image: coopengo/coog:coog-2.7.18
     command: ["server", "1"]
     depends_on:
       - redis
       - postgres
     env_file:
       - var.env
-    labels:
-      -  "traefik.http.routers.coogz.rule=Host(`coog.localhost`)"
+   # labels:
+  #    -  "traefik.http.routers.coog.rule=Host(`coog.localhost`)"
 
   postgres:
     image: postgres:11.7-alpine
@@ -41,38 +41,37 @@ services:
      # - ./mongo-volume:/data/db
  
   gateway:
-    image: coopengo/gateway:coog-2.6.13
+    image: coopengo/gateway:coog-2.7.18
     env_file:
     - var.env
     depends_on:
       - mongo
-      - reverse-proxy
     labels:
       - "traefik.http.routers.gateway.rule=Host(`coog.localhost`) && PathPrefix(`/gateway`)"
 
   api:
-    image: coopengo/api:coog-2.6.13
+    image: coopengo/api:coog-2.7.18
     env_file:
       - var.env
     depends_on:
       - mongo
 
   api-b2b-config:
-    image: coopengo/api-b2b-config:coog-2.6.13
+    image: coopengo/api-b2b-config:coog-2.7.18
     env_file:
       - var.env
     depends_on:
       - mongo
 
   api-referential:
-    image: coopengo/api-referential:coog-2.6.13
+    image: coopengo/api-referential:coog-2.7.18
     env_file:
       - var.env
     depends_on:
       - mongo
 
   api-identity-manager:
-    image: coopengo/api-identity-manager:coog-2.6.13
+    image: coopengo/api-identity-manager:coog-2.7.18
     env_file:
       - var.env
     depends_on:
@@ -80,27 +79,25 @@ services:
       - api
 
   web:
-    image: coopengo/web:coog-2.6.13
+    image: coopengo/web:coog-2.7.18
     env_file:
       - web.env
     command: ["server", "1"]
     depends_on:
       - redis
-    labels:
-      - "traefik.http.routers.web.rule=Host(`web.localhost`)"
 
   portal:
-    image: coopengo/portal-prevere:prevere-coog-2.6.13
+    image: coopengo/portal:coog-2.7.17
     command: ["server", "1"]
     env_file:
       - var.env
     labels:
       - "traefik.http.routers.portal.rule=Host(`coog.localhost`) && PathPrefix(`/portal`)"
-      - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=/portal(/|$$)(.*)"
-      - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=/portal/$${2}"
+      - "traefik.http.middlewares.portal.redirectregex.regex=^http://coog.localhost/portal(/|$$)(.*)"
+      - "traefik.http.middlewares.portal.redirectregex.replacement=http://coog.localhost/$${2}"
 
   static:
-    image: coopengo/static:coog-2.6.13
+    image: coopengo/static:coog-2.7.18
     labels:
       - "traefik.http.routers.static.rule=Host(`coog.localhost`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )"
 
