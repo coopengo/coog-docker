@@ -17,8 +17,8 @@ services:
       - postgres
     env_file:
       - var.env
-   # labels:
-  #    -  "traefik.http.routers.coog.rule=Host(`coog.localhost`)"
+    labels:
+      -  "traefik.http.routers.coog.rule=Host(`coog.localhost`)"
 
   postgres:
     image: postgres:11.7-alpine
