@@ -23,11 +23,12 @@ services:
       -  "traefik.http.routers.coog.rule=Host(`coog.localhost`)"
 
   postgres:
-    image: postgres:11.7-alpine
+    image: postgres:12-alpine
     env_file:
       - postgres.env
     volumes:
-      - ./init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+      #- ./init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
+      - ./coog27.sql:/docker-entrypoint-initdb.d/2_coog27.sql:ro
 
   redis:
     image: redis:5.0.7-alpine
