@@ -12,7 +12,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   coog:
-    image: coopengo/coog:debian
+    image: coopengo/coog:coog-2.7.23
     command: ["server", "1"]
     depends_on:
       - redis
@@ -25,7 +25,7 @@ services:
   postgres:
     image: postgres:11.7-alpine
     env_file:
-    - postgres.env
+      - postgres.env
     volumes:
       - ./init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
 
@@ -37,15 +37,15 @@ services:
   mongo:
     image: mongo
     env_file:
-    - var.env
+      - var.env
     volumes:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
      # - ./mongo-volume:/data/db
  
   gateway:
-    image: coopengo/gateway:master
+    image: coopengo/gateway:coog-2.7.23
     env_file:
-    - var.env
+      - var.env
     depends_on:
       - mongo
     labels:
@@ -55,28 +55,28 @@ services:
       - "traefik.http.middlewares.gateway.replacepathregex.replacement=/$${2}"
 
   api:
-    image: coopengo/api:master
+    image: coopengo/api:coog-2.7.23
     env_file:
       - var.env
     depends_on:
       - mongo
 
   api-b2b-config:
-    image: coopengo/api-b2b-config:master
+    image: coopengo/api-b2b-config:coog-2.7.23
     env_file:
       - var.env
     depends_on:
       - mongo
 
   api-referential:
-    image: coopengo/api-referential:master
+    image: coopengo/api-referential:coog-2.7.23
     env_file:
       - var.env
     depends_on:
       - mongo
 
   api-identity-manager:
-    image: coopengo/api-identity-manager:coog-2.7.21
+    image: coopengo/api-identity-manager:coog-2.7.23
     env_file:
       - var.env
     depends_on:
@@ -84,15 +84,15 @@ services:
       - api
 
   web:
-    image: coopengo/web:master
+    image: coopengo/web:coog-2.7.23
     env_file:
-      - web.env
+      - var.env
     command: ["server", "1"]
     depends_on:
       - redis
 
   portal:
-    image: coopengo/portal:master
+    image: coopengo/portal:coog-2.7.23
     command: ["server", "1"]
     env_file:
       - var.env
