@@ -2,7 +2,7 @@ version: '3'
 
 services:
   reverse-proxy:
-    image: traefik:v2.1
+    image: traefik:2.2.0
     ports:
       - 80:80
       - 443:443
@@ -12,7 +12,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   coog:
-    image: coopengo/coog:coog-2.7.23
+    image: coopengo/coog:coog-2.7.21
     command: ["server", "1"]
     depends_on:
       - redis
@@ -43,7 +43,7 @@ services:
      # - ./mongo-volume:/data/db
  
   gateway:
-    image: coopengo/gateway:coog-2.7.23
+    image: coopengo/gateway:coog-2.7.21
     env_file:
       - var.env
     depends_on:
@@ -55,28 +55,28 @@ services:
       - "traefik.http.middlewares.gateway.replacepathregex.replacement=/$${2}"
 
   api:
-    image: coopengo/api:coog-2.7.23
+    image: coopengo/api:coog-2.7.21
     env_file:
       - var.env
     depends_on:
       - mongo
 
   api-b2b-config:
-    image: coopengo/api-b2b-config:coog-2.7.23
+    image: coopengo/api-b2b-config:coog-2.7.21
     env_file:
       - var.env
     depends_on:
       - mongo
 
   api-referential:
-    image: coopengo/api-referential:coog-2.7.23
+    image: coopengo/api-referential:coog-2.7.21
     env_file:
       - var.env
     depends_on:
       - mongo
 
   api-identity-manager:
-    image: coopengo/api-identity-manager:coog-2.7.23
+    image: coopengo/api-identity-manager:coog-2.7.21
     env_file:
       - var.env
     depends_on:
@@ -84,7 +84,7 @@ services:
       - api
 
   web:
-    image: coopengo/web:coog-2.7.23
+    image: coopengo/web:coog-2.7.21
     env_file:
       - var.env
     command: ["server", "1"]
@@ -92,7 +92,7 @@ services:
       - redis
 
   portal:
-    image: coopengo/portal:coog-2.7.23
+    image: coopengo/portal:coog-2.7.21
     command: ["server", "1"]
     env_file:
       - var.env
