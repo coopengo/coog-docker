@@ -186,6 +186,13 @@ services:
     networks:
       - frontend
 
+  unoconv:
+    image: coopengo/unoconv:2.5.11
+    env_file:
+      - var.env
+    networks:
+      - backend
+
   busybox:
     image: busybox
     command: tail -f /dev/null
