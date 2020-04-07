@@ -29,9 +29,6 @@ services:
   coog:
     image: coopengo/coog:coog-2.7.21
     command: ["server", "1"]
-    depends_on:
-      - redis
-      - postgres
     env_file:
       - var.env
     labels:
@@ -48,11 +45,16 @@ services:
   celery:
     image: coopengo/coog:coog-2.7.21
     command: ["celery", "1"]
-    depends_on:
-      - redis
-      - postgres
     env_file:
-      - var.env
+      - celery.env
+    networks:
+      - backend
+
+  celery_single:
+    image: coopengo/coog:coog-2.7.21
+    command: ["celery_single"]
+    env_file:
+      - celery_single.env
     networks:
       - backend
 
