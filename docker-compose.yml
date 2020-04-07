@@ -17,8 +17,8 @@ services:
       - ./certs:/etc/certs:ro
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      - ./traefik.toml:/etc/traefik/traefik.toml:ro
-      - ./traefik.config.toml:/etc/traefik/traefik.config.toml:ro
+      - ./traefik/traefik.toml:/etc/traefik/traefik.toml:ro
+      - ./traefik/traefik.config.toml:/etc/traefik/traefik.config.toml:ro
       - ./acme.json:/acme.json
     labels:
       - traefik.frontend.redirect.entryPoint=https
@@ -30,7 +30,7 @@ services:
     image: coopengo/coog:coog-2.7.21
     command: ["server", "1"]
     env_file:
-      - var.env
+      - env_files/var.env
     labels:
       - traefik.http.routers.coog.rule=Host(`coog.localhost`)
       - traefik.http.routers.coog.entrypoints=http
@@ -46,7 +46,7 @@ services:
     image: coopengo/coog:coog-2.7.21
     command: ["celery", "1"]
     env_file:
-      - celery.env
+      - env_files/celery.env
     networks:
       - backend
 
@@ -54,14 +54,14 @@ services:
     image: coopengo/coog:coog-2.7.21
     command: ["celery_single"]
     env_file:
-      - celery_single.env
+      - env_files/celery_single.env
     networks:
       - backend
 
   postgres:
     image: postgres:12-alpine
     env_file:
-      - postgres.env
+      - env_files/postgres.env
     volumes:
       #- ./init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
       - ./coog27.sql:/docker-entrypoint-initdb.d/2_coog27.sql:ro
@@ -78,7 +78,7 @@ services:
   mongo:
     image: mongo
     env_file:
-      - var.env
+      - env_files/var.env
     volumes:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     networks:
@@ -87,7 +87,7 @@ services:
   gateway:
     image: coopengo/gateway:coog-2.7.21
     env_file:
-      - var.env
+      - env_files/var.env
     depends_on:
       - mongo
     labels:
@@ -110,7 +110,7 @@ services:
   api:
     image: coopengo/api:coog-2.7.21
     env_file:
-      - var.env
+      - env_files/var.env
     depends_on:
       - mongo
     networks:
@@ -119,7 +119,7 @@ services:
   api-b2b-config:
     image: coopengo/api-b2b-config:coog-2.7.21
     env_file:
-      - var.env
+      - env_files/var.env
     depends_on:
       - mongo
     networks:
@@ -128,7 +128,7 @@ services:
   api-referential:
     image: coopengo/api-referential:coog-2.7.21
     env_file:
-      - var.env
+      - env_files/var.env
     depends_on:
       - mongo
     networks:
@@ -137,7 +137,7 @@ services:
   api-identity-manager:
     image: coopengo/api-identity-manager:coog-2.7.21
     env_file:
-      - var.env
+      - env_files/var.env
     depends_on:
       - mongo
       - api
@@ -147,7 +147,7 @@ services:
   web:
     image: coopengo/web:coog-2.7.21
     env_file:
-      - var.env
+      - env_files/var.env
     command: ["server", "1"]
     depends_on:
       - redis
@@ -158,7 +158,7 @@ services:
     image: coopengo/portal:coog-2.7.21
     command: ["server", "1"]
     env_file:
-      - var.env
+      - env_files/var.env
     labels:
       - traefik.http.routers.portal.rule=Host(`coog.localhost`) && PathPrefix(`/portal`)
       - traefik.http.routers.portal.entrypoints=http
@@ -191,7 +191,7 @@ services:
   unoconv:
     image: coopengo/unoconv:2.5.11
     env_file:
-      - var.env
+      - env_files/var.env
     networks:
       - backend
 
