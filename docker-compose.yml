@@ -1,5 +1,10 @@
 version: '3'
 
+networks:
+  frontend:
+    driver: bridge
+  backend:
+
 services:
   reverse-proxy:
     image: traefik:2.2.0
@@ -8,8 +13,18 @@ services:
       - 443:443
       - 8080:8080
     volumes:
-      - ./traefik.toml:/etc/traefik/traefik.toml
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs:/etc/certs:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./traefik.toml:/etc/traefik/traefik.toml:ro
+      - ./traefik.config.toml:/etc/traefik/traefik.config.toml:ro
+      - ./acme.json:/acme.json
+    labels:
+      - traefik.frontend.redirect.entryPoint=https
+    networks:
+      - backend
+      - frontend
 
   coog:
     image: coopengo/coog:coog-2.7.21
@@ -20,7 +35,15 @@ services:
     env_file:
       - var.env
     labels:
-      -  "traefik.http.routers.coog.rule=Host(`coog.localhost`)"
+      - traefik.http.routers.coog.rule=Host(`coog.localhost`)
+      - traefik.http.routers.coog.entrypoints=http
+      - traefik.http.routers.coog.middlewares=redirect@file
+      - traefik.http.routers.coog_s.rule=Host(`coog.localhost`)
+      - traefik.http.routers.coog_s.entrypoints=https
+      - traefik.http.routers.coog_s.tls=true
+    networks:
+      - backend
+      - frontend
 
   postgres:
     image: postgres:12-alpine
@@ -29,11 +52,15 @@ services:
     volumes:
       #- ./init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
       - ./coog27.sql:/docker-entrypoint-initdb.d/2_coog27.sql:ro
+    networks:
+      - backend
 
   redis:
     image: redis:5.0.7-alpine
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - backend
 
   mongo:
     image: mongo
@@ -41,8 +68,9 @@ services:
       - var.env
     volumes:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-     # - ./mongo-volume:/data/db
- 
+    networks:
+      - backend
+
   gateway:
     image: coopengo/gateway:coog-2.7.21
     env_file:
@@ -50,10 +78,21 @@ services:
     depends_on:
       - mongo
     labels:
-      - "traefik.http.routers.gateway.middlewares=gateway"
-      - "traefik.http.routers.gateway.rule=Host(`coog.localhost`) && PathPrefix(`/gateway`)"
-      - "traefik.http.middlewares.gateway.replacepathregex.regex=/gateway(/|$$)(.*)"
-      - "traefik.http.middlewares.gateway.replacepathregex.replacement=/$${2}"
+      - traefik.http.routers.gateway.rule=Host(`coog.localhost`) && PathPrefix(`/gateway`)
+      - traefik.http.routers.gateway.entrypoints=http
+      - traefik.http.routers.gateway.middlewares=gateway
+      - traefik.http.middlewares.gateway.replacepathregex.regex=/gateway(/|$$)(.*)
+      - traefik.http.middlewares.gateway.replacepathregex.replacement=/$${2}
+      - traefik.http.routers.gateway.middlewares=redirect@file
+      - traefik.http.routers.gateway_s.rule=Host(`coog.localhost`) && PathPrefix(`/gateway`)
+      - traefik.http.routers.gateway_s.middlewares=gateway_s
+      - traefik.http.middlewares.gateway_s.replacepathregex.regex=/gateway(/|$$)(.*)
+      - traefik.http.middlewares.gateway_s.replacepathregex.replacement=/$${2}
+      - traefik.http.routers.gateway_s.entrypoints=https
+      - traefik.http.routers.gateway_s.tls=true
+    networks:
+      - backend
+      - frontend
 
   api:
     image: coopengo/api:coog-2.7.21
@@ -61,6 +100,8 @@ services:
       - var.env
     depends_on:
       - mongo
+    networks:
+      - backend
 
   api-b2b-config:
     image: coopengo/api-b2b-config:coog-2.7.21
@@ -68,6 +109,8 @@ services:
       - var.env
     depends_on:
       - mongo
+    networks:
+      - backend
 
   api-referential:
     image: coopengo/api-referential:coog-2.7.21
@@ -75,6 +118,8 @@ services:
       - var.env
     depends_on:
       - mongo
+    networks:
+      - backend
 
   api-identity-manager:
     image: coopengo/api-identity-manager:coog-2.7.21
@@ -83,6 +128,8 @@ services:
     depends_on:
       - mongo
       - api
+    networks:
+      - backend
 
   web:
     image: coopengo/web:coog-2.7.21
@@ -91,6 +138,8 @@ services:
     command: ["server", "1"]
     depends_on:
       - redis
+    networks:
+      - backend
 
   portal:
     image: coopengo/portal:coog-2.7.21
@@ -98,15 +147,33 @@ services:
     env_file:
       - var.env
     labels:
-      - "traefik.http.routers.portal.middlewares=portal"
-      - "traefik.http.routers.portal.rule=Host(`coog.localhost`) && PathPrefix(`/portal`)"
-      - "traefik.http.middlewares.portal.replacepathregex.regex=/portal(/|$$)(.*)"
-      - "traefik.http.middlewares.portal.replacepathregex.replacement=/$${2}"
+      - traefik.http.routers.portal.rule=Host(`coog.localhost`) && PathPrefix(`/portal`)
+      - traefik.http.routers.portal.entrypoints=http
+      - traefik.http.routers.portal.middlewares=portal
+      - traefik.http.middlewares.portal.replacepathregex.regex=/portal(/|$$)(.*)
+      - traefik.http.middlewares.portal.replacepathregex.replacement=/$${2}
+      - traefik.http.routers.portal.middlewares=redirect@file
+      - traefik.http.routers.portal_s.rule=Host(`coog.localhost`) && PathPrefix(`/portal`)
+      - traefik.http.routers.portal_s.middlewares=portal_s
+      - traefik.http.middlewares.portal_s.replacepathregex.regex=/portal(/|$$)(.*)
+      - traefik.http.middlewares.portal_s.replacepathregex.replacement=/$${2}
+      - traefik.http.routers.portal_s.entrypoints=https
+      - traefik.http.routers.portal_s.tls=true
+
+    networks:
+      - frontend
 
   static:
     image: coopengo/static:master
     labels:
-      - "traefik.http.routers.static.rule=Host(`coog.localhost`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )"
+      - traefik.http.routers.static.rule=Host(`coog.localhost`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
+      - traefik.http.routers.static.entrypoints=http
+      - traefik.http.routers.static.middlewares=redirect@file
+      - traefik.http.routers.static_s.rule=Host(`coog.localhost`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
+      - traefik.http.routers.static_s.entrypoints=https
+      - traefik.http.routers.static_s.tls=true
+    networks:
+      - frontend
 
   busybox:
     image: busybox

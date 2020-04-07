@@ -2,31 +2,36 @@
   sendAnonymousUsage = false
 
 [log]
-  level = "INFO"
+  level = "DEBUG"
   format = "common"
+
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+  [entryPoints.https]
+    address = ":443"
 
 [providers]
   [providers.docker]
     endpoint = "unix:///var/run/docker.sock"
     watch = true
-    exposedByDefault = true
-    swarmMode = false
+      [docker.tls]
+        cert = "/etc/certs/localhost-cert.pem"
+        key = "/etc/certs/localhost-key.pem"
+  [providers.file]
+    filename = "/etc/traefik/traefik.config.toml"
+    watch = true
 
 [api]
   dashboard = true
   debug = false
   insecure = true
 
-[entryPoints]
-  [entryPoints.insecure]
-    address = ":80"
-  [entryPoints.secure]
-    address = ":443"
-
-[certificatesResolvers.letsencrypt.acme]
-  email = "julien.gourmelen@coopengo.com"
-  storage = "acme.json"
-  caServer = "https://acme-v02.api.letsencrypt.org/directory"
-  keyType = "EC256"
-  [certificatesResolvers.letsencrypt.acme.httpChallenge]
-    entryPoint = "http"
+[certificatesResolvers]
+  [certificatesResolvers.letsencrypt]
+    [certificatesResolvers.letsencrypt.acme]
+      email = "julien.gourmelen@coopengo.com"
+      caServer = "https://acme-v02.api.letsencrypt.org/directory"
+      storage = "acme.json"
+        [certificatesResolvers.letsencrypt.acme.httpChallenge]
+          entrypoint = "https"
