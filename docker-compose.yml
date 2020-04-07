@@ -45,7 +45,10 @@ services:
   celery:
     image: coopengo/coog:coog-2.7.21
     command: ["celery", "1"]
+    depends_on:
+      - postgres
     env_file:
+      - env_files/var.env
       - env_files/celery.env
     networks:
       - backend
@@ -54,6 +57,7 @@ services:
     image: coopengo/coog:coog-2.7.21
     command: ["celery_single"]
     env_file:
+      - env_files/var.env
       - env_files/celery_single.env
     networks:
       - backend
