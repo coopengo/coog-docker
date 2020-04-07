@@ -5,7 +5,14 @@ sudo chmod +x /usr/local/bin/mkcert
 mkcert -install
 mkcert -cert-file certs/localhost-cert.pem -key-file certs/localhost-key.pem "coog.localhost" ""
 
+# Démarrer coog
+docker-compose up
+OU
+docker-compose up -d #(mode démon)
+
+
 # coog-traefik
+
 
 Init DB :
   ep  admin -u ir res -d coog
