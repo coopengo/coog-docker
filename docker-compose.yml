@@ -45,6 +45,17 @@ services:
       - backend
       - frontend
 
+  celery:
+    image: coopengo/coog:coog-2.7.21
+    command: ["celery", "1"]
+    depends_on:
+      - redis
+      - postgres
+    env_file:
+      - var.env
+    networks:
+      - backend
+
   postgres:
     image: postgres:12-alpine
     env_file:
