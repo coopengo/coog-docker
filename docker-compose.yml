@@ -19,7 +19,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - ./traefik/traefik.toml:/etc/traefik/traefik.toml:ro
       - ./traefik/traefik.config.toml:/etc/traefik/traefik.config.toml:ro
-      - ./acme.json:/acme.json
+      - ./traefik/acme.json:/acme.json
     labels:
       - traefik.frontend.redirect.entryPoint=https
     networks:
@@ -65,15 +65,15 @@ services:
     env_file:
       - env_files/postgres.env
     volumes:
-      #- ./init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
-      - ./coog27.sql:/docker-entrypoint-initdb.d/2_coog27.sql:ro
+      #- ./postgres/init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
+      - .postgres/dumps/coog27.sql:/docker-entrypoint-initdb.d/2_coog27.sql:ro
     networks:
       - backend
 
   redis:
     image: redis:5.0.7-alpine
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
+    env_file:
+      - env_files/redis.env
     networks:
       - backend
 
@@ -82,7 +82,7 @@ services:
     env_file:
       - env_files/var.env
     volumes:
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     networks:
       - backend
 
