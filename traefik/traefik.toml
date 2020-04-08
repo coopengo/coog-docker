@@ -2,7 +2,7 @@
   sendAnonymousUsage = false
 
 [log]
-  level = "DEBUG"
+  level = "INFO"
   format = "common"
 
 [entryPoints]
@@ -27,11 +27,10 @@
   debug = false
   insecure = true
 
-[certificatesResolvers]
-  [certificatesResolvers.letsencrypt]
-    [certificatesResolvers.letsencrypt.acme]
-      email = "julien.gourmelen@coopengo.com"
-      caServer = "https://acme-v02.api.letsencrypt.org/directory"
-      storage = "acme.json"
-        [certificatesResolvers.letsencrypt.acme.httpChallenge]
-          entrypoint = "https"
+[certificatesResolvers.letsencrypt.acme]
+  email = "julien.gourmelen@coopengo.com"
+  storage = "acme.json"
+  caServer = "https://acme-v02.api.letsencrypt.org/directory"
+  keyType = "EC256"
+  [certificatesResolvers.letsencrypt.acme.httpChallenge]
+    entryPoint = "http"

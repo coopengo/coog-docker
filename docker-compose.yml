@@ -27,23 +27,27 @@ services:
       - frontend
 
   coog:
-    image: coopengo/coog:coog-2.7.21
+    image: coopengo/coog:${IMAGE_VERSION_COOG}
     command: ["server", "1"]
     env_file:
       - env_files/var.env
     labels:
-      - traefik.http.routers.coog.rule=Host(`coog.localhost`)
+      - traefik.http.routers.coog.rule=Host(`${HOSTNAME}`)
       - traefik.http.routers.coog.entrypoints=http
       - traefik.http.routers.coog.middlewares=redirect@file
-      - traefik.http.routers.coog_s.rule=Host(`coog.localhost`)
+      - traefik.http.routers.coog_s.rule=Host(`${HOSTNAME}`)
       - traefik.http.routers.coog_s.entrypoints=https
       - traefik.http.routers.coog_s.tls=true
+      - traefik.http.routers.coog_s.tls.certresolver=letsencrypt
+
     networks:
       - backend
       - frontend
+    depends_on:
+      - postgres
 
   celery:
-    image: coopengo/coog:coog-2.7.21
+    image: coopengo/coog:${IMAGE_VERSION_COOG}
     command: ["celery", "1"]
     env_file:
       - env_files/var.env
@@ -52,7 +56,7 @@ services:
       - backend
 
   celery_single:
-    image: coopengo/coog:coog-2.7.21
+    image: coopengo/coog:${IMAGE_VERSION_COOG}
     command: ["celery_single"]
     env_file:
       - env_files/var.env
@@ -66,7 +70,7 @@ services:
       - env_files/postgres.env
     volumes:
       #- ./postgres/init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
-      - .postgres/dumps/coog27.sql:/docker-entrypoint-initdb.d/2_coog27.sql:ro
+      - ./postgres/dumps/coog27.sql:/docker-entrypoint-initdb.d/2_coog27.sql:ro
     networks:
       - backend
 
@@ -87,19 +91,19 @@ services:
       - backend
 
   gateway:
-    image: coopengo/gateway:coog-2.7.21
+    image: coopengo/gateway:${IMAGE_VERSION_GATEWAY}
     env_file:
       - env_files/var.env
     depends_on:
       - mongo
     labels:
-      - traefik.http.routers.gateway.rule=Host(`coog.localhost`) && PathPrefix(`/gateway`)
+      - traefik.http.routers.gateway.rule=Host(`${HOSTNAME}`) && PathPrefix(`/gateway`)
       - traefik.http.routers.gateway.entrypoints=http
       - traefik.http.routers.gateway.middlewares=gateway
       - traefik.http.middlewares.gateway.replacepathregex.regex=/gateway(/|$$)(.*)
       - traefik.http.middlewares.gateway.replacepathregex.replacement=/$${2}
       - traefik.http.routers.gateway.middlewares=redirect@file
-      - traefik.http.routers.gateway_s.rule=Host(`coog.localhost`) && PathPrefix(`/gateway`)
+      - traefik.http.routers.gateway_s.rule=Host(`${HOSTNAME}`) && PathPrefix(`/gateway`)
       - traefik.http.routers.gateway_s.middlewares=gateway_s
       - traefik.http.middlewares.gateway_s.replacepathregex.regex=/gateway(/|$$)(.*)
       - traefik.http.middlewares.gateway_s.replacepathregex.replacement=/$${2}
@@ -119,7 +123,7 @@ services:
       - backend
 
   api-b2b-config:
-    image: coopengo/api-b2b-config:coog-2.7.21
+    image: coopengo/api-b2b-config:${IMAGE_VERSION_API_B2B_CONFIG}
     env_file:
       - env_files/var.env
     depends_on:
@@ -128,7 +132,7 @@ services:
       - backend
 
   api-referential:
-    image: coopengo/api-referential:coog-2.7.21
+    image: coopengo/api-referential:${IMAGE_VERSION_API_REFERENTIAL}
     env_file:
       - env_files/var.env
     depends_on:
@@ -137,7 +141,7 @@ services:
       - backend
 
   api-identity-manager:
-    image: coopengo/api-identity-manager:coog-2.7.21
+    image: coopengo/api-identity-manager:${IMAGE_VERSION_API_IDENTITY_MANAGER}
     env_file:
       - env_files/var.env
     depends_on:
@@ -147,7 +151,7 @@ services:
       - backend
 
   web:
-    image: coopengo/web:coog-2.7.21
+    image: coopengo/web:${IMAGE_VERSION_WEB}
     env_file:
       - env_files/var.env
     command: ["server", "1"]
@@ -157,41 +161,43 @@ services:
       - backend
 
   portal:
-    image: coopengo/portal:coog-2.7.21
+    image: coopengo/portal:${IMAGE_VERSION_PORTAL}
     command: ["server", "1"]
     env_file:
       - env_files/var.env
     labels:
-      - traefik.http.routers.portal.rule=Host(`coog.localhost`) && PathPrefix(`/portal`)
+      - traefik.http.routers.portal.rule=Host(`${HOSTNAME}`) && PathPrefix(`/portal`)
       - traefik.http.routers.portal.entrypoints=http
       - traefik.http.routers.portal.middlewares=portal
       - traefik.http.middlewares.portal.replacepathregex.regex=/portal(/|$$)(.*)
       - traefik.http.middlewares.portal.replacepathregex.replacement=/$${2}
       - traefik.http.routers.portal.middlewares=redirect@file
-      - traefik.http.routers.portal_s.rule=Host(`coog.localhost`) && PathPrefix(`/portal`)
+      - traefik.http.routers.portal_s.rule=Host(`${HOSTNAME}`) && PathPrefix(`/portal`)
       - traefik.http.routers.portal_s.middlewares=portal_s
       - traefik.http.middlewares.portal_s.replacepathregex.regex=/portal(/|$$)(.*)
       - traefik.http.middlewares.portal_s.replacepathregex.replacement=/$${2}
       - traefik.http.routers.portal_s.entrypoints=https
       - traefik.http.routers.portal_s.tls=true
+      - traefik.http.routers.portal_s.tls.certresolver=letsencrypt
 
     networks:
       - frontend
 
   static:
-    image: coopengo/static:master
+    image: coopengo/static:${IMAGE_VERSION_STATIC}
     labels:
-      - traefik.http.routers.static.rule=Host(`coog.localhost`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
+      - traefik.http.routers.static.rule=Host(`${HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
       - traefik.http.routers.static.entrypoints=http
       - traefik.http.routers.static.middlewares=redirect@file
-      - traefik.http.routers.static_s.rule=Host(`coog.localhost`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
+      - traefik.http.routers.static_s.rule=Host(`${HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
       - traefik.http.routers.static_s.entrypoints=https
       - traefik.http.routers.static_s.tls=true
+      - traefik.http.routers.static_s.tls.certresolver=letsencrypt
     networks:
       - frontend
 
   unoconv:
-    image: coopengo/unoconv:2.5.11
+    image: coopengo/unoconv:${IMAGE_VERSION_UNOCONV}
     env_file:
       - env_files/var.env
     networks:
