@@ -17,4 +17,5 @@ docker-compose up -d #(mode démon)
 Init DB :
   ep  admin -u ir res -d coog
 
+# coog=# update ir_note_type set code = concat(concat(code, '_'), id);
 
