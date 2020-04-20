@@ -1,21 +1,32 @@
 # Certificats SSL sur le localhost
-wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-amd64
-sudo mv mkcert-v1.4.1-linux-amd64 /usr/local/bin/mkcert
-sudo chmod +x /usr/local/bin/mkcert
-mkcert -install
-mkcert -cert-file certs/localhost-cert.pem -key-file certs/localhost-key.pem "coog.localhost"
+
+
+    wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-amd64
+    sudo mv mkcert-v1.4.1-linux-amd64 /usr/local/bin/mkcert
+    sudo chmod +x /usr/local/bin/mkcert
+    mkcert -install
+    mkcert -cert-file certs/localhost-cert.pem -key-file certs/localhost-key.pem "coog.localhost"
 
 # Démarrer coog
-docker-compose up
+
+
+    docker-compose up
+
 OU
-docker-compose up -d #(mode démon)
+
+
+    docker-compose up -d #(mode démon)
 
 
 # coog-traefik
 
 
 Init DB :
-  ep  admin -u ir res -d coog
+  
 
-# coog=# update ir_note_type set code = concat(concat(code, '_'), id);
+    ep  admin -u ir res -d coog
+
+# Divers
+
+coog=# update ir_note_type set code = concat(concat(code, '_'), id);
 
