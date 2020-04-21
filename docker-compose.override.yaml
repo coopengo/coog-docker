@@ -1,0 +1,5 @@
+version: '3'
+
+# services:
+#   coog:
+#     image: coopengo/coog-client:${IMAGE_VERSION_COOG}

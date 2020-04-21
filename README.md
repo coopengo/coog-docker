@@ -1,3 +1,7 @@
+# Installer Docker 
+
+  Doc officielle Centos : https://docs.docker.com/engine/install/centos/
+
 # Certificats SSL sur le localhost
 
 
@@ -29,4 +33,21 @@ Init DB :
 # Divers
 
 coog=# update ir_note_type set code = concat(concat(code, '_'), id);
+
+
+# docker-compose specifique client
+
+Creer un docker-compose.override.yaml à la racine.
+
+Fichier automatiquement lu par docker-compose et mergé avec le docker-compose.yaml.
+
+
+    version: "3"
+    
+    services:
+      paybox:
+        entrypoint: ["echo", "Service foo disabled"]
+      coog:
+          image: coopengo/coog-client:${IMAGE_VERSION_COOG}
+
 

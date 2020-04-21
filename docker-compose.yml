@@ -33,6 +33,8 @@ services:
       - env_files/var.env
         #    depends_on:
         # - initcoog
+    volumes:
+      - ${COOG_VOLUME}:/workspace/io
     networks:
       - backend
 
@@ -76,6 +78,7 @@ services:
     env_file:
       - env_files/postgres.env
     volumes:
+      - ${POSTGRES_DATA_VOLUME}:/var/lib/postgresql/data
       - ./postgres/init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
         #- ./postgres/dumps/${POSTGRES_DUMP}:/docker-entrypoint-initdb.d/2_coog27.sql:ro
     networks:
