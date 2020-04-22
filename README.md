@@ -1,3 +1,14 @@
+# Pré-requis Hardware
+- OS : centos 7
+- RAM : 16Gb
+- CPU : 8 CPU
+- HDD : 100Go
+
+# Documentation externe :
+
+Docker-compose : https://docs.docker.com/compose
+
+
 # Installer Docker 
 
   Doc officielle Centos : https://docs.docker.com/engine/install/centos/
@@ -21,21 +32,17 @@ OU
 
     docker-compose up -d #(mode démon)
 
-
 # Démarrer un service spécifique
 
 
     docker-compose up coog
-
 
 # Arrêter un service spécifique
 
 
     docker-compose down coog
 
-
 # Commande de module update
-
 
 Init DB :
   
@@ -49,19 +56,13 @@ Il est possible de scaler des conteneurs de cette manière :
 
     docker-compose up --scale coog=5
 
-
-# Divers
-
-coog=# update ir_note_type set code = concat(concat(code, '_'), id);
-
-
 # Configuration specifique client
 
 Il faut alimenter le docker-compose.override.yaml à la racine du projet avec les spécificités clientes si besoin.
 
 Ce fichier est automatiquement lu par docker-compose et mergé avec le docker-compose.yaml.
 
-ex:
+ex: Désactiver les conteneur paybox et changer l'image de référence de coog :
 
 
     version: "3"
