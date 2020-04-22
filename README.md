@@ -77,3 +77,16 @@ ex: Désactiver les conteneur paybox et changer l'image de référence de coog :
 Les autres configurations éditables sont :
 - .env              (variables liés au docker-compose.yaml)
 - ./env_files/*     (variables liés au container)
+
+
+# Backup
+
+Les données susceptibles d'être à backuper se situent automatiquement dans le répertoire de la machine host /coog .
+Elle contient le point de montage de coog ainsi que ceux des bases de données.
+
+Pour backuper postgres on peut par ex utiliser la commande pg_dump. Se reinsigner sur la documentation officielle de Postgres :
+- https://www.postgresql.org/docs/current/backup.html
+
+    
+
+Pour backuper Coog, il faut utiliser la commande tar sur le repertoire /coog au niveau de la machine host.
