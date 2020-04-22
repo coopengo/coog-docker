@@ -21,17 +21,20 @@ OU
 
     docker-compose up -d #(mode démon)
 
+
+# Démarrer un service spécifique
+
+
+    docker-compose up coog
+
+
 # Arrêter un service spécifique
 
 
     docker-compose down coog
 
-# Démarrer un service spécifique
 
-
-    docker-compose down coog
-
-# coog-traefik
+# Commande de module update
 
 
 Init DB :
@@ -52,11 +55,13 @@ Il est possible de scaler des conteneurs de cette manière :
 coog=# update ir_note_type set code = concat(concat(code, '_'), id);
 
 
-# docker-compose specifique client
+# Configuration specifique client
 
-Creer un docker-compose.override.yaml à la racine.
+Il faut alimenter le docker-compose.override.yaml à la racine du projet avec les spécificités clientes si besoin.
 
-Fichier automatiquement lu par docker-compose et mergé avec le docker-compose.yaml.
+Ce fichier est automatiquement lu par docker-compose et mergé avec le docker-compose.yaml.
+
+ex:
 
 
     version: "3"
@@ -68,3 +73,6 @@ Fichier automatiquement lu par docker-compose et mergé avec le docker-compose.y
           image: coopengo/coog-client:${IMAGE_VERSION_COOG}
 
 
+Les autres configurations éditables sont :
+- .env              (variables liés au docker-compose.yaml)
+- ./env_files/*     (variables liés au container)
