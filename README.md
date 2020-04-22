@@ -45,7 +45,7 @@ OU
 # Commande de module update
 
 Init DB :
-  
+
 
     ep  admin -u ir res -d coog
 
@@ -93,3 +93,26 @@ Ex d'utilisation au travers de la commande docker :
     docker exec -it coog-docker_postgres_1 pg_dump -d coog -U coog
 
 Pour backuper le repertoire Workspace de Coog, il faut utiliser la commande tar sur le repertoire /coog au niveau de la machine host.
+
+Ex de commande tar :
+
+
+    tar -zcvpf /backup/coog-$(date +%d-%m-%Y).tar.gz /coog/coog_data
+
+
+# Anonymiser une base
+
+Le but est d'appliquer ces requêtes à la BDD que l'on souhaite anonymiser :
+
+
+    docker exec -it coog-docker_coog_1 ep anon_queries 1
+
+
+Ex de copie d'une base coog et de son anonymisation :
+
+
+    docker exec -it coog-docker_postgres_1 psql --quiet -c "create database anon_db;" -U coog
+    docker exec -t coog-docker_postgres_1 pg_dump -d coog -U coog -c -O > dump_to_anon.sql
+    cat dump_to_anon.sql | docker exec -i coog-docker_postgres_1 psql -U coog -d anon_db
+    docker exec -it coog-docker_coog_1 ep anon_queries 1 | docker exec -i coog-docker_postgres_1 psql -U coog -d anon_db
+    
