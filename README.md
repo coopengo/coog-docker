@@ -100,6 +100,7 @@ Ex de commande tar :
     tar -zcvpf /backup/coog-$(date +%d-%m-%Y).tar.gz /coog/coog_data
 
 
+
 # Anonymiser une base
 
 Le but est d'appliquer ces requêtes à la BDD que l'on souhaite anonymiser :
