@@ -14,12 +14,12 @@ services:
       - 8080:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/etc/certs:ro
+      - ./certs:/etc/certs:rw
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
       - ./traefik/traefik.toml:/etc/traefik/traefik.toml:ro
       - ./traefik/traefik.config.toml:/etc/traefik/traefik.config.toml:ro
-      - ./traefik/acme.json:/acme.json
+      - ./traefik/acme.json:/acme.json:rw
     labels:
       - traefik.frontend.redirect.entryPoint=https
     networks:
@@ -31,8 +31,16 @@ services:
     command: ["server", "1"]
     env_file:
       - env_files/var.env
-        #    depends_on:
-        # - initcoog
+    depends_on:
+      - initcoog
+    labels:
+      - traefik.http.routers.coog.rule=Host(`${COOG_HOSTNAME}`)
+      - traefik.http.routers.coog.entrypoints=http
+      - traefik.http.routers.coog.middlewares=redirect@file
+      - traefik.http.routers.coog_s.rule=Host(`${COOG_HOSTNAME}`)
+      - traefik.http.routers.coog_s.entrypoints=https
+      - traefik.http.routers.coog_s.tls=true
+      - traefik.http.routers.coog_s.tls.certresolver=letsencrypt
     volumes:
       - ${COOG_VOLUME}:/workspace/io
     networks:
@@ -43,17 +51,8 @@ services:
     command: ["admin", "-u", "ir", "res", "-d", "${COOG_DB_NAME}"]
     env_file:
       - env_files/var.env
-    labels:
-      - traefik.http.routers.coog.rule=Host(`${COOG_HOSTNAME}`)
-      - traefik.http.routers.coog.entrypoints=http
-      - traefik.http.routers.coog.middlewares=redirect@file
-      - traefik.http.routers.coog_s.rule=Host(`${COOG_HOSTNAME}`)
-      - traefik.http.routers.coog_s.entrypoints=https
-      - traefik.http.routers.coog_s.tls=true
-      - traefik.http.routers.coog_s.tls.certresolver=letsencrypt
     networks:
       - backend
-      - frontend
 
   celery:
     image: coopengo/coog:${IMAGE_VERSION_COOG}
@@ -79,8 +78,8 @@ services:
       - env_files/postgres.env
     volumes:
       - ${POSTGRES_DATA_VOLUME}:/var/lib/postgresql/data
-      - ./postgres/init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
-        #- ./postgres/dumps/${POSTGRES_DUMP}:/docker-entrypoint-initdb.d/2_coog27.sql:ro
+      #- ./postgres/init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
+      - ./postgres/dumps/${POSTGRES_DUMP}:/docker-entrypoint-initdb.d/2_coog27.sql:ro
     networks:
       - backend
 

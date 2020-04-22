@@ -21,6 +21,15 @@ OU
 
     docker-compose up -d #(mode démon)
 
+# Arrêter un service spécifique
+
+
+    docker-compose down coog
+
+# Démarrer un service spécifique
+
+
+    docker-compose down coog
 
 # coog-traefik
 
@@ -29,6 +38,14 @@ Init DB :
   
 
     ep  admin -u ir res -d coog
+
+# Scaling de container
+
+Il est possible de scaler des conteneurs de cette manière :
+
+
+    docker-compose up --scale coog=5
+
 
 # Divers
 
