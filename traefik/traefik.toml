@@ -28,7 +28,7 @@
   insecure = true
 
 [certificatesResolvers.letsencrypt.acme]
-  email = "julien.gourmelen@coopengo.com"
+  email = "support@coopengo.com"
   storage = "acme.json"
   caServer = "https://acme-v02.api.letsencrypt.org/directory"
   keyType = "EC256"
