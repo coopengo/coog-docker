@@ -84,9 +84,12 @@ Les autres configurations éditables sont :
 Les données susceptibles d'être à backuper se situent automatiquement dans le répertoire de la machine host /coog .
 Elle contient le point de montage de coog ainsi que ceux des bases de données.
 
-Pour backuper postgres on peut par ex utiliser la commande pg_dump. Se reinsigner sur la documentation officielle de Postgres :
+Pour backuper postgres, il faut utiliser la commande pg_dump. Ci-joint la documentation officielle Postgres :
 - https://www.postgresql.org/docs/current/backup.html
 
-    
+Ex d'utilisation au travers de la commande docker :
 
-Pour backuper Coog, il faut utiliser la commande tar sur le repertoire /coog au niveau de la machine host.
+
+    docker exec -it coog-docker_postgres_1 pg_dump -d coog -U coog
+
+Pour backuper le repertoire Workspace de Coog, il faut utiliser la commande tar sur le repertoire /coog au niveau de la machine host.
