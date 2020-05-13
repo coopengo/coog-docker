@@ -28,18 +28,25 @@ services:
 
   flower:
     image: mher/flower:latest
+    command: ["--basic_auth=${FLOWER_PASSWORD}:${FLOWER_PASSWORD}", "--url-prefix=flower" ]
     depends_on:
+      - reverse-proxy
       - celery
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/1
     labels:
-      - traefik.http.routers.flower.rule=Host(`${FLOWER_HOSTNAME}`)
+      - traefik.http.routers.flower.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/flower`)
       - traefik.http.routers.flower.entrypoints=http
+      - traefik.http.routers.flower.middlewares=flower
+      - traefik.http.middlewares.flower.replacepathregex.regex=/flower(/|$$)(.*)
+      - traefik.http.middlewares.flower.replacepathregex.replacement=/$${2}
       - traefik.http.routers.flower.middlewares=redirect@file
-      - traefik.http.routers.flower_s.rule=Host(`${FLOWER_HOSTNAME}`)
+      - traefik.http.routers.flower_s.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/flower`)
+      - traefik.http.routers.flower_s.middlewares=flower_s
+      - traefik.http.middlewares.flower_s.replacepathregex.regex=/flower(/|$$)(.*)
+      - traefik.http.middlewares.flower_s.replacepathregex.replacement=/$${2}
       - traefik.http.routers.flower_s.entrypoints=https
       - traefik.http.routers.flower_s.tls=true
-      - traefik.http.routers.flower_s.tls.certresolver=letsencrypt
     networks:
       - backend
       - frontend
