@@ -148,7 +148,7 @@ services:
       - frontend
 
   api:
-    image: coopengo/api:coog-2.7.21
+    image: coopengo/api:${IMAGE_VERSION_API}
     env_file:
       - env_files/var.env
     depends_on:
