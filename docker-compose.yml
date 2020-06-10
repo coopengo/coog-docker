@@ -68,6 +68,8 @@ services:
       - traefik.http.routers.coog_s.tls.certresolver=letsencrypt
     volumes:
       - ${COOG_VOLUME}:/workspace/io
+      - ./conf/coog.conf:/workspace/coog.conf:ro
+      - ./conf/batch.conf:/workspace/batch.conf:ro
     networks:
       - backend
 
@@ -78,6 +80,9 @@ services:
       - env_files/var.env
     networks:
       - backend
+    volumes:
+      - ./conf/coog.conf:/workspace/coog.conf:ro
+      - ./conf/batch.conf:/workspace/batch.conf:ro
 
   celery:
     image: coopengo/coog:${IMAGE_VERSION_COOG}
@@ -87,6 +92,9 @@ services:
       - env_files/celery.env
     networks:
       - backend
+    volumes:
+      - ./conf/coog.conf:/workspace/coog.conf:ro
+      - ./conf/batch.conf:/workspace/batch.conf:ro
 
   celery_single:
     image: coopengo/coog:${IMAGE_VERSION_COOG}
@@ -96,6 +104,9 @@ services:
       - env_files/celery_single.env
     networks:
       - backend
+    volumes:
+      - ./conf/coog.conf:/workspace/coog.conf:ro
+      - ./conf/batch.conf:/workspace/batch.conf:ro
 
   postgres:
     image: postgres:12-alpine
@@ -246,12 +257,3 @@ services:
       - env_files/var.env
     networks:
       - backend
-
-  busybox:
-    image: busybox
-    command: tail -f /dev/null
-
-  centos:
-    image: centos
-    command: tail -f /dev/null
-
