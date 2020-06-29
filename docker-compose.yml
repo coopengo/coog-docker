@@ -20,8 +20,6 @@ services:
       - ./traefik/traefik.toml:/etc/traefik/traefik.toml:ro
       - ./traefik/traefik.config.toml:/etc/traefik/traefik.config.toml:ro
       - ./traefik/acme.json:/acme.json:rw
-    labels:
-      - traefik.frontend.redirect.entryPoint=https
     networks:
       - backend
       - frontend
@@ -40,7 +38,6 @@ services:
       - traefik.http.routers.flower.middlewares=flower
       - traefik.http.middlewares.flower.replacepathregex.regex=/flower(/|$$)(.*)
       - traefik.http.middlewares.flower.replacepathregex.replacement=/$${2}
-      - traefik.http.routers.flower.middlewares=redirect@file
       - traefik.http.routers.flower_s.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/flower`)
       - traefik.http.routers.flower_s.middlewares=flower_s
       - traefik.http.middlewares.flower_s.replacepathregex.regex=/flower(/|$$)(.*)
@@ -61,7 +58,6 @@ services:
     labels:
       - traefik.http.routers.coog.rule=Host(`${COOG_HOSTNAME}`)
       - traefik.http.routers.coog.entrypoints=http
-      - traefik.http.routers.coog.middlewares=redirect@file
       - traefik.http.routers.coog_s.rule=Host(`${COOG_HOSTNAME}`)
       - traefik.http.routers.coog_s.entrypoints=https
       - traefik.http.routers.coog_s.tls=true
@@ -147,7 +143,6 @@ services:
       - traefik.http.routers.gateway.middlewares=gateway
       - traefik.http.middlewares.gateway.replacepathregex.regex=/gateway(/|$$)(.*)
       - traefik.http.middlewares.gateway.replacepathregex.replacement=/$${2}
-      - traefik.http.routers.gateway.middlewares=redirect@file
       - traefik.http.routers.gateway_s.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/gateway`)
       - traefik.http.routers.gateway_s.middlewares=gateway_s
       - traefik.http.middlewares.gateway_s.replacepathregex.regex=/gateway(/|$$)(.*)
@@ -226,7 +221,6 @@ services:
       - traefik.http.routers.portal.middlewares=portal
       - traefik.http.middlewares.portal.replacepathregex.regex=/portal(/|$$)(.*)
       - traefik.http.middlewares.portal.replacepathregex.replacement=/$${2}
-      - traefik.http.routers.portal.middlewares=redirect@file
       - traefik.http.routers.portal_s.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/portal`)
       - traefik.http.routers.portal_s.middlewares=portal_s
       - traefik.http.middlewares.portal_s.replacepathregex.regex=/portal(/|$$)(.*)
@@ -243,7 +237,6 @@ services:
     labels:
       - traefik.http.routers.static.rule=Host(`${COOG_HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
       - traefik.http.routers.static.entrypoints=http
-      - traefik.http.routers.static.middlewares=redirect@file
       - traefik.http.routers.static_s.rule=Host(`${COOG_HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
       - traefik.http.routers.static_s.entrypoints=https
       - traefik.http.routers.static_s.tls=true
