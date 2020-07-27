@@ -1,4 +1,4 @@
-# Pré-requis Hardware
+# Prérequis Hardware
 - OS : centos 7
 - RAM : 16Gb
 - CPU : 8 CPU
@@ -6,12 +6,10 @@
 
 # Documentation externe :
 
+Docker : https://docs.docker.com/engine/install/centos/
+
 Docker-compose : https://docs.docker.com/compose
 
-
-# Installer Docker 
-
-  Doc officielle Centos : https://docs.docker.com/engine/install/centos/
 
 # Certificats SSL sur le localhost
 
@@ -42,7 +40,7 @@ OU
 
     docker-compose down coog
 
-# Commande de module update
+# Initialisation de la base de données (coog module update)
 
 Init DB :
 
@@ -81,10 +79,10 @@ Les autres configurations éditables sont :
 
 # Backup
 
-Les données susceptibles d'être à backuper se situent automatiquement dans le répertoire de la machine host /coog .
-Elle contient le point de montage de coog ainsi que ceux des bases de données.
+Les données susceptibles d'être à backuper se situent dans le répertoire de la machine host "/coog" .
+Ce répertopire correspond au point de montage de coog, ainsi que celui des bases de données.
 
-Pour backuper postgres, il faut utiliser la commande pg_dump. Ci-joint la documentation officielle Postgres :
+Pour backuper postgres, il faut utiliser la commande pg_dump. Voir la documentation officielle PostgreSql :
 - https://www.postgresql.org/docs/current/backup.html
 
 Ex d'utilisation au travers de la commande docker :
@@ -92,7 +90,7 @@ Ex d'utilisation au travers de la commande docker :
 
     docker exec -it coog-docker_postgres_1 pg_dump -d coog -U coog
 
-Pour backuper le repertoire Workspace de Coog, il faut utiliser la commande tar sur le repertoire /coog au niveau de la machine host.
+Pour backuper le répertoire Workspace de Coog, il faut utiliser la commande tar sur le répertoire /coog au niveau de la machine Host.
 
 Ex de commande tar :
 
@@ -103,13 +101,13 @@ Ex de commande tar :
 
 # Anonymiser une base
 
-Le but est d'appliquer ces requêtes à la BDD que l'on souhaite anonymiser :
+Le but est d'appliquer ces requêtes au sein de la BDD que l'on souhaite anonymiser :
 
 
     docker exec -it coog-docker_coog_1 ep anon_queries 1
 
 
-Ex de copie d'une base coog et de son anonymisation :
+Exemple de copie d'une base coog et de son anonymisation :
 
 
     docker exec -it coog-docker_postgres_1 psql --quiet -c "create database anon_db;" -U coog
@@ -121,9 +119,9 @@ Ex de copie d'une base coog et de son anonymisation :
 # Installer sentry
 
 Il est possible d'installer des outils d'aide à la gestion d'erreurs.
-Ce sont des outils non adéhrant à Coopengo et qui reste à la charge de l'utilisateur.
+Ce sont des outils non adéhrant à Coog et qui reste à la charge de l'utilisateur.
 
-Un ex de configuration pour lever Sentry (à placer dans le docker-compose.override.yaml:
+Un exemple de configuration pour lever Sentry (à placer dans le docker-compose.override.yaml) :
 
     version: '3'
     
@@ -210,7 +208,7 @@ Une fois levée, il faut initialiser la BDD de cette manière :
     
 Sentry est ainsi disponible à l'adresse : http://sentry.localhost:8080/
 
-Il reste à finaliser la configuration du backend COOG avec ces variables d'environnement (à setter pour le conteneur coog):
+Il reste à finaliser la configuration du backend COOG avec ces variables d'environnement (à setter dans le conteneur coog, fichier var.env):
 
     COOG_SENTRY_PUB=<public_key>
     COOG_SENTRY_SEC=<private_key>
