@@ -117,3 +117,104 @@ Ex de copie d'une base coog et de son anonymisation :
     cat dump_to_anon.sql | docker exec -i coog-docker_postgres_1 psql -U coog -d anon_db
     docker exec -it coog-docker_coog_1 ep anon_queries 1 | docker exec -i coog-docker_postgres_1 psql -U coog -d anon_db
     
+
+# Installer sentry
+
+Il est possible d'installer des outils d'aide à la gestion d'erreurs.
+Ce sont des outils non adéhrant à Coopengo et qui reste à la charge de l'utilisateur.
+
+Un ex de configuration pour lever Sentry (à placer dans le docker-compose.override.yaml:
+
+    version: '3'
+    
+    volumes:
+      pgdbsentry:
+    
+    services:
+      redissentry:
+        image: redis
+        networks:
+          - backend
+    
+      postgressentry:
+        image: postgres
+        environment:
+          POSTGRES_USER: sentry
+          POSTGRES_PASSWORD: sentry
+          POSTGRES_DB: sentry
+        volumes:
+          - pgdbsentry:/var/lib/postgresql/data
+        networks:
+          - backend
+    
+      sentry:
+        image: sentry
+        links:
+         - redissentry
+         - postgressentry
+        environment:
+          SENTRY_SECRET_KEY: '!!!SECRET!!!'
+          SENTRY_POSTGRES_HOST: postgressentry
+          SENTRY_DB_USER: sentry
+          SENTRY_DB_PASSWORD: sentry
+          SENTRY_REDIS_HOST: redissentry
+        networks:
+          - backend
+          - frontend
+        labels:
+          - traefik.http.routers.sentry.rule=Host(`sentry.localhost`)
+          - traefik.http.routers.sentry.entrypoints=http
+          - traefik.port=9000
+        depends_on:
+          - reverse-proxy
+    
+      cron:
+        image: sentry
+        links:
+         - redissentry
+         - postgressentry
+        command: "sentry run cron"
+        environment:
+          SENTRY_SECRET_KEY: '!!!SECRET!!!'
+          SENTRY_POSTGRES_HOST: postgressentry
+          SENTRY_DB_USER: sentry
+          SENTRY_DB_PASSWORD: sentry
+          SENTRY_REDIS_HOST: redis_sentry
+        networks:
+          - backend
+          - frontend
+        depends_on:
+          - reverse-proxy
+    
+      worker:
+        image: sentry
+        links:
+         - redissentry
+         - postgressentry
+        command: "sentry run worker"
+        environment:
+          SENTRY_SECRET_KEY: '!!!SECRET!!!'
+          SENTRY_POSTGRES_HOST: postgressentry
+          SENTRY_DB_USER: sentry
+          SENTRY_DB_PASSWORD: sentry
+          SENTRY_REDIS_HOST: redissentry
+        networks:
+          - backend
+          - frontend
+        depends_on:
+          - reverse-proxy
+
+Une fois levée, il faut initialiser la BDD de cette manière :
+
+    docker exec -it demo_sentry_1 sentry upgrade
+    
+Sentry est ainsi disponible à l'adresse : http://sentry.localhost:8080/
+
+Il reste à finaliser la configuration du backend COOG avec ces variables d'environnement (à setter pour le conteneur coog):
+
+    COOG_SENTRY_PUB=<public_key>
+    COOG_SENTRY_SEC=<private_key>
+    COOG_SENTRY_PROJECT=<project_id>
+    COOG_SENTRY_PROTOCOL=http
+    COOG_SENTRY_HOST=<[external-]server-ip>
+    COOG_SENTRY_PORT=9000
