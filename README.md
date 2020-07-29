@@ -30,6 +30,17 @@ OU
 
     docker-compose up -d #(mode démon)
 
+# Mapper le volume avec les bons droits sur le Host
+Le répertoire /workspace/io des conteneurs, est mappé avec le répertoire de la machine Host /coog/coog_data
+
+Pour des questions de sécurité, les conteneurs coog ne tournent pas en root.
+
+Il est donc indispensable de positionner les bons droits sur le répertoire /coog/coog_data qui est mappé dans les conteneurs.
+
+Commande à faire sur la machine HOST :
+
+    sudo chown 1003:1003 /coog/coog_data
+
 # Démarrer un service spécifique
 
 
