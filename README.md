@@ -130,7 +130,7 @@ Exemple de copie d'une base coog et de son anonymisation :
 # Installer sentry
 
 Il est possible d'installer des outils d'aide à la gestion d'erreurs.
-Ce sont des outils non adéhrant à Coog et qui reste à la charge de l'utilisateur.
+Ce sont des outils non adhérant à Coog et qui reste à la charge de l'utilisateur.
 
 Un exemple de configuration pour lever Sentry (à placer dans le docker-compose.override.yaml) :
 
@@ -219,7 +219,7 @@ Une fois levée, il faut initialiser la BDD de cette manière :
     
 Sentry est ainsi disponible à l'adresse : http://sentry.localhost:8080/
 
-Il reste à finaliser la configuration du backend COOG avec ces variables d'environnement (à setter dans le conteneur coog, fichier var.env):
+Il reste à finaliser la configuration du backend COOG avec ces variables d'environnement (à setter dans le conteneur Coog, fichier var.env):
 
     COOG_SENTRY_PUB=<public_key>
     COOG_SENTRY_SEC=<private_key>
