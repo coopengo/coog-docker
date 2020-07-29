@@ -4,6 +4,10 @@
 - CPU : 8 CPU
 - HDD : 100Go
 
+# Coog-admin DEPRECATED :
+Dans un souci de standardisation et de simplification de son installation, coog-admin a été déprécié au profit de coog-docker (basé uniquement sur docker et docker-compose).
+
+
 # Documentation externe :
 
 Docker : https://docs.docker.com/engine/install/centos/
