@@ -14,7 +14,7 @@
 [providers]
   [providers.docker]
     endpoint = "unix:///var/run/docker.sock"
-    watch = true
+    exposedByDefault = false
       [docker.tls]
         cert = "/etc/certs/localhost-cert.pem"
         key = "/etc/certs/localhost-key.pem"

@@ -36,6 +36,7 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/1
     labels:
+      - traefik.enable=true
       - traefik.http.routers.flower.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/flower`)
       - traefik.http.routers.flower.entrypoints=http
       - traefik.http.routers.flower.middlewares=flower
@@ -59,6 +60,7 @@ services:
     depends_on:
       - initcoog
     labels:
+      - traefik.enable=true
       - traefik.http.routers.coog.rule=Host(`${COOG_HOSTNAME}`)
       - traefik.http.routers.coog.entrypoints=http
       - traefik.http.routers.coog_s.rule=Host(`${COOG_HOSTNAME}`)
@@ -141,6 +143,7 @@ services:
     depends_on:
       - mongo
     labels:
+      - traefik.enable=true
       - traefik.http.routers.gateway.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/gateway`)
       - traefik.http.routers.gateway.entrypoints=http
       - traefik.http.routers.gateway.middlewares=gateway
@@ -219,6 +222,7 @@ services:
     env_file:
       - env_files/var.env
     labels:
+      - traefik.enable=true
       - traefik.http.routers.portal.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/portal`)
       - traefik.http.routers.portal.entrypoints=http
       - traefik.http.routers.portal.middlewares=portal
@@ -238,6 +242,7 @@ services:
   static:
     image: coopengo/static:${IMAGE_VERSION_STATIC}
     labels:
+      - traefik.enable=true
       - traefik.http.routers.static.rule=Host(`${COOG_HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
       - traefik.http.routers.static.entrypoints=http
       - traefik.http.routers.static_s.rule=Host(`${COOG_HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
