@@ -7,7 +7,7 @@ networks:
 
 services:
   reverse-proxy:
-    image: traefik:2.2.1
+    image: traefik:2.2.8
     ports:
       - 8080:80
       - 443:443
