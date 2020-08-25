@@ -12,6 +12,7 @@ services:
       - 8080:80
       - 443:443
       - 8081:8080
+    restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/certs:rw
@@ -51,6 +52,7 @@ services:
     networks:
       - backend
       - frontend
+    restart: always
 
   coog:
     image: coopengo/coog:${IMAGE_VERSION_COOG}
@@ -67,6 +69,7 @@ services:
       - traefik.http.routers.coog_s.entrypoints=https
       - traefik.http.routers.coog_s.tls=true
       - traefik.http.routers.coog_s.tls.certresolver=letsencrypt
+    restart: always
     volumes:
       - ${COOG_VOLUME}:/workspace/io
       - ./conf/coog.conf:/workspace/coog.conf:ro
@@ -81,6 +84,7 @@ services:
       - env_files/var.env
     networks:
       - backend
+    restart: always
     volumes:
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
@@ -93,6 +97,7 @@ services:
       - env_files/celery.env
     networks:
       - backend
+    restart: always
     volumes:
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
@@ -105,6 +110,7 @@ services:
       - env_files/celery_single.env
     networks:
       - backend
+    restart: always
     volumes:
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
@@ -117,6 +123,7 @@ services:
       - ${POSTGRES_DATA_VOLUME}:/var/lib/postgresql/data
       #- ./postgres/init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
       - ./postgres/dumps/${POSTGRES_DUMP}:/docker-entrypoint-initdb.d/2_coog27.sql:ro
+    restart: always
     networks:
       - backend
 
@@ -124,6 +131,7 @@ services:
     image: redis:5.0.7-alpine
     env_file:
       - env_files/redis.env
+    restart: always
     networks:
       - backend
 
@@ -131,6 +139,7 @@ services:
     image: mongo
     env_file:
       - env_files/var.env
+    restart: always
     volumes:
       - ./mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     networks:
@@ -155,6 +164,7 @@ services:
       - traefik.http.middlewares.gateway_s.replacepathregex.replacement=/$${2}
       - traefik.http.routers.gateway_s.entrypoints=https
       - traefik.http.routers.gateway_s.tls=true
+    restart: always
     networks:
       - backend
       - frontend
@@ -165,6 +175,7 @@ services:
       - env_files/var.env
     depends_on:
       - mongo
+    restart: always
     networks:
       - backend
 
@@ -174,6 +185,7 @@ services:
       - env_files/var.env
     depends_on:
       - mongo
+    restart: always
     networks:
       - backend
 
@@ -183,6 +195,7 @@ services:
       - env_files/var.env
     depends_on:
       - mongo
+    restart: always
     networks:
       - backend
 
@@ -193,6 +206,7 @@ services:
     depends_on:
       - mongo
       - api
+    restart: always
     networks:
       - backend
 
@@ -213,6 +227,7 @@ services:
     command: ["server", "1"]
     depends_on:
       - redis
+    restart: always
     networks:
       - backend
 
@@ -235,7 +250,7 @@ services:
       - traefik.http.routers.portal_s.entrypoints=https
       - traefik.http.routers.portal_s.tls=true
       - traefik.http.routers.portal_s.tls.certresolver=letsencrypt
-
+    restart: always
     networks:
       - frontend
 
@@ -249,6 +264,7 @@ services:
       - traefik.http.routers.static_s.entrypoints=https
       - traefik.http.routers.static_s.tls=true
       - traefik.http.routers.static_s.tls.certresolver=letsencrypt
+    restart: always
     networks:
       - frontend
 
@@ -256,5 +272,6 @@ services:
     image: coopengo/unoconv:${IMAGE_VERSION_UNOCONV}
     env_file:
       - env_files/var.env
+    restart: always
     networks:
       - backend
