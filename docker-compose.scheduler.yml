@@ -14,5 +14,9 @@ services:
     volumes:
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
+    deploy:
+      resources:
+        limits:
+          memory: 16G
     networks:
       - backend
