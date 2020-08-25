@@ -1,79 +1,12 @@
 version: '3'
 
-volumes:
-  pgdbsentry:
-
-services:
-  redissentry:
-    image: redis
-    networks:
-      - backend
-
-  postgressentry:
-    image: postgres
-    environment:
-      POSTGRES_USER: sentry
-      POSTGRES_PASSWORD: sentry
-      POSTGRES_DB: sentry
-    volumes:
-      - pgdbsentry:/var/lib/postgresql/data
-    networks:
-      - backend
-
-  sentry:
-    image: sentry
-    links:
-     - redissentry
-     - postgressentry
-    environment:
-      SENTRY_SECRET_KEY: '!!!SECRET!!!'
-      SENTRY_POSTGRES_HOST: postgressentry
-      SENTRY_DB_USER: sentry
-      SENTRY_DB_PASSWORD: sentry
-      SENTRY_REDIS_HOST: redissentry
-    networks:
-      - backend
-      - frontend
-    labels:
-      - traefik.http.routers.sentry.rule=Host(`sentry.localhost`)
-      - traefik.http.routers.sentry.entrypoints=http
-      - traefik.port=9000
-    depends_on:
-      - reverse-proxy
-
-  cron:
-    image: sentry
-    links:
-     - redissentry
-     - postgressentry
-    command: "sentry run cron"
-    environment:
-      SENTRY_SECRET_KEY: '!!!SECRET!!!'
-      SENTRY_POSTGRES_HOST: postgressentry
-      SENTRY_DB_USER: sentry
-      SENTRY_DB_PASSWORD: sentry
-      SENTRY_REDIS_HOST: redis_sentry
-    networks:
-      - backend
-      - frontend
-    depends_on:
-      - reverse-proxy
-
-  worker:
-    image: sentry
-    links:
-     - redissentry
-     - postgressentry
-    command: "sentry run worker"
-    environment:
-      SENTRY_SECRET_KEY: '!!!SECRET!!!'
-      SENTRY_POSTGRES_HOST: postgressentry
-      SENTRY_DB_USER: sentry
-      SENTRY_DB_PASSWORD: sentry
-      SENTRY_REDIS_HOST: redissentry
-    networks:
-      - backend
-      - frontend
-    depends_on:
-      - reverse-proxy
+#services:
+#  coog:
+#    image: coopengo/coog-:${IMAGE_VERSION_COOG}
+#  initcoog:
+#    image: coopengo/coog-:${IMAGE_VERSION_COOG}
+#  celery:
+#    image: coopengo/coog-:${IMAGE_VERSION_COOG}
+#  celery_single:
+#    image: coopengo/coog-:${IMAGE_VERSION_COOG}
 
