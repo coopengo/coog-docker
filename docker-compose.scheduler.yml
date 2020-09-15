@@ -7,7 +7,7 @@ networks:
 services:
 
   batch:
-    image: coopengo/coog-bfm:${IMAGE_VERSION_COOG}
+    image: coopengo/coog:${IMAGE_VERSION_COOG}
     container_name: batch-${BATCH_NAME}
     command: 
       - batch
@@ -24,7 +24,7 @@ services:
     networks:
       - backend
   celery:
-    image: coopengo/coog-bfm:${IMAGE_VERSION_COOG}
+    image: coopengo/coog:${IMAGE_VERSION_COOG}
     command: 
       - celery 
       - ${NUM_WORKERS}
@@ -39,7 +39,7 @@ services:
     networks:
       - backend
   redis:
-    image: coopengo/coog-bfm:${IMAGE_VERSION_COOG}
+    image: coopengo/coog:${IMAGE_VERSION_COOG}
     container_name: redis-${BATCH_NAME}
     command: 
       - redis
