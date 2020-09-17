@@ -69,6 +69,12 @@ Il est possible de scaler des conteneurs de cette manière :
 
     docker-compose up --scale coog=5
 
+#celery daily
+
+
+    COMPOSE_PROJECT_NAME=batch docker-compose -f docker-compose.daily.yml up -d
+
+
 # Configuration specifique client
 
 Il faut alimenter le docker-compose.override.yaml à la racine du projet avec les spécificités clientes si besoin.
