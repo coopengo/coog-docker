@@ -29,13 +29,14 @@ services:
       - traefik.http.routers.reverse-proxy.entrypoints=http
 
   flower:
-    image: mher/flower:latest
-    command: ["--basic_auth=${FLOWER_PASSWORD}:${FLOWER_PASSWORD}", "--url-prefix=flower" ]
+    image: mher/flower:0.9
+    command: ["--url-prefix=flower" ]
     depends_on:
       - reverse-proxy
       - celery
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/1
+      - URL_PREFIX=flower
     labels:
       - traefik.enable=true
       - traefik.http.routers.flower.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/flower`)
