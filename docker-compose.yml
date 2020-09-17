@@ -24,9 +24,6 @@ services:
     networks:
       - backend
       - frontend
-    labels:
-      - traefik.http.routers.reverse-proxy.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/dashboard`)
-      - traefik.http.routers.reverse-proxy.entrypoints=http
 
   flower:
     image: mher/flower:0.9
