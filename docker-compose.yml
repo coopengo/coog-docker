@@ -82,7 +82,7 @@ services:
       - env_files/var.env
     networks:
       - backend
-    restart: always
+    restart: on-failure
     volumes:
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
