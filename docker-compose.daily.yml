@@ -6,7 +6,7 @@ services:
 
   celery_daily:
     image: coopengo/coog:${IMAGE_VERSION_COOG}
-    command: ["ep", "daily", "4", "french_work_days"]
+    command: ["daily", "4", "french_work_days"]
     env_file:
       - env_files/var.env
       - env_files/celery.env
