@@ -34,6 +34,12 @@ OU
 
     docker-compose up -d #(mode démon)
 
+
+# Configurer les variables d'environnements coog
+    Il suffit de mettre à jour le contenu des .env présent dans le repertoire env_files.
+    Le var.env est appelé dans tous les conteneurs coog.
+    
+
 # Mapper le volume avec les bons droits sur le Host
 Le répertoire /workspace/io des conteneurs, est mappé avec le répertoire de la machine Host /coog/coog_data
 
