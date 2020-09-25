@@ -24,6 +24,10 @@ Docker-compose : https://docs.docker.com/compose
     mkcert -install
     mkcert -cert-file certs/localhost-cert.pem -key-file certs/localhost-key.pem "coog.localhost"
 
+# IMPORTANT
+
+le scommandes docker-compose sont à exécuter à la racine du répertoire coog-docker.
+
 # Démarrer coog
 
 
