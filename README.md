@@ -26,7 +26,7 @@ Docker-compose : https://docs.docker.com/compose
 
 # IMPORTANT
 
-le scommandes docker-compose sont à exécuter à la racine du répertoire coog-docker.
+Les commandes docker-compose sont à exécuter à la racine du répertoire coog-docker.
 
 # Démarrer coog
 
