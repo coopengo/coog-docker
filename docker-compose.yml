@@ -139,6 +139,14 @@ services:
     networks:
       - backend
 
+  rabbitmq:
+    image: rabbitmq:alpine
+    env_file:
+      - env_files/rabbitmq.env
+    restart: always
+    networks:
+      - backend
+
   mongo:
     image: mongo
     env_file:
