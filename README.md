@@ -50,14 +50,17 @@ Penser à faire :
 
 # Mapper le volume avec les bons droits sur le Host
 Le répertoire /workspace/io des conteneurs, est mappé avec le répertoire de la machine Host /coog/coog_data
+Le répertoire /workspace/tmp  est mappé avec le répertoire de la machine Host /coog/coog_tmp
 
 Pour des questions de sécurité, les conteneurs coog ne tournent pas en root.
 
-Il est donc indispensable de positionner les bons droits sur le répertoire /coog/coog_data qui est mappé dans les conteneurs.
+Il est donc indispensable de positionner les bons droits sur les répertoires /coog/coog_data et /coog/coog_tmp qui sont mappés dans les conteneurs.
 
 Commande à faire sur la machine HOST :
 
     sudo chown 1003:1003 /coog/coog_data
+    sudo chown 1003:1003 /coog/coog_tmp
+
 
 # Démarrer un service spécifique
 
