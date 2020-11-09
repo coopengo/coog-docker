@@ -10,6 +10,7 @@ services:
     env_file:
       - env_files/var.env
       - env_files/celery.env
+    restart: "no"
     volumes:
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
