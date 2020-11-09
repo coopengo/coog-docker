@@ -86,10 +86,11 @@ Il est possible de scaler des conteneurs de cette manière :
 
     docker-compose up --scale coog=5
 
-#celery daily
+#celery daily (à positionner en crontab)
 
+Pour lancer la chaîne de batch quotidienne, on peut spécifier dans la crontab du système :
 
-    COMPOSE_PROJECT_NAME=batch docker-compose -f docker-compose.daily.yml up -d
+    docker-compose -p coog_batch --project-directory ./coopengo/coog-docker/ -f ./coopengo/coog-docker/docker-compose.daily.yml up
 
 
 # Configuration specifique client
