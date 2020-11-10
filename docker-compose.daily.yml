@@ -1,6 +1,8 @@
 version: '3'
 networks:
-  backend:
+  default:
+    external:
+      name: ${COMPOSE_PROJECT_NAME}_backend
 
 services:
 
@@ -14,5 +16,3 @@ services:
     volumes:
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
-    networks:
-      - backend
