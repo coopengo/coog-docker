@@ -2,7 +2,7 @@ version: '3'
 networks:
   default:
     external:
-      name: ${COMPOSE_PROJECT_NAME}_backend
+      name: ${NETWORK_BACKEND_NAME}
 
 services:
 

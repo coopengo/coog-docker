@@ -3,10 +3,12 @@ version: '3.5'
 networks:
   frontend:
     driver: bridge
+    name: ${NETWORK_FRONTEND_NAME}
     ipam:
       config:
       - subnet:  10.0.1.0/24
   backend:
+    name: ${NETWORK_BACKEND_NAME}
     ipam:
       config:
       - subnet:  10.0.2.0/24
