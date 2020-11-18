@@ -141,7 +141,9 @@ services:
     restart: always
     command:
       - redis-server
-      - ${REDIS_EXTRA_ARGS}
+      - /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./conf/redis.conf:/usr/local/etc/redis/redis.conf:ro
     networks:
       - backend
 
