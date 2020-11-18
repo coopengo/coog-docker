@@ -102,7 +102,16 @@ Commande à faire sur la machine HOST :
 
     docker-compose down coog
 
-# Initialisation de la base de données (coog module update)
+
+# celery daily (à positionner en crontab)
+
+Pour lancer la chaîne de batch quotidienne, on peut spécifier dans la crontab du système :
+
+    docker-compose -p coog_batch --project-directory ./coopengo/coog-docker/ -f ./coopengo/coog-docker/docker-compose.daily.yml up
+
+
+
+# Initialisation de la base de données (coog module update)
 
 Init DB :
 
@@ -115,13 +124,6 @@ Il est possible de scaler des conteneurs de cette manière :
 
 
     docker-compose up --scale coog=5
-
-#celery daily (à positionner en crontab)
-
-Pour lancer la chaîne de batch quotidienne, on peut spécifier dans la crontab du système :
-
-    docker-compose -p coog_batch --project-directory ./coopengo/coog-docker/ -f ./coopengo/coog-docker/docker-compose.daily.yml up
-
 
 
 
