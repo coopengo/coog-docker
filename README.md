@@ -41,13 +41,35 @@ OU
     docker-compose up -d #(mode démon)
 
 
-# Configurer les variables d'environnements systèmes
+# Configuration specifique client
+
+Il faut alimenter le docker-compose.override.yaml à la racine du projet avec les spécificités clientes si besoin.
+
+Ce fichier est automatiquement lu par docker-compose et mergé avec le docker-compose.yaml.
+
+ex: Désactiver les conteneur paybox et changer l'image de référence de coog :
+
+
+    version: "3"
+    
+    services:
+      paybox:
+        entrypoint: ["echo", "Service foo disabled"]
+      coog:
+          image: coopengo/coog-client:${IMAGE_VERSION_COOG}
+
+
+Les autres configurations éditables sont :
+- .env              (variables liés au docker-compose.yaml)
+- ./env_files/*     (variables liés au container)
+
+# Configurer les variables d'environnements systèmes : ".env"
 
 Le fichier .env, à la racine du projet coog-docker, contient les données des versions des conteneurs, ainsi que les différentes options systèmes liées à Docker-compose.
 Il faut le mettre à jour selon ses besoins (version des conteneurs, nom du projet, DNS du serveur etc).
 
 
-# Configurer les variables d'environnements coog
+# Configurer les variables d'environnements coog : "./env_files/*"
 
 Il suffit de mettre à jour le contenu des .env présent dans le repertoire env_files.
 Le var.env est appelé dans tous les conteneurs coog.
@@ -101,27 +123,6 @@ Pour lancer la chaîne de batch quotidienne, on peut spécifier dans la crontab 
     docker-compose -p coog_batch --project-directory ./coopengo/coog-docker/ -f ./coopengo/coog-docker/docker-compose.daily.yml up
 
 
-# Configuration specifique client
-
-Il faut alimenter le docker-compose.override.yaml à la racine du projet avec les spécificités clientes si besoin.
-
-Ce fichier est automatiquement lu par docker-compose et mergé avec le docker-compose.yaml.
-
-ex: Désactiver les conteneur paybox et changer l'image de référence de coog :
-
-
-    version: "3"
-    
-    services:
-      paybox:
-        entrypoint: ["echo", "Service foo disabled"]
-      coog:
-          image: coopengo/coog-client:${IMAGE_VERSION_COOG}
-
-
-Les autres configurations éditables sont :
-- .env              (variables liés au docker-compose.yaml)
-- ./env_files/*     (variables liés au container)
 
 
 # Backup
