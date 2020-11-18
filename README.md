@@ -60,8 +60,8 @@ ex: Désactiver les conteneur paybox et changer l'image de référence de coog :
 
 
 Les autres configurations éditables sont :
-- .env              (variables liés au docker-compose.yaml)
-- ./env_files/*     (variables liés au container)
+- .env              (variables liées au docker-compose.yaml)
+- ./env_files/*     (variables liées au container)
 
 # Configurer les variables d'environnements systèmes : ".env"
 
