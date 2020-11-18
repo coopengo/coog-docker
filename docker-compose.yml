@@ -139,6 +139,9 @@ services:
     env_file:
       - env_files/redis.env
     restart: always
+    command:
+      - redis-server
+      - ${REDIS_EXTRA_ARGS}
     networks:
       - backend
 
