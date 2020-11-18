@@ -41,6 +41,12 @@ OU
     docker-compose up -d #(mode démon)
 
 
+# Configurer les variables d'environnements systèmes
+
+Le fichier .env, à la racine du projet coog-docker, contient les données des versions des conteneurs, ainsi que les différentes options systèmes liées à Docker-compose.
+Il faut le mettre à jour selon ses besoins (version des conteneurs, nom du projet, DNS du serveur etc).
+
+
 # Configurer les variables d'environnements coog
 
 Il suffit de mettre à jour le contenu des .env présent dans le repertoire env_files.
