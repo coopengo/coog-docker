@@ -61,7 +61,7 @@ services:
     restart: always
 
   coog:
-    image: coopengo/coog:${IMAGE_VERSION_COOG}
+    image: coopengohub/coog:${IMAGE_VERSION_COOG}
     command: ["server", "1"]
     env_file:
       - env_files/var.env
@@ -85,7 +85,7 @@ services:
       - backend
 
   initcoog:
-    image: coopengo/coog:${IMAGE_VERSION_COOG}
+    image: coopengohub/coog:${IMAGE_VERSION_COOG}
     command: ["admin", "-u", "ir", "res", "-d", "${COOG_DB_NAME}"]
     env_file:
       - env_files/var.env
@@ -97,7 +97,7 @@ services:
       - ./conf/batch.conf:/workspace/batch.conf:ro
 
   celery:
-    image: coopengo/coog:${IMAGE_VERSION_COOG}
+    image: coopengohub/coog:${IMAGE_VERSION_COOG}
     command: ["celery", "1"]
     env_file:
       - env_files/var.env
@@ -110,7 +110,7 @@ services:
       - ./conf/batch.conf:/workspace/batch.conf:ro
 
   celery_single:
-    image: coopengo/coog:${IMAGE_VERSION_COOG}
+    image: coopengohub/coog:${IMAGE_VERSION_COOG}
     command: ["celery_single"]
     env_file:
       - env_files/var.env
@@ -167,7 +167,7 @@ services:
       - backend
 
   gateway:
-    image: coopengo/gateway:${IMAGE_VERSION_GATEWAY}
+    image: coopengohub/gateway:${IMAGE_VERSION_GATEWAY}
     env_file:
       - env_files/var.env
     depends_on:
@@ -191,7 +191,7 @@ services:
       - frontend
 
   api:
-    image: coopengo/api:${IMAGE_VERSION_API}
+    image: coopengohub/api:${IMAGE_VERSION_API}
     env_file:
       - env_files/var.env
     depends_on:
@@ -201,7 +201,7 @@ services:
       - backend
 
   api-b2b-config:
-    image: coopengo/api-b2b-config:${IMAGE_VERSION_API_B2B_CONFIG}
+    image: coopengohub/api-b2b-config:${IMAGE_VERSION_API_B2B_CONFIG}
     env_file:
       - env_files/var.env
     depends_on:
@@ -211,7 +211,7 @@ services:
       - backend
 
   api-referential:
-    image: coopengo/api-referential:${IMAGE_VERSION_API_REFERENTIAL}
+    image: coopengohub/api-referential:${IMAGE_VERSION_API_REFERENTIAL}
     env_file:
       - env_files/var.env
     depends_on:
@@ -221,7 +221,7 @@ services:
       - backend
 
   api-identity-manager:
-    image: coopengo/api-identity-manager:${IMAGE_VERSION_API_IDENTITY_MANAGER}
+    image: coopengohub/api-identity-manager:${IMAGE_VERSION_API_IDENTITY_MANAGER}
     env_file:
       - env_files/var.env
     depends_on:
@@ -242,7 +242,7 @@ services:
   #     - backend
 
   web:
-    image: coopengo/web:${IMAGE_VERSION_WEB}
+    image: coopengohub/web:${IMAGE_VERSION_WEB}
     env_file:
       - env_files/var.env
     command: ["server", "1"]
@@ -253,7 +253,7 @@ services:
       - backend
 
   portal:
-    image: coopengo/portal:${IMAGE_VERSION_PORTAL}
+    image: coopengohub/portal:${IMAGE_VERSION_PORTAL}
     command: ["server", "1"]
     env_file:
       - env_files/var.env
@@ -276,7 +276,7 @@ services:
       - frontend
 
   static:
-    image: coopengo/static:${IMAGE_VERSION_STATIC}
+    image: coopengohub/static:${IMAGE_VERSION_STATIC}
     labels:
       - traefik.enable=true
       - traefik.http.routers.static.rule=Host(`${COOG_HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
@@ -290,7 +290,7 @@ services:
       - frontend
 
   unoconv:
-    image: coopengo/unoconv:${IMAGE_VERSION_UNOCONV}
+    image: coopengohub/unoconv:${IMAGE_VERSION_UNOCONV}
     env_file:
       - env_files/var.env
     restart: always

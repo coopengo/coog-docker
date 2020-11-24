@@ -2,11 +2,11 @@ version: '3.5'
 
 #services:
 #  coog:
-#    image: coopengo/coog-:${IMAGE_VERSION_COOG}
+#    image: coopengohub/coog-:${IMAGE_VERSION_COOG}
 #  initcoog:
-#    image: coopengo/coog-:${IMAGE_VERSION_COOG}
+#    image: coopengohub/coog-:${IMAGE_VERSION_COOG}
 #  celery:
-#    image: coopengo/coog-:${IMAGE_VERSION_COOG}
+#    image: coopengohub/coog-:${IMAGE_VERSION_COOG}
 #  celery_single:
-#    image: coopengo/coog-:${IMAGE_VERSION_COOG}
+#    image: coopengohub/coog-:${IMAGE_VERSION_COOG}
 
