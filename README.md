@@ -103,7 +103,7 @@ Commande à faire sur la machine HOST :
     docker-compose down coog
 
 
-# celery daily (à positionner en crontab)
+# Activer la chaîne de batch : celery daily (à positionner en crontab)
 
 Pour lancer la chaîne de batch quotidienne, on peut spécifier dans la crontab du système :
 
