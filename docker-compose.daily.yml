@@ -7,7 +7,7 @@ networks:
 services:
 
   celery_daily:
-    image: coopengohub/coog:${IMAGE_VERSION_COOG}
+    image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
     command: ["daily", "4", "french_work_days"]
     env_file:
       - env_files/var.env

@@ -5,7 +5,7 @@ networks:
 services:
 
   celery:
-    image: coopengohub/coog:${IMAGE_VERSION_COOG}
+    image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
     command: ["celery", "${NUM_WORKERS}"]
     container_name: celery-${BATCH_NAME}
     env_file:

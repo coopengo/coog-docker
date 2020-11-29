@@ -56,7 +56,7 @@ ex: Désactiver les conteneur paybox et changer l'image de référence de coog :
       paybox:
         entrypoint: ["echo", "Service foo disabled"]
       coog:
-          image: coopengohub/coog-client:${IMAGE_VERSION_COOG}
+          image: ${IMAGE_REGISTRY}/coog-client:${IMAGE_VERSION_COOG}
 
 
 Les autres configurations éditables sont :

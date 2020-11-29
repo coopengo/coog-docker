@@ -15,7 +15,7 @@ networks:
 
 services:
   reverse-proxy:
-    image: traefik:2.3.2
+    image: traefik:2.3.4
     ports:
       - 80:80
       - 443:443
@@ -34,25 +34,22 @@ services:
       - frontend
 
   flower:
-    image: mher/flower:0.9
-    command: ["--url-prefix=flower" ]
+    image: mher/flower:0.9.5
+    command: [" --url_prefix=flower"]
+    user: "1003:1003"
     depends_on:
       - reverse-proxy
       - celery
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/1
-      - URL_PREFIX=flower
+      - FLOWER_URL_PREFIX=flower
+      - FLOWER_LOGGING=DEBUG
     labels:
       - traefik.enable=true
       - traefik.http.routers.flower.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/flower`)
       - traefik.http.routers.flower.entrypoints=http
       - traefik.http.routers.flower.middlewares=flower
-      - traefik.http.middlewares.flower.replacepathregex.regex=/flower(/|$$)(.*)
-      - traefik.http.middlewares.flower.replacepathregex.replacement=/$${2}
       - traefik.http.routers.flower_s.rule=Host(`${COOG_HOSTNAME}`) && PathPrefix(`/flower`)
-      - traefik.http.routers.flower_s.middlewares=flower_s
-      - traefik.http.middlewares.flower_s.replacepathregex.regex=/flower(/|$$)(.*)
-      - traefik.http.middlewares.flower_s.replacepathregex.replacement=/$${2}
       - traefik.http.routers.flower_s.entrypoints=https
       - traefik.http.routers.flower_s.tls=true
     networks:
@@ -61,7 +58,7 @@ services:
     restart: always
 
   coog:
-    image: coopengohub/coog:${IMAGE_VERSION_COOG}
+    image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
     command: ["server", "1"]
     env_file:
       - env_files/var.env
@@ -85,7 +82,7 @@ services:
       - backend
 
   initcoog:
-    image: coopengohub/coog:${IMAGE_VERSION_COOG}
+    image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
     command: ["admin", "-u", "ir", "res", "-d", "${COOG_DB_NAME}"]
     env_file:
       - env_files/var.env
@@ -97,7 +94,7 @@ services:
       - ./conf/batch.conf:/workspace/batch.conf:ro
 
   celery:
-    image: coopengohub/coog:${IMAGE_VERSION_COOG}
+    image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
     command: ["celery", "1"]
     env_file:
       - env_files/var.env
@@ -110,7 +107,7 @@ services:
       - ./conf/batch.conf:/workspace/batch.conf:ro
 
   celery_single:
-    image: coopengohub/coog:${IMAGE_VERSION_COOG}
+    image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
     command: ["celery_single"]
     env_file:
       - env_files/var.env
@@ -167,7 +164,7 @@ services:
       - backend
 
   gateway:
-    image: coopengohub/gateway:${IMAGE_VERSION_GATEWAY}
+    image: ${IMAGE_REGISTRY}/gateway:${IMAGE_VERSION_GATEWAY}
     env_file:
       - env_files/var.env
     depends_on:
@@ -191,7 +188,7 @@ services:
       - frontend
 
   api:
-    image: coopengohub/api:${IMAGE_VERSION_API}
+    image: ${IMAGE_REGISTRY}/api:${IMAGE_VERSION_API}
     env_file:
       - env_files/var.env
     depends_on:
@@ -201,7 +198,7 @@ services:
       - backend
 
   api-b2b-config:
-    image: coopengohub/api-b2b-config:${IMAGE_VERSION_API_B2B_CONFIG}
+    image: ${IMAGE_REGISTRY}/api-b2b-config:${IMAGE_VERSION_API_B2B_CONFIG}
     env_file:
       - env_files/var.env
     depends_on:
@@ -211,7 +208,7 @@ services:
       - backend
 
   api-referential:
-    image: coopengohub/api-referential:${IMAGE_VERSION_API_REFERENTIAL}
+    image: ${IMAGE_REGISTRY}/api-referential:${IMAGE_VERSION_API_REFERENTIAL}
     env_file:
       - env_files/var.env
     depends_on:
@@ -221,7 +218,7 @@ services:
       - backend
 
   api-identity-manager:
-    image: coopengohub/api-identity-manager:${IMAGE_VERSION_API_IDENTITY_MANAGER}
+    image: ${IMAGE_REGISTRY}/api-identity-manager:${IMAGE_VERSION_API_IDENTITY_MANAGER}
     env_file:
       - env_files/var.env
     depends_on:
@@ -232,7 +229,7 @@ services:
       - backend
 
   # app-b2c:
-  #   image: coopengo/app-b2c:${IMAGE_VERSION_APP_B2C}
+  #   image: ${IMAGE_REGISTRY}/app-b2c:${IMAGE_VERSION_APP_B2C}
   #   env_file:
   #     - env_files/var.env
   #   depends_on:
@@ -242,7 +239,7 @@ services:
   #     - backend
 
   web:
-    image: coopengohub/web:${IMAGE_VERSION_WEB}
+    image: ${IMAGE_REGISTRY}/web:${IMAGE_VERSION_WEB}
     env_file:
       - env_files/var.env
     command: ["server", "1"]
@@ -253,7 +250,7 @@ services:
       - backend
 
   portal:
-    image: coopengohub/portal:${IMAGE_VERSION_PORTAL}
+    image: ${IMAGE_REGISTRY}/portal:${IMAGE_VERSION_PORTAL}
     command: ["server", "1"]
     env_file:
       - env_files/var.env
@@ -276,7 +273,7 @@ services:
       - frontend
 
   static:
-    image: coopengohub/static:${IMAGE_VERSION_STATIC}
+    image: ${IMAGE_REGISTRY}/static:${IMAGE_VERSION_STATIC}
     labels:
       - traefik.enable=true
       - traefik.http.routers.static.rule=Host(`${COOG_HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
@@ -290,7 +287,7 @@ services:
       - frontend
 
   unoconv:
-    image: coopengohub/unoconv:${IMAGE_VERSION_UNOCONV}
+    image: ${IMAGE_REGISTRY}/unoconv:${IMAGE_VERSION_UNOCONV}
     env_file:
       - env_files/var.env
     restart: always
