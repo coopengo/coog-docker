@@ -5,7 +5,7 @@
 - HDD : 100Go
 - docker-compose : 3.5
 
-- 1 serveur de base de données POSTGRESQL sécurisé et backupé
+- 1 serveur de base de données POSTGRESQL 12 sécurisé et backupé
 
 # Coog-admin DEPRECATED :
 Dans un souci de standardisation et de simplification de son installation, coog-admin a été déprécié au profit de coog-docker (basé uniquement sur docker et docker-compose).
