@@ -10,10 +10,10 @@ services:
     image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
     command: ["daily", "4", "french_work_days"]
     env_file:
-      - ${COOG_VOLUME}:/workspace/io
       - env_files/var.env
       - env_files/celery.env
     restart: "no"
     volumes:
+      - ${COOG_VOLUME}:/workspace/io
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
