@@ -87,6 +87,7 @@ services:
       - backend
     restart: on-failure
     volumes:
+      - ${COOG_VOLUME}:/workspace/io
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
 
@@ -100,6 +101,7 @@ services:
       - backend
     restart: always
     volumes:
+      - ${COOG_VOLUME}:/workspace/io
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
 
@@ -113,6 +115,7 @@ services:
       - backend
     restart: always
     volumes:
+      - ${COOG_VOLUME}:/workspace/io
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
 
