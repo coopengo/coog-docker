@@ -10,6 +10,7 @@ services:
     image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
     command: ["daily", "4", "french_work_days"]
     env_file:
+      - ${COOG_VOLUME}:/workspace/io
       - env_files/var.env
       - env_files/celery.env
     restart: "no"
