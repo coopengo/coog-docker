@@ -6,12 +6,12 @@ networks:
     name: ${NETWORK_FRONTEND_NAME}
     ipam:
       config:
-      - subnet:  10.0.1.0/24
+      - subnet:  ${NETWORK_FRONTEND_SUBNET}
   backend:
     name: ${NETWORK_BACKEND_NAME}
     ipam:
       config:
-      - subnet:  10.0.2.0/24
+      - subnet:  ${NETWORK_BACKEND_SUBNET}
 
 services:
   reverse-proxy:
