@@ -55,7 +55,9 @@ ex: Désactiver les conteneur paybox et changer l'image de référence de coog :
     
     services:
       paybox:
-        entrypoint: ["echo", "Service foo disabled"]
+        image: alpine:latest
+        command: "true"
+        entrypoint: "true"
       coog:
           image: ${IMAGE_REGISTRY}/coog-client:${IMAGE_VERSION_COOG}
 
