@@ -16,8 +16,8 @@
     endpoint = "unix:///var/run/docker.sock"
     exposedByDefault = false
       [docker.tls]
-        cert = "/etc/certs/localhost-cert.pem"
-        key = "/etc/certs/localhost-key.pem"
+        cert = "/etc/certs/cert.pem"
+        key = "/etc/certs/key.pem"
   [providers.file]
     filename = "/etc/traefik/traefik.config.toml"
     watch = true
