@@ -80,7 +80,7 @@ services:
 
   initcoog:
     image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
-    command: ["admin", "-u", "ir", "res", "-d", "${COOG_DB_NAME}"]
+    command: ["admin", "-cu", "ir", "res", "-d", "${COOG_DB_NAME}"]
     env_file:
       - env_files/var.env
     networks:
