@@ -53,11 +53,13 @@ Docker-compose : <https://docs.docker.com/compose>
 
 ### Certificats SSL sur le localhost
 
-    wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-amd64
-    sudo mv mkcert-v1.4.1-linux-amd64 /usr/local/bin/mkcert
-    sudo chmod +x /usr/local/bin/mkcert
-    mkcert -install
-    mkcert -cert-file certs/cert.pem -key-file certs/key.pem "coog.localhost"
+```shell
+wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-amd64
+sudo mv mkcert-v1.4.1-linux-amd64 /usr/local/bin/mkcert
+sudo chmod +x /usr/local/bin/mkcert
+mkcert -install
+mkcert -cert-file certs/cert.pem -key-file certs/key.pem "coog.localhost"
+```
 
 ### IMPORTANT
 
@@ -65,11 +67,15 @@ Les commandes `docker-compose` sont à exécuter à la racine du répertoire coo
 
 ## Démarrer coog
 
-    docker-compose up
+```shell
+docker-compose up
+```
 
 OU
 
-    docker-compose up -d #(mode démon)
+```shell
+docker-compose up -d #(mode démon)
+```
 
 ## Configuration spécifique client
 
@@ -79,15 +85,17 @@ Ce fichier est automatiquement lu par docker-compose et mergé avec le docker-co
 
 ex: Désactiver les conteneur paybox et changer l'image de référence de coog :
 
-    version: "3"
-    
-    services:
-      paybox:
-        image: alpine:latest
-        command: "true"
-        entrypoint: "true"
-      coog:
-          image: ${IMAGE_REGISTRY}/coog-client:${IMAGE_VERSION_COOG}
+```YAML
+version: "3"
+
+services:
+  paybox:
+    image: alpine:latest
+    command: "true"
+    entrypoint: "true"
+  coog:
+      image: ${IMAGE_REGISTRY}/coog-client:${IMAGE_VERSION_COOG}
+```
 
 Les autres configurations éditables sont :
 
@@ -107,7 +115,9 @@ Il suffit de mettre à jour le contenu des .env présent dans le repertoire env_
 Le var.env est appelé dans tous les conteneurs coog.
 Penser à faire :
 
-    docker-compose up -d
+```shell
+docker-compose up -d
+```
 
 ## Mapper le volume avec les bons droits sur le Host
 
@@ -120,44 +130,60 @@ Il est donc indispensable de positionner les bons droits sur les répertoires /c
 
 Commande à faire sur la machine HOST :
 
-    sudo chown 1003:1003 /coog/coog_data
-    sudo chown 1003:1003 /coog/coog_tmp
+```shell
+sudo chown 1003:1003 /coog/coog_data
+sudo chown 1003:1003 /coog/coog_tmp
+```
 
 ## Gérer les services
 
 ### Démarrer un service spécifique
 
-    docker-compose up <service>
+```shell
+docker-compose up [service]
+```
 
 **Exemple :**
 
-    docker-compose up coog
+```shell
+docker-compose up coog
+```
 
 ### Arrêter un service spécifique
 
-    docker-compose down <service>
+```shell
+docker-compose down [service]
+```
 
 **Exemple :**
 
-    docker-compose down coog
+```shell
+docker-compose down coog
+```
 
 ## Activer la chaîne de batch : celery daily (à positionner en crontab)
 
 Pour lancer la chaîne de batch quotidienne, on peut spécifier dans la crontab du système :
 
-    docker-compose -p coog_batch --project-directory ./coopengo/coog-docker/ -f ./coopengo/coog-docker/docker-compose.daily.yml up
+```shell
+docker-compose -p coog_batch --project-directory ./coopengo/coog-docker/ -f ./coopengo/coog-docker/docker-compose.daily.yml up
+```
 
 ## Initialisation de la base de données (coog module update)
 
 Init DB :
 
-    ep  admin -u ir res -d coog
+```shell
+ep  admin -u ir res -d coog
+```
 
 ## Scaling de container
 
 Il est possible de scaler des conteneurs de cette manière :
 
-    docker-compose up --scale coog=5
+```shell
+docker-compose up --scale coog=5`
+```
 
 ## Base de données
 
@@ -172,17 +198,47 @@ Pour backuper postgres, il faut utiliser la commande pg_dump. Voir la documentat
 
 Ex d'utilisation au travers de la commande docker :
 
-    docker exec -it coog-docker_postgres_1 pg_dump -d coog -U coog
+```shell
+docker exec -it demo_postgres_1 pg_dump -d coog -U coog > coog_`date +%d-%m-%Y"_"%H_%M_%S`.sql
+```
+
+ou
+
+```shell
+docker exec -it demo_postgres_1 pg_dump -F c -b -d coog -U coog > coog_`date +%d-%m-%Y"_"%H_%M_%S`.dump
+```
 
 Pour backuper le répertoire Workspace de Coog, il faut utiliser la commande tar sur le répertoire /coog au niveau de la machine Host.
 
 Ex de commande tar :
 
-    tar -zcvpf /backup/coog-$(date +%d-%m-%Y).tar.gz /coog/coog_data
+```shell
+tar -zcvpf /backup/coog-$(date +%d-%m-%Y).tar.gz /coog/coog_data
+```
+
+Note: S'il a plusieurs bases de données dans le container `postgres`, on peut également utiliser la commande `pg_dumpall` :
+
+```shell
+docker exec -t [your-db-container] pg_dumpall -c -U postgres > dump_`date +%d-%m-%Y"_"%H_%M_%S`.sql
+```
 
 ### Restore
 
-    docker exec -it coog-docker_postgres_1 psql <dbname> < <dumpfile>
+```shell
+docker exec -it [your-db-container] psql [dbname] < [dumpfile]
+```
+
+ou
+
+```shell
+docker exec -it [your-db-container] pg_restore -U [username] -d [dbname] -1 [dumpfile.dump]
+```
+
+Ex de commande :
+
+```shell
+docker exec -it coog-demo_postgres_1 psql coog < coog_14-04-2021_16_37_38.sql
+```
 
 ### Anonymiser une base
 
