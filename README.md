@@ -37,7 +37,7 @@
 - RAM : 16Gb
 - CPU : 8 CPU
 - HDD : 100Go
-- docker-compose : 3.5
+- docker-compose : 3.5+
 
 - 1 serveur de base de données POSTGRESQL 12 sécurisé et backupé
 
@@ -52,6 +52,8 @@ Docker : <https://docs.docker.com/engine/install/centos/>
 Docker-compose : <https://docs.docker.com/compose>
 
 ### Certificats SSL sur le localhost
+
+Dans le repertoire `coog-docker`, exécuter les commandes suivantes :
 
 ```shell
 wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-amd64
