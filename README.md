@@ -24,6 +24,9 @@
   - [Base de données](#base-de-données)
     - [Backup](#backup)
     - [Restore](#restore)
+      - [Si le restore ne fonctionne pas](#si-le-restore-ne-fonctionne-pas)
+        - [Essayer avec :](#essayer-avec-)
+        - [Si le pg_restore ne fonctionne toujours pas :](#si-le-pg_restore-ne-fonctionne-toujours-pas-)
     - [Anonymiser une base](#anonymiser-une-base)
   - [Installer sentry](#installer-sentry)
 
@@ -239,7 +242,37 @@ docker exec -it [your-db-container] pg_restore -U [username] -d [dbname] -1 [dum
 Ex de commande :
 
 ```shell
-docker exec -it coog-demo_postgres_1 psql coog < coog_14-04-2021_16_37_38.sql
+docker exec -it demo_postgres_1 psql coog < coog_14-04-2021_16_37_38.sql
+```
+
+#### Si le restore ne fonctionne pas
+##### Essayer avec :
+
+```
+docker compose up postgres
+docker exec -it demo_postgres_1 /bin/bash
+mkdir backups
+ctrl+D
+docker cp [dumpfile.dump] demo_postgres_1:/backups/[dumpfile.dump]
+docker exec -it demo_postgres_1 /bin/bash
+pg_restore -U coog -d coog -O -x backups/[dumpfile.dump]
+```
+
+##### Si le pg_restore ne fonctionne toujours pas :
+
+Fermer le container demo_postgres_1 s'il tourne  
+Supprimer le contenu du répertoire POSTGRES_DATA_VOLUME
+
+```
+docker compose up postgres
+psql -U coog
+drop database coog;
+create database coog;
+ctrl+D
+pg_restore -U coog -d coog -O -x backups/[dumpfile.dump]
+psql -U coog
+\d // Pour contrôler que les tables coog ont bien été créées
+// Si les tables sont pas présentes, re-exécuter la commande du pg_restore (?!)
 ```
 
 ### Anonymiser une base
