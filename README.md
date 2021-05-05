@@ -27,6 +27,7 @@
       - [Si le restore ne fonctionne pas](#si-le-restore-ne-fonctionne-pas)
         - [Essayer avec :](#essayer-avec-)
         - [Si le pg_restore ne fonctionne toujours pas :](#si-le-pg_restore-ne-fonctionne-toujours-pas-)
+      - [Mettre à jour/Restaurer un nouveau dump](#mettre-à-jourrestaurer-un-nouveau-dump)
     - [Anonymiser une base](#anonymiser-une-base)
   - [Installer sentry](#installer-sentry)
 
@@ -273,6 +274,16 @@ pg_restore -U coog -d coog -O -x backups/[dumpfile.dump]
 psql -U coog
 \d // Pour contrôler que les tables coog ont bien été créées
 // Si les tables sont pas présentes, re-exécuter la commande du pg_restore (?!)
+```
+
+#### Mettre à jour/Restaurer un nouveau dump
+```
+docker cp [dumpfile.dump] demo_postgres_1:/backups/[dumpfile.dump]
+psql -U coog
+\c postgres
+drop database coog;
+create database coog;
+pg_restore -U coog -d coog -O -x backups/[dumpfile.dump]
 ```
 
 ### Anonymiser une base
