@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  init:
+    image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
+    command: ["admin", "-cu", "ir", "res", "-d", "${COOG_DB_NAME}"]
+    env_file:
+      - env/var.env
+    networks:
+      - backend
+    restart: on-failure
+    volumes:
+      - ${COOG_VOLUME}:/workspace/io
+      - ./conf/coog.conf:/workspace/coog.conf:ro
+      - ./conf/batch.conf:/workspace/batch.conf:ro
+    profiles:
+      - backend

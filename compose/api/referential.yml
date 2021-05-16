@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  api-referential:
+    image: ${IMAGE_REGISTRY}/api-referential:${IMAGE_VERSION_API_REFERENTIAL}
+    env_file:
+      - env/var.env
+    depends_on:
+      - mongo
+    restart: always
+    networks:
+      - backend

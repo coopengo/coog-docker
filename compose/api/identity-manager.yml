@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  api-identity-manager:
+    image: ${IMAGE_REGISTRY}/api-identity-manager:${IMAGE_VERSION_API_IDENTITY_MANAGER}
+    env_file:
+      - env/var.env
+    depends_on:
+      - mongo
+      - api
+    restart: always
+    networks:
+      - backend
+    profiles:
+      - frontend

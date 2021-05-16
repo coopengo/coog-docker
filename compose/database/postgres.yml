@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:12-alpine
+    env_file:
+      - env/postgres.env
+    volumes:
+      - ${POSTGRES_DATA_VOLUME}:/var/lib/postgresql/data
+      #- ./postgres/init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
+      - ./postgres/dumps/${POSTGRES_DUMP}:/docker-entrypoint-initdb.d/2_coog27.sql:ro
+    restart: always
+    networks:
+      - backend
+    profiles:
+      - backend

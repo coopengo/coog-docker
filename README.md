@@ -13,7 +13,7 @@
   - [Configuration spécifique client](#configuration-spécifique-client)
   - [Configurer les variables d'environnements](#configurer-les-variables-denvironnements)
     - [Configurer les variables d'environnements **systèmes** : ".env"](#configurer-les-variables-denvironnements-systèmes--env)
-    - [Configurer les variables d'environnements **coog** : "./env_files/*"](#configurer-les-variables-denvironnements-coog--env_files)
+    - [Configurer les variables d'environnements **coog** : "./env/*"](#configurer-les-variables-denvironnements-coog--env)
   - [Mapper le volume avec les bons droits sur le Host](#mapper-le-volume-avec-les-bons-droits-sur-le-host)
   - [Gérer les services](#gérer-les-services)
     - [Démarrer un service spécifique](#démarrer-un-service-spécifique)
@@ -102,7 +102,7 @@ services:
 Les autres configurations éditables sont :
 
 - .env              (variables liées au docker-compose.yaml)
-- ./env_files/*     (variables liées au container)
+- ./env/*     (variables liées au container)
 
 ## Configurer les variables d'environnements
 
@@ -111,9 +111,9 @@ Les autres configurations éditables sont :
 Le fichier .env, à la racine du projet coog-docker, contient les données des versions des conteneurs, ainsi que les différentes options systèmes liées à Docker-compose.
 Il faut le mettre à jour selon ses besoins (version des conteneurs, nom du projet, DNS du serveur etc).
 
-### Configurer les variables d'environnements **coog** : "./env_files/*"
+### Configurer les variables d'environnements **coog** : "./env/*"
 
-Il suffit de mettre à jour le contenu des .env présent dans le repertoire env_files.
+Il suffit de mettre à jour le contenu des .env présent dans le repertoire env.
 Le var.env est appelé dans tous les conteneurs coog.
 Penser à faire :
 

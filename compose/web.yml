@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  web:
+    image: ${IMAGE_REGISTRY}/web:${IMAGE_VERSION_WEB}
+    env_file:
+      - env/var.env
+    command: ["server", "1"]
+    depends_on:
+      - redis
+    restart: always
+    networks:
+      - backend
+    profiles:
+      - frontend

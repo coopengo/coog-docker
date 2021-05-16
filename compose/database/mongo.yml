@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo
+    env_file:
+      - env/var.env
+    restart: always
+    volumes:
+      - ${MONGODB_DATA_VOLUME}:/data/db
+      - ./mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - backend
+    profiles:
+      - frontend

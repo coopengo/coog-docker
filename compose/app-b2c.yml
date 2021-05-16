@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  app-b2c:
+    image: ${IMAGE_REGISTRY}/app-b2c:${IMAGE_VERSION_APP_B2C}
+    env_file:
+      - env/var.env
+    depends_on:
+      - mongo
+      - api
+    networks:
+      - backend

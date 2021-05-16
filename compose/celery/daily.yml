@@ -1,17 +1,12 @@
-version: '3'
-networks:
-  default:
-    external:
-      name: ${NETWORK_BACKEND_NAME}
+version: "3.9"
 
 services:
-
-  celery_daily:
+  celery-daily:
     image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
     command: ["daily", "4", "french_work_days"]
     env_file:
-      - env_files/var.env
-      - env_files/celery.env
+      - env/var.env
+      - env/celery.env
     restart: "no"
     volumes:
       - ${COOG_VOLUME}:/workspace/io

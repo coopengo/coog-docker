@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  api-b2b-config:
+    image: ${IMAGE_REGISTRY}/api-b2b-config:${IMAGE_VERSION_API_B2B_CONFIG}
+    env_file:
+      - env/var.env
+    depends_on:
+      - mongo
+    restart: always
+    networks:
+      - backend

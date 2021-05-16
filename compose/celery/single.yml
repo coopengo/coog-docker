@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  celery-single:
+    image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
+    command: ["celery_single"]
+    env_file:
+      - env/var.env
+      - env/celery-single.env
+    networks:
+      - backend
+    restart: always
+    volumes:
+      - ${COOG_VOLUME}:/workspace/io
+      - ./conf/coog.conf:/workspace/coog.conf:ro
+      - ./conf/batch.conf:/workspace/batch.conf:ro
