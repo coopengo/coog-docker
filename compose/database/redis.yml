@@ -10,7 +10,7 @@ services:
       - redis-server
       - /usr/local/etc/redis/redis.conf
     volumes:
-      - ./conf/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - conf/redis.conf:/usr/local/etc/redis/redis.conf:ro
     networks:
       - backend
     profiles:

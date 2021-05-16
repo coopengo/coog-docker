@@ -23,12 +23,12 @@ services:
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ../certs:/etc/certs:rw
+      - certs:/etc/certs:rw
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      - ../traefik/traefik.toml:/etc/traefik/traefik.toml:ro
-      - ../traefik/traefik.config.toml:/etc/traefik/traefik.config.toml:ro
-      - ../traefik/acme.json:/acme.json:rw
+      - traefik/traefik.toml:/etc/traefik/traefik.toml:ro
+      - traefik/traefik.config.toml:/etc/traefik/traefik.config.toml:ro
+      - traefik/acme.json:/acme.json:rw
     networks:
       - backend
       - frontend

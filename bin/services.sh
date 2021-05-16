@@ -3,7 +3,7 @@ export BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/helpers/colors.sh"
 . "${BASE_PATH}/services.env"
 
-FILES="compose/base.yml"
+FILES="docker-compose.yml"
 for service in ${SERVICES[@]}
 do
     service_file="compose/${service}.yml"
