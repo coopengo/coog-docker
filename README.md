@@ -250,7 +250,7 @@ docker exec -it demo_postgres_1 psql coog < coog_14-04-2021_16_37_38.sql
 ##### Essayer avec :
 
 ```
-docker compose up postgres
+docker-compose up postgres
 docker exec -it demo_postgres_1 /bin/bash
 mkdir backups
 ctrl+D
@@ -265,7 +265,8 @@ Fermer le container demo_postgres_1 s'il tourne
 Supprimer le contenu du répertoire POSTGRES_DATA_VOLUME
 
 ```
-docker compose up postgres
+docker-compose up postgres
+docker exec -it demo_postgres_1 /bin/bash
 psql -U coog
 drop database coog;
 create database coog;
@@ -278,11 +279,14 @@ psql -U coog
 
 #### Mettre à jour/Restaurer un nouveau dump
 ```
+docker-compose up postgres
 docker cp [dumpfile.dump] demo_postgres_1:/backups/[dumpfile.dump]
+docker exec -it demo_postgres_1 /bin/bash
 psql -U coog
 \c postgres
 drop database coog;
 create database coog;
+Ctrl+D
 pg_restore -U coog -d coog -O -x backups/[dumpfile.dump]
 ```
 
