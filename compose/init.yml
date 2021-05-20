@@ -13,3 +13,6 @@ services:
       - ${COOG_VOLUME}:/workspace/io
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
+    deploy:
+      restart_policy:
+        condition: on-failure
