@@ -1,0 +1,11 @@
+#!/bin/bash
+BASE_PATH=`realpath "$(dirname $0)/.."`
+. "${BASE_PATH}/helpers/colors.sh"
+
+${BASE_PATH}/bin/init "  "
+
+section "Déploiement"
+. "${BASE_PATH}/.env"
+export $(cut -d= -f1 "${BASE_PATH}/.env")
+STACK_FILES="-c ${BASE_PATH}/$(echo ${COMPOSE_FILE} | sed -E "s|:| -c ${BASE_PATH}/|g")"
+docker stack deploy ${STACK_FILES} "$COMPOSE_PROJECT_NAME"

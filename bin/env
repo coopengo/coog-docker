@@ -2,6 +2,7 @@
 export BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/helpers/colors.sh"
 
+export PREFIX="$1"
 copy_env() {
     sample_file=$0
     path=`dirname $sample_file`
@@ -12,10 +13,10 @@ copy_env() {
 
     if [ -f "${path}/${filename}" ]
     then
-        neutral "${relative_path}${filename} existe"
+        neutral "${relative_path}${filename} existe" "" "${PREFIX}"
     else
         cp -n "${path}/${sample_filename}" "${path}/${filename}"
-        check "${relative_path}${filename} créé"
+        check "${relative_path}${filename} créé" "" "${PREFIX}"
     fi
 }
 export -f copy_env

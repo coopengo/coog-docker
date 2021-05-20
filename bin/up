@@ -1,0 +1,8 @@
+#!/bin/bash
+BASE_PATH=`realpath "$(dirname $0)/.."`
+. "${BASE_PATH}/helpers/colors.sh"
+
+${BASE_PATH}/bin/init "  "
+
+section "Lancement"
+docker-compose up $@ 

@@ -11,7 +11,5 @@ services:
     restart: on-failure
     volumes:
       - ${COOG_VOLUME}:/workspace/io
-      - conf/coog.conf:/workspace/coog.conf:ro
-      - conf/batch.conf:/workspace/batch.conf:ro
-    profiles:
-      - backend
+      - ./conf/coog.conf:/workspace/coog.conf:ro
+      - ./conf/batch.conf:/workspace/batch.conf:ro

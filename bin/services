@@ -3,16 +3,17 @@ export BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/helpers/colors.sh"
 . "${BASE_PATH}/services.env"
 
+PREFIX="$1"
 FILES="docker-compose.yml"
 for service in ${SERVICES[@]}
 do
     service_file="compose/${service}.yml"
     if [ -f "$service_file" ]
     then
-        check "${service} ajouté"
+        check "${service} ajouté" "" "${PREFIX}"
         FILES="${FILES}:${service_file}"
     else
-        fail "${service} n'existe pas"
+        fail "${service} n'existe pas" "" "${PREFIX}"
     fi
 done
 

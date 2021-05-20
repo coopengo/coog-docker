@@ -24,5 +24,3 @@ services:
     networks:
       - backend
       - frontend
-    profiles:
-      - frontend

@@ -19,9 +19,7 @@ services:
     volumes:
       - ${COOG_TMP}:/workspace/tmp
       - ${COOG_VOLUME}:/workspace/io
-      - conf/coog.conf:/workspace/coog.conf:ro
-      - conf/batch.conf:/workspace/batch.conf:ro
+      - ./conf/coog.conf:/workspace/coog.conf:ro
+      - ./conf/batch.conf:/workspace/batch.conf:ro
     networks:
-      - backend
-    profiles:
       - backend
