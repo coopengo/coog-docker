@@ -76,7 +76,7 @@ services:
       - ./conf/coog.conf:/workspace/coog.conf:ro
       - ./conf/batch.conf:/workspace/batch.conf:ro
     networks:
-      - backend
+      - backend 
 
   initcoog:
     image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
@@ -126,7 +126,7 @@ services:
     volumes:
       - ${POSTGRES_DATA_VOLUME}:/var/lib/postgresql/data
       #- ./postgres/init-user-db.sh:/docker-entrypoint-initdb.d/1_init-user-db.sh
-      - ./postgres/dumps/${POSTGRES_DUMP}:/docker-entrypoint-initdb.d/2_coog27.sql:ro
+      - ./postgres/dumps/${POSTGRES_DUMP}:/docker-entrypoint-initdb.d/2_coog.dump:ro
     restart: always
     networks:
       - backend
