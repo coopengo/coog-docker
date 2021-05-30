@@ -125,6 +125,14 @@ a0x86wi4ubcw   coopengo_static                 replicated   1/1        coopengoh
 4ld376o6927e   coopengo_web                    replicated   1/1        coopengohub/web:coog-2.12.0  
 ````
 
+Cron
+----
+
+Pour lancer quotidiennement ```celery/daily``` (préalablement ajouté aux services), il suffit d'ajouter un cron executant :
+```bash
+docker service scale coopengo_celery-daily=0 && docker service scale coopengo_celery-daily=1
+```
+
 
 <!-- Environnements
 --------------
