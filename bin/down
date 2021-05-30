@@ -1,4 +1,7 @@
 #!/bin/bash
+#----------
+# Shortcut to docker-compose down
+#----------
 BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/helpers/colors.sh"
 
