@@ -124,3 +124,20 @@ exllw9cd7h83   coopengo_reverse-proxy          replicated   1/1        traefik:2
 a0x86wi4ubcw   coopengo_static                 replicated   1/1        coopengohub/static:coog-2.12.0                    
 4ld376o6927e   coopengo_web                    replicated   1/1        coopengohub/web:coog-2.12.0  
 ````
+
+
+<!-- Environnements
+--------------
+
+Il est possible de lancer plusieurs instances des services de coog.
+
+Dans le fichier ```.env```, il suffit de personnaliser :
+
+* ```COMPOSE_PROJECT_NAME```
+* ```NETWORK_BACKEND_NAME```
+* ```NETWORK_BACKEND_SUBNET```
+* ```NETWORK_FRONTEND_NAME```
+* ```NETWORK_BACKEND_SUBNET```
+* ```TRAEFIK_HTTP_PORT```
+* ```TRAEFIK_HTTPS_PORT```
+* ```TRAEFIK_MANAGMENT_PORT``` -->
