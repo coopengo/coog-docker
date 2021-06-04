@@ -280,14 +280,14 @@ psql -U coog
 #### Mettre à jour/Restaurer un nouveau dump
 ```
 docker-compose up postgres
-docker cp [dumpfile.dump] demo_postgres_1:/backups/[dumpfile.dump]
+docker cp postgres/dumps/coog.dump demo_postgres_1:/backups/coog.dump
 docker exec -it demo_postgres_1 /bin/bash
 psql -U coog
 \c postgres
 drop database coog;
 create database coog;
 Ctrl+D
-pg_restore -U coog -d coog -O -x backups/[dumpfile.dump]
+pg_restore -U coog -d coog -O -x backups/coog.dump
 ```
 
 ### Anonymiser une base
