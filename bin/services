@@ -20,8 +20,8 @@ do
     fi
 done
 
-if [[ ! $(cat "${BASE_PATH}/.env" | grep "COMOSE_FILE") ]]; then
-    fail '"COMPOSE_FILE" not found in ' "${BASE_PATH}/.env, aborting...'
+if [[ ! $(cat "${BASE_PATH}/.env" | grep "COMPOSE_FILE") ]]; then
+    fail '"COMPOSE_FILE" not found in ' "${BASE_PATH}/.env, aborting..."
     exit 1
 fi
 
