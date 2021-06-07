@@ -3,7 +3,9 @@ Coopengo Docker Ecosystem
 
 Ce projet permet de lancer, au cas par cas, les différentes briques de coog.
 
-Il est ainsi possible de lancer le projet avec [docker compose](https://docs.docker.com/compose/) ou bien dans un [swarm docker](https://docs.docker.com/engine/swarm/).
+Il est ainsi possible de lancer le projet avec [docker
+compose](https://docs.docker.com/compose/) ou bien dans un [swarm
+docker](https://docs.docker.com/engine/swarm/).
 
 Utilisation
 -----------
@@ -39,7 +41,11 @@ Lancement
 Creating network "coog-backend" with the default driver
 Creating network "coog-frontend" with the default driver
 ```
-Il est également possible de modifier au préalable les fichiers de variables d'environnement en lancant la commande ```bin/env``` pour créer des fichiers non versionnés à partir de fichier exemple (sample.env). Il peut, par exemple, être intéressant de spécifier un nom de projet différent ```COMPOSE_PROJECT_NAME``` dans le fichier ```.env```.
+Il est également possible de modifier au préalable les fichiers de variables
+d'environnement en lancant la commande ``bin/env`` pour créer des fichiers
+non versionnés à partir de fichier exemple (sample.env). Il peut, par exemple,
+être intéressant de spécifier un nom de projet différent
+``COMPOSE_PROJECT_NAME`` dans le fichier ``.env``.
 
 Il est possible de passer n'importe quel argument utilisé par docker-compose :
 ```bash
@@ -128,7 +134,7 @@ a0x86wi4ubcw   coopengo_static                 replicated   1/1        coopengoh
 Cron
 ----
 
-Pour lancer quotidiennement ```celery/daily``` (préalablement ajouté aux services), il suffit d'ajouter un cron executant :
+Pour lancer quotidiennement ``celery/daily`` (préalablement ajouté aux services), il suffit d'ajouter un cron executant :
 ```bash
 docker service scale coopengo_celery-daily=0 && docker service scale coopengo_celery-daily=1
 ```
