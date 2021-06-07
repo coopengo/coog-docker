@@ -20,4 +20,9 @@ do
     fi
 done
 
+if [[ ! $(cat "${BASE_PATH}/.env" | grep "COMOSE_FILE") ]]; then
+    fail '"COMPOSE_FILE" not found in ' "${BASE_PATH}/.env, aborting...'
+    exit 1
+fi
+
 sed -i -E "s|^(COMPOSE_FILE=).*?$|\1$FILES|" "${BASE_PATH}/.env"
