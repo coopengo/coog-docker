@@ -10,6 +10,49 @@ docker](https://docs.docker.com/engine/swarm/).
 Utilisation
 -----------
 
+### Configuration
+
+#### Fichier `services.env`
+
+Ce fichier contient la liste des services à activer pour le déploiement.
+
+Il permet de configurer un déploiement "pur backoffice", ou un déploiement
+complet (Back + Front)
+
+#### Fichier `.env`
+
+- `COOG_TMP` / `COOG_VOLUME` / `POSTGRES_DATA_VOLUME` / `MONGODB_DATA_VOLUME`:
+Chemins pour le stockage des données. A changer
+- `COOG_HOSTNAME`: Le nom de domaine pour accéder à l'application. Par défaut,
+permet d'accéder au portail via http://coog.localhost/portal, au back via
+http://coog.localhost/sao, et aux APIs via http://coog.localhost/gateway
+**Attention** : Il peut être nécessaire d'ajouter ce nom d'hôte manuellement dans la
+configuration d'hôte (`/etc/host` sous Linux)
+En cas de modification, il sera nécessaire de modifier les URL référançant ce nom
+de domaine dans les fichiers `env/*`. Notamment dans `env/var.env`, les variables
+`COOG_GATEWAY_URL`, `COOG_PORTAL_URL`, `WHITELIST` et `TRYTOND_WEB__CORS`
+- `COOG_DB_NAME`: Le nom de la base de données qui sera utilisée par le
+backoffice. Si cette valeur est modifiée, il faut également modifier la variable
+`POSTGRES_DB` dans `env/postgres.env`, et **purger le dossier `POSTGRES_DATA_VOLUME`.**
+Modifier également `COOG_DB_NAME` et `TRYTOND_DATABASE__PATH` dans `env/var.env`,
+ainsi que `COOG_API_COOG_DB` dans `env/web.env`
+L'application ne supporte qu'une seule base de données "principale", les bases
+secondaires peuvent être créées manuellement via le container postgres
+
+#### Fichier `env/var.env`
+
+La configuration par défaut est fonctionnelle, il est uniquement nécessaire de
+modifier les variables suivantes :
+
+- `COOG_WEB_TOKEN`: Le Jeton backoffice qui sera utilisée par l'application. Ce
+jeton doit préalablement avoir été créé côté Backoffice, et doit être rattaché
+à un utilisateur disposant des droits d'appels aux APIs (groupe "API Full Access"
+ou équivalent). Cet utilisateur doit également avoir une identité API rattachée
+dans le Backoffice
+- `JWT_ENCRYPTION` / `JWT_INTERNAL_ENCRYPTION`: Ces deux variables doivent avoir
+la même valeur. Il s'agit d'un jeton utilisé pour sécuriser les communications
+Front / Back, il doit donc être autant aléatoire que possible
+
 ### Docker Compose
 
 Pour lancer le projet, il suffit de lancer :
