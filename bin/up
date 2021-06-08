@@ -8,4 +8,4 @@ BASE_PATH=`realpath "$(dirname $0)/.."`
 ${BASE_PATH}/bin/init "  "
 
 section "Lancement"
-docker-compose up $@
+docker-compose --env-file $BASE_PATH/.env up $@

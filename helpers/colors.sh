@@ -21,7 +21,7 @@ write() {
 }
 
 section() {
-    color "$1" "$UNDERLINED" "$2"
+    color "$1" "$UNDERLINED" "${2:-}"
 }
 
 neutral() {

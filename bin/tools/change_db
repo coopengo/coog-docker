@@ -1,0 +1,70 @@
+#!/bin/bash
+set -euo pipefail
+
+BASE_PATH=`realpath "$(dirname $0)/../.."`
+. "${BASE_PATH}/helpers/colors.sh"
+
+if [[ ! -f "$1" ]]; then
+    echo "$1" is not a file
+    echo ""
+    echo "Usage: change_db <path_to_sql_dump_file>"
+    exit 1
+fi
+
+echo " "
+section "Loading required informations"
+
+db_name=$(cat $BASE_PATH/.env | grep "^COOG_DB_NAME=" | sed -e "s/.*=//")
+project_name=$(cat $BASE_PATH/.env | grep "^COMPOSE_PROJECT_NAME=" | sed -e "s/.*=//")
+user=$(cat $BASE_PATH/env/postgres.env | grep "^POSTGRES_USER=" | sed -e "s/.*=//")
+
+if [[ ! "$project_name" ]]; then
+    echo "Could not extract compose project name from .env file"
+    exit 1
+else
+    echo "Project name: $project_name"
+fi
+
+if [[ ! "$db_name" ]]; then
+    echo "Could not extract database name from .env file"
+    exit 1
+else
+    echo "Target database: $db_name"
+fi
+
+if [[ ! "$user" ]]; then
+    echo "Could not extract user name from .env file"
+    exit 1
+else
+    echo "Database user: $user"
+fi
+
+# Stop everything
+echo " "
+section "Stopping everything"
+$BASE_PATH/bin/down 
+
+# Restart only postgres
+echo " "
+section "Restarting only postgres"
+$BASE_PATH/bin/up -d postgres
+
+container_name="$project_name"_postgres_1
+
+echo " "
+section "Dropping existing database"
+docker exec -it "$container_name" dropdb -U "$user" "$db_name"
+
+echo " "
+section "Recreating database"
+docker exec -it "$container_name" createdb -U "$user" "$db_name"
+
+echo " "
+section "Loading database from dump file"
+docker cp "$1" "$container_name":/tmp/dump.sql
+docker exec -it "$container_name" bash -c "cat /tmp/dump.sql | psql -U coog -d $db_name" > /dev/null
+
+# Restart everything else
+echo " "
+section "Restarting everything"
+$BASE_PATH/bin/up -d
