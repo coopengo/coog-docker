@@ -14,9 +14,9 @@ fi
 echo " "
 section "Loading required informations"
 
-db_name=$(cat $BASE_PATH/.env | grep "^COOG_DB_NAME=" | sed -e "s/.*=//")
-project_name=$(cat $BASE_PATH/.env | grep "^COMPOSE_PROJECT_NAME=" | sed -e "s/.*=//")
-user=$(cat $BASE_PATH/env/postgres.env | grep "^POSTGRES_USER=" | sed -e "s/.*=//")
+db_name=$(source $BASE_PATH/.env && echo $COOG_MAIN_DATABASE)
+project_name=$(source $BASE_PATH/.env && echo $COMPOSE_PROJECT_NAME)
+user=$(source $BASE_PATH/.env && echo $POSTGRES_USER)
 
 if [[ ! "$project_name" ]]; then
     echo "Could not extract compose project name from .env file"

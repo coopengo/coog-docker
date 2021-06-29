@@ -5,9 +5,9 @@ services:
     image: ${IMAGE_REGISTRY}/static:${IMAGE_VERSION_STATIC}
     labels:
       - traefik.enable=true
-      - traefik.http.routers.static.rule=Host(`${COOG_HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
+      - traefik.http.routers.static.rule=Host(`${PROJECT_HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
       - traefik.http.routers.static.entrypoints=http
-      - traefik.http.routers.static_s.rule=Host(`${COOG_HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
+      - traefik.http.routers.static_s.rule=Host(`${PROJECT_HOSTNAME}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
       - traefik.http.routers.static_s.entrypoints=https
       - traefik.http.routers.static_s.tls=true
     restart: always

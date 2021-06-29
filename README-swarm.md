@@ -23,7 +23,7 @@ complet (Back + Front)
 
 - `COOG_TMP` / `COOG_VOLUME` / `POSTGRES_DATA_VOLUME` / `MONGODB_DATA_VOLUME`:
 Chemins pour le stockage des données. A changer
-- `COOG_HOSTNAME`: Le nom de domaine pour accéder à l'application. Par défaut,
+- `PROJECT_HOSTNAME`: Le nom de domaine pour accéder à l'application. Par défaut,
 permet d'accéder au portail via http://coog.localhost/portal, au back via
 http://coog.localhost/sao, et aux APIs via http://coog.localhost/gateway
 **Attention** : Il peut être nécessaire d'ajouter ce nom d'hôte manuellement dans la

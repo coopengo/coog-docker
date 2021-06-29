@@ -5,12 +5,19 @@ services:
     image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
     command: ["celery", "1"]
     env_file:
-      - env/var.env
-      - env/celery.env
+      - env/back.env
+    environment:
+      - TRYTOND_WEB__CORS=${BASE_URL}
+      - TRYTOND_DATABASE__URI=${POSTGRESQL_CONNECTION_STRING}
+      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?COOG_MAIN_DATABASE not set!}
+      - COOG_DB_HOST=${POSTGRES_HOST}
+      - COOG_DB_PORT=${POSTGRES_PORT}
+      - COOG_DB_USER=${POSTGRES_USER}
+      - COOG_DB_PASSWORD=${POSTGRES_PASSWORD}
+      - TRYTOND_ASYNC_CELERY=${RABBITMQ_URI}
     networks:
       - backend
     restart: always
     volumes:
+      - ${COOG_TMP}:/workspace/tmp
       - ${COOG_VOLUME}:/workspace/io
-      - ./conf/coog.conf:/workspace/coog.conf:ro
-      - ./conf/batch.conf:/workspace/batch.conf:ro
