@@ -2,7 +2,7 @@
   sendAnonymousUsage = false
 
 [log]
-  level = "DEBUG"
+  level = "INFO"
   format = "common"
 
 [entryPoints]

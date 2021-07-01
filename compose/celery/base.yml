@@ -7,6 +7,7 @@ services:
     env_file:
       - env/back.env
     environment:
+      - LOG_LEVEL=${COOG_LOG_LEVEL?}
       - TRYTOND_WEB__CORS=${BASE_URL}
       - TRYTOND_DATABASE__URI=${POSTGRESQL_CONNECTION_STRING}
       - COOG_DB_NAME=${COOG_MAIN_DATABASE:?COOG_MAIN_DATABASE not set!}

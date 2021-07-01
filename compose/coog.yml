@@ -2,31 +2,32 @@ version: "3.9"
 
 services:
   coog:
-    image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
+    image: ${IMAGE_REGISTRY?}/coog:${IMAGE_VERSION_COOG?}
     command: ["server", "1"]
     env_file:
       - env/back.env
     environment:
-      - TRYTOND_WEB__CORS=${BASE_URL}
-      - TRYTOND_DATABASE__URI=${POSTGRESQL_CONNECTION_STRING}
-      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?COOG_MAIN_DATABASE not set!}
-      - COOG_DB_HOST=${POSTGRES_HOST}
-      - COOG_DB_PORT=${POSTGRES_PORT}
-      - COOG_DB_USER=${POSTGRES_USER}
-      - COOG_DB_PASSWORD=${POSTGRES_PASSWORD}
-      - TRYTOND_ASYNC_CELERY=${RABBITMQ_URI}
+      - LOG_LEVEL=${COOG_LOG_LEVEL?}
+      - TRYTOND_WEB__CORS=${CORS_WHITELIST?}
+      - TRYTOND_DATABASE__URI=${POSTGRESQL_CONNECTION_STRING?}
+      - COOG_DB_NAME=${COOG_MAIN_DATABASE?}
+      - COOG_DB_HOST=${POSTGRES_HOST?}
+      - COOG_DB_PORT=${POSTGRES_PORT?}
+      - COOG_DB_USER=${POSTGRES_USER?}
+      - COOG_DB_PASSWORD=${POSTGRES_PASSWORD?}
+      - TRYTOND_ASYNC_CELERY=${RABBITMQ_URI?}
     depends_on:
       - init
     labels:
       - traefik.enable=true
-      - traefik.http.routers.coog.rule=Host(`${PROJECT_HOSTNAME}`)
+      - traefik.http.routers.coog.rule=Host(`${PROJECT_HOSTNAME?}`)
       - traefik.http.routers.coog.entrypoints=http
-      - traefik.http.routers.coog_s.rule=Host(`${PROJECT_HOSTNAME}`)
+      - traefik.http.routers.coog_s.rule=Host(`${PROJECT_HOSTNAME?}`)
       - traefik.http.routers.coog_s.entrypoints=https
       - traefik.http.routers.coog_s.tls=true
     restart: always
     volumes:
-      - ${COOG_TMP}:/workspace/tmp
-      - ${COOG_VOLUME}:/workspace/io
+      - ${COOG_TMP?}:/workspace/tmp
+      - ${COOG_VOLUME?}:/workspace/io
     networks:
       - backend

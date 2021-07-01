@@ -3,8 +3,11 @@ version: "3.9"
 services:
   api-b2b-config:
     image: ${IMAGE_REGISTRY}/api-b2b-config:${IMAGE_VERSION_API_B2B_CONFIG}
-    env_file:
-      - env/var.env
+    environment:
+      - COOG_GATEWAY_URL=${COOG_GATEWAY_URL:-http://coog.localhost/gateway}
+      - COOG_URL=$COOG_INTERNAL_URL
+      - COOG_DB_NAME=$COOG_MAIN_DATABASE
+      - JWT_INTERNAL_ENCRYPTION=$JWT_INTERNAL_ENCRYPTION
     depends_on:
       - mongo
     restart: always

@@ -3,6 +3,10 @@ version: "3.9"
 services:
   mongo:
     image: mongo
+    environment:
+      - MONGO_INITDB_DATABASE=$GATEWAY_MAIN_DATABASE
+      - MONGO_INITDB_ROOT_USERNAME=$MONGO_USER
+      - MONGO_INITDB_ROOT_PASSWORD=$MONGO_PASSWORD
     env_file:
       - env/var.env
     restart: always
