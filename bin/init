@@ -3,7 +3,7 @@
 # Shortcut to check env files and services
 #----------
 BASE_PATH=`realpath "$(dirname $0)/.."`
-. "${BASE_PATH}/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/colors.sh"
 
 PREFIX="${1:-  }"
 section "Vérification des fichiers d'environnement"

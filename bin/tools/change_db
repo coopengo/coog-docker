@@ -2,7 +2,7 @@
 set -euo pipefail
 
 BASE_PATH=`realpath "$(dirname $0)/../.."`
-. "${BASE_PATH}/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/colors.sh"
 
 if [[ ! -f "$1" ]]; then
     echo "$1" is not a file
@@ -48,6 +48,9 @@ $BASE_PATH/bin/down
 echo " "
 section "Restarting only postgres"
 $BASE_PATH/bin/up -d postgres
+
+# In case the first database must be created
+sleep 2
 
 container_name="$project_name"_postgres_1
 

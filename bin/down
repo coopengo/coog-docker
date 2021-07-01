@@ -3,7 +3,7 @@
 # Shortcut to docker-compose down
 #----------
 BASE_PATH=`realpath "$(dirname $0)/.."`
-. "${BASE_PATH}/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/colors.sh"
 
 section "Arrêt"
 docker-compose --env-file $BASE_PATH/.env down $@

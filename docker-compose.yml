@@ -2,33 +2,32 @@ version: "3.9"
 
 networks:
   frontend:
-    # driver: bridge
-    name: ${NETWORK_FRONTEND_NAME}
+    name: ${NETWORK_FRONTEND_NAME:?}
     ipam:
       config:
-      - subnet: ${NETWORK_FRONTEND_SUBNET}
+      - subnet: ${NETWORK_FRONTEND_SUBNET:?}
   backend:
-    name: ${NETWORK_BACKEND_NAME}
+    name: ${NETWORK_BACKEND_NAME:?}
     ipam:
       config:
-      - subnet: ${NETWORK_BACKEND_SUBNET}
+      - subnet: ${NETWORK_BACKEND_SUBNET:?}
 
 services:
   reverse-proxy:
     image: traefik:2.3.4
     ports:
-      - "${TRAEFIK_HTTP_PORT}:80"
-      - "${TRAEFIK_HTTPS_PORT}:443"
-      - "${TRAEFIK_MANAGMENT_PORT}:8080"
+      - ${TRAEFIK_HTTP_PORT:?}:80
+      - ${TRAEFIK_HTTPS_PORT:?}:443
+      - ${TRAEFIK_MANAGMENT_PORT:?}:8080
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/etc/certs:rw
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      - ./traefik/traefik.toml:/etc/traefik/traefik.toml:ro
-      - ./traefik/traefik.config.toml:/etc/traefik/traefik.config.toml:ro
-      - ./traefik/acme.json:/acme.json:rw
+      - ${TRAEFIK_CERTS_PATH:?}:/etc/certs:rw
+      - ${TRAEFIK_TOML_PATH:?}:/etc/traefik/traefik.toml:ro
+      - ${TRAEFIK_CONFIG_TOML_PATH:?}:/etc/traefik/traefik.config.toml:ro
+      - ${TRAEFIK_ACME_PATH:?}:/acme.json:rw
     networks:
       - backend
       - frontend

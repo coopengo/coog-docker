@@ -3,7 +3,7 @@
 # Allow to deploy a stack to a docker swarm
 #----------
 BASE_PATH=`realpath "$(dirname $0)/.."`
-. "${BASE_PATH}/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/colors.sh"
 
 # Check env and services
 ${BASE_PATH}/bin/init "  "

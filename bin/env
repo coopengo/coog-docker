@@ -3,7 +3,7 @@
 # Create all env files from existing *.sample.env
 #----------
 export BASE_PATH=`realpath "$(dirname $0)/.."`
-. "${BASE_PATH}/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/colors.sh"
 
 export PREFIX="$1"
 copy_env() {

@@ -3,7 +3,7 @@
 # Create COMPOSE_FILE variable to integrate needed services declared in services.env file
 #----------
 export BASE_PATH=`realpath "$(dirname $0)/.."`
-. "${BASE_PATH}/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/colors.sh"
 . "${BASE_PATH}/services.env"
 
 PREFIX="$1"

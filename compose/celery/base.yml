@@ -2,23 +2,23 @@ version: "3.9"
 
 services:
   celery:
-    image: ${IMAGE_REGISTRY}/coog:${IMAGE_VERSION_COOG}
-    command: ["celery", "1"]
+    image: ${IMAGE_REGISTRY:?}/coog:${IMAGE_VERSION_COOG:?}
+    command: ["celery", "${COOG_CELERY_WORKERS:?}"]
     env_file:
       - env/back.env
     environment:
-      - LOG_LEVEL=${COOG_LOG_LEVEL?}
-      - TRYTOND_WEB__CORS=${BASE_URL}
-      - TRYTOND_DATABASE__URI=${POSTGRESQL_CONNECTION_STRING}
-      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?COOG_MAIN_DATABASE not set!}
-      - COOG_DB_HOST=${POSTGRES_HOST}
-      - COOG_DB_PORT=${POSTGRES_PORT}
-      - COOG_DB_USER=${POSTGRES_USER}
-      - COOG_DB_PASSWORD=${POSTGRES_PASSWORD}
-      - TRYTOND_ASYNC_CELERY=${RABBITMQ_URI}
+      - LOG_LEVEL=${COOG_LOG_LEVEL:?}
+      - TRYTOND_WEB__CORS=${BASE_URL:?}
+      - TRYTOND_DATABASE__URI=${POSTGRESQL_CONNECTION_STRING:?}
+      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
+      - COOG_DB_HOST=${POSTGRES_HOST:?}
+      - COOG_DB_PORT=${POSTGRES_PORT:?}
+      - COOG_DB_USER=${POSTGRES_USER:?}
+      - COOG_DB_PASSWORD=${POSTGRES_PASSWORD:?}
+      - TRYTOND_ASYNC_CELERY=${RABBITMQ_URI:?}
     networks:
       - backend
     restart: always
     volumes:
-      - ${COOG_TMP}:/workspace/tmp
-      - ${COOG_VOLUME}:/workspace/io
+      - ${COOG_TMP:?}:/workspace/tmp
+      - ${COOG_VOLUME:?}:/workspace/io
