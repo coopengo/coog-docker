@@ -4,7 +4,7 @@ services:
   api-identity-manager:
     image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_API_IDENTITY_MANAGER:?}:${IMAGE_VERSION_API_IDENTITY_MANAGER:?}
     env_file:
-      - env/api-identity-manager.yml
+      - env/api-identity-manager.env
     environment:
       - COOG_URL=${COOG_INTERNAL_URL:?}
       - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}

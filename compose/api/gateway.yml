@@ -6,7 +6,7 @@ services:
     depends_on:
       - mongo
     env_file:
-      - env/gateway.yml
+      - env/gateway.env
     environment:
       - COOG_API_B2B_CONFIG_URL=${API_B2B_CONFIG_INTERNAL_URL:?}
       - COOG_API_B2C_URL=${API_B2C_INTERNAL_URL:?}
