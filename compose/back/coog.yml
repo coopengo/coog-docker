@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   coog:
-    image: ${IMAGE_REGISTRY:?}/coog:${IMAGE_VERSION_COOG:?}
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_COOG:?}:${IMAGE_VERSION_COOG:?}
     command: ["server", "${COOG_SERVER_WORKERS:?}"]
     env_file:
       - env/back.env
@@ -15,7 +15,7 @@ services:
       - COOG_DB_PORT=${POSTGRES_PORT:?}
       - COOG_DB_USER=${POSTGRES_USER:?}
       - COOG_DB_PASSWORD=${POSTGRES_PASSWORD:?}
-      - TRYTOND_ASYNC_CELERY=${RABBITMQ_URI:?}
+      - TRYTOND_ASYNC_CELERY=${CELERY_BROKER_URI:?}
     depends_on:
       - init
     labels:

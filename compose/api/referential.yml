@@ -2,11 +2,13 @@ version: "3.9"
 
 services:
   api-referential:
-    image: ${IMAGE_REGISTRY}/api-referential:${IMAGE_VERSION_API_REFERENTIAL}
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_API_REFERENTIAL:?}:${IMAGE_VERSION_API_REFERENTIAL:?}
+    env_file:
+      - env/api-referential.env
     environment:
-      - COOG_URL=$COOG_INTERNAL_URL
-      - COOG_DB_NAME=$COOG_MAIN_DATABASE
-      - JWT_INTERNAL_ENCRYPTION=$JWT_INTERNAL_ENCRYPTION
+      - COOG_URL=${COOG_INTERNAL_URL:?}
+      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
+      - JWT_INTERNAL_ENCRYPTION=${JWT_INTERNAL_ENCRYPTION:?}
     depends_on:
       - mongo
     restart: always

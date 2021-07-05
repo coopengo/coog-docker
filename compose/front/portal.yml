@@ -2,20 +2,20 @@ version: "3.9"
 
 services:
   portal:
-    image: ${IMAGE_REGISTRY}/portal:${IMAGE_VERSION_PORTAL}
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_PORTAL:?}:${IMAGE_VERSION_PORTAL:?}
     command: ["server", "1"]
     env_file:
-      - env/var.env
+      - env/portal.env
     labels:
       - traefik.enable=true
-      - traefik.http.routers.portal.rule=Host(`${PROJECT_HOSTNAME}`) && PathPrefix(`/portal`)
+      - traefik.http.routers.portal.rule=Host(`${PROJECT_HOSTNAME}`) && PathPrefix(`/${PORTAL_SUB_ROUTE:?}`)
       - traefik.http.routers.portal.entrypoints=http
       - traefik.http.routers.portal.middlewares=portal
-      - traefik.http.middlewares.portal.replacepathregex.regex=/portal(/|$$)(.*)
+      - traefik.http.middlewares.portal.replacepathregex.regex=/${PORTAL_SUB_ROUTE:?}(/|$$)(.*)
       - traefik.http.middlewares.portal.replacepathregex.replacement=/$${2}
-      - traefik.http.routers.portal_s.rule=Host(`${PROJECT_HOSTNAME}`) && PathPrefix(`/portal`)
+      - traefik.http.routers.portal_s.rule=Host(`${PROJECT_HOSTNAME}`) && PathPrefix(`/${PORTAL_SUB_ROUTE:?}`)
       - traefik.http.routers.portal_s.middlewares=portal_s
-      - traefik.http.middlewares.portal_s.replacepathregex.regex=/portal(/|$$)(.*)
+      - traefik.http.middlewares.portal_s.replacepathregex.regex=/${PORTAL_SUB_ROUTE:?}(/|$$)(.*)
       - traefik.http.middlewares.portal_s.replacepathregex.replacement=/$${2}
       - traefik.http.routers.portal_s.entrypoints=https
       - traefik.http.routers.portal_s.tls=true
