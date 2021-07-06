@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   app-b2c:
     image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_APP_B2C:?}:${IMAGE_VERSION_APP_B2C:?}

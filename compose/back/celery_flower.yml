@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   flower:
     image: mher/flower:0.9.5

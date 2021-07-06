@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   static:
     image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_STATIC:?}:${IMAGE_VERSION_STATIC:?}

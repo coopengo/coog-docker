@@ -1,27 +1,10 @@
-version: "3.9"
-
 services:
   init:
-    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_COOG:?}:${IMAGE_VERSION_COOG:?}
+    extends:
+      file: compose/back/common.yml
+      service: back-common
     command: ["admin", "-cu", "ir", "res", "-d", "${COOG_MAIN_DATABASE:?}"]
-    networks:
-      - backend
-    env_file:
-      - env/back.env
-    environment:
-      - LOG_LEVEL=${COOG_LOG_LEVEL:?}
-      - TRYTOND_WEB__CORS=${CORS_WHITELIST:?}
-      - TRYTOND_DATABASE__URI=${POSTGRESQL_CONNECTION_STRING:?}
-      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
-      - COOG_DB_HOST=${POSTGRES_HOST:?}
-      - COOG_DB_PORT=${POSTGRES_PORT:?}
-      - COOG_DB_USER=${POSTGRES_USER:?}
-      - COOG_DB_PASSWORD=${POSTGRES_PASSWORD:?}
-      - TRYTOND_ASYNC_CELERY=${CELERY_BROKER_URI:?}
     restart: on-failure
-    volumes:
-      - ${COOG_TMP:?}:/workspace/tmp
-      - ${COOG_VOLUME:?}:/workspace/io
     deploy:
       restart_policy:
         condition: on-failure

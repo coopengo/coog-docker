@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   api-identity-manager:
     image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_API_IDENTITY_MANAGER:?}:${IMAGE_VERSION_API_IDENTITY_MANAGER:?}

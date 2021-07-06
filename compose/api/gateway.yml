@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   gateway:
     image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_GATEWAY:?}:${IMAGE_VERSION_GATEWAY:?}

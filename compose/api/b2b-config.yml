@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   api-b2b-config:
     image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_API_B2B_CONFIG:?}:${IMAGE_VERSION_API_B2B_CONFIG:?}

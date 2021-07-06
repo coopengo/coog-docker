@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   web:
     image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_WEB:?}:${IMAGE_VERSION_WEB:?}

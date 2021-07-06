@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   unoconv:
     image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_UNOCONV:?}:${IMAGE_VERSION_UNOCONV:?}
