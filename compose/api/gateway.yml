@@ -44,11 +44,11 @@ services:
       - traefik.http.routers.gateway.entrypoints=http
       - traefik.http.routers.gateway.middlewares=gateway
       - traefik.http.middlewares.gateway.replacepathregex.regex=/gateway(/|$$)(.*)
-      - traefik.http.middlewares.gateway.replacepathregex.replacement=/$${2:?}
+      - traefik.http.middlewares.gateway.replacepathregex.replacement=/$$2
       - traefik.http.routers.gateway_s.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/gateway`)
       - traefik.http.routers.gateway_s.middlewares=gateway_s
       - traefik.http.middlewares.gateway_s.replacepathregex.regex=/gateway(/|$$)(.*)
-      - traefik.http.middlewares.gateway_s.replacepathregex.replacement=/$${2:?}
+      - traefik.http.middlewares.gateway_s.replacepathregex.replacement=/$$2
       - traefik.http.routers.gateway_s.entrypoints=https
       - traefik.http.routers.gateway_s.tls=true
     restart: always
