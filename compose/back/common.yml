@@ -1,6 +1,6 @@
 services:
   back-common:
-    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_COOG:?}:${IMAGE_VERSION_COOG:?}
+    image: ${IMAGE_REGISTRY_COOG:?}/${IMAGE_NAME_COOG:?}:${IMAGE_VERSION_COOG:?}
     env_file:
       # For some reason, we need to specify a relative path here
       - ../../env/back.env

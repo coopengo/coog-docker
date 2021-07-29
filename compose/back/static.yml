@@ -1,6 +1,6 @@
 services:
   static:
-    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_STATIC:?}:${IMAGE_VERSION_STATIC:?}
+    image: ${IMAGE_REGISTRY_STATIC:?}/${IMAGE_NAME_STATIC:?}:${IMAGE_VERSION_STATIC:?}
     labels:
       - traefik.enable=true
       - traefik.http.routers.static.rule=Host(`${PROJECT_HOSTNAME:?}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
