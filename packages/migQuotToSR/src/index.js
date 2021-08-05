@@ -9,8 +9,6 @@ const { getOfferFromV1 } = require('./transformOfferToV2');
 const tStart = performance.now();
 const CONFIG = require('./config');
 
-const testData = require('./test/quotations.json');
-
 /**
  * In Redis, table 7 (by default)
  * "q:xxx" : Quotation
