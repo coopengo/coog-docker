@@ -1,0 +1,9 @@
+services:
+  migrquot2sr:
+    # build: ${MIGRQUOT2SR_DIR}
+    image: coopengohub/migrquot2sr:latest
+    env_file:
+      - env/migrquot2sr.env
+    restart: 'no'
+    networks:
+      - backend

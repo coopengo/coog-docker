@@ -1,0 +1,58 @@
+{{- if .Values.migration.quotation.enabled -}}
+apiVersion: apps/v1
+kind: CronJob
+metadata:
+  name: {{ include "full_name" . }}
+  labels:
+{{ include "chart_labels" . | indent 4 }}
+spec:
+  concurrencyPolicy: Forbid
+  schedule: {{ .Values.migration.web.schedule }}
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+        spec:
+        {{- with .Values.coog.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+        {{- end }}
+          restartPolicy: Never
+        {{- if .Values.coog.persistentVolume.enabled }}
+          containers:
+            - name: {{ .Chart.Name }}
+              image: "{{ .Values.migration.quotation.name }}:latest"
+              imagePullPolicy: {{ .Values.migration.quotation.pullPolicy }}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                  - ALL
+                privileged: false
+                procMount: Default
+                runAsNonRoot: true
+                runAsUser: {{ .Values.coog.securityContext.runAsUser }}
+          env: 
+            - name: COOG_DB_NAME
+              value: "{{ .Values.postgres.database }}"
+            - name: REDIs_URL
+              value: "{{ .Values.externalRedis.host }}"
+            - name: REDIS_DB
+              value: "7"
+            - name: MONGO_URL
+              {{- if not .Values.gateway.external_mongodb.enabled }}
+              value: "{{ .Release.Name }}-mongodb"
+              {{ else }}
+              value: "{{ .Values.gateway.external_mongodb.host }}"
+              {{- end }}
+            - name: MONGO_USER
+              value: "{{ .Values.gateway.mongodb_user }}"
+            - name: MONGO_PASSWORD
+              value: "{{ .Values.gateway.mongodb_root_password }}"
+            - name: MONGO_API_DB
+              value: "{{ .Values.api.mongodb.database }}"
+            - name: MONGO_IDENTITY_DB
+              value: "{{ .Values.api.mongodb.database }}"
+{{- end }}
