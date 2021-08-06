@@ -19,14 +19,14 @@ You can start a migration by
 ## Build container
 
 ```
-docker build . -t coopengo/migquottosr
-docker push coopengo/migquottosr:latest (optional in local)
+docker build . -t coopengohub/migrquot2sr
+docker push coopengohub/migrquot2sr:latest (optional in local)
 ```
 
 ## Run container
 
 ```
-docker run coopengo/migquottosr
+docker run coopengohub/migrquot2sr
 ```
 
 ## Docker compose
