@@ -9,6 +9,7 @@ const envVarsSchema = Joi.object({
   MONGO_PASSWORD: Joi.string(),
   MONGO_API_DB: Joi.string().required(),
   MONGO_IDENTITY_DB: Joi.string().required(),
+  API_IDENTITY_MANAGER_INTERNAL_URL: Joi.string().required(),
 })
   .unknown()
   .required();
@@ -30,6 +31,7 @@ const CONFIG = {
   mongoPassword: envVars.MONGO_PASSWORD,
   mongoApiDb: envVars.MONGO_API_DB,
   mongoIdentityDb: envVars.MONGO_IDENTITY_DB,
+  apiIdentityManagerInternalUrl: envVars.API_IDENTITY_MANAGER_INTERNAL_URL,
 };
 
 module.exports = CONFIG;

@@ -3,6 +3,8 @@ const _ = require('lodash');
 const redis = require('redis');
 const { promisify } = require('util');
 const { MongoClient } = require('mongodb');
+const request = require('axios');
+
 const { getSalesRouteFromQuotation } = require('./transformToSR');
 const { getOfferFromV1 } = require('./transformOfferToV2');
 
@@ -31,6 +33,39 @@ scanAsync = promisify(redisClient.scan).bind(redisClient);
 sscanAsync = promisify(redisClient.sscan).bind(redisClient);
 getAsync = promisify(redisClient.get).bind(redisClient);
 
+const getIdentityByToken = (token, allIdentities) => {
+  return request
+    .post(`${CONFIG.apiIdentityManagerInternalUrl}/auth/coog/bearer`, { token })
+    .then(response => response.data)
+    .then(data => [
+      ...allIdentities,
+      {
+        coogId: _.get(data, 'token.user'),
+        token: _.get(data, 'token.key'),
+        dist_network: { id: _.get(data, 'dist_network') },
+      },
+    ])
+    .catch(err => {
+      console.log(`Error ${_.get(err, 'response.status')} for ${token}:`);
+      console.log(_.get(err, 'response.data'));
+    });
+};
+
+const displaySuccessInsertLoadIdentities = identities => {
+  console.log(`Successfully added ${identities.result.n} identities\n`);
+  return identities.ops;
+};
+
+const insertIdentities = (db, identities) =>
+  db
+    .collection('identities')
+    .insertMany(identities, { check_keys: false })
+    .then(displaySuccessInsertLoadIdentities)
+    .catch(() => {
+      console.log(`Error: ${identities}`);
+      return identities;
+    });
+
 const parseQuotation = val => {
   const quotation = {
     ...JSON.parse(val),
@@ -48,9 +83,8 @@ const fetchQuotation = quotation => getAsync(`q:${quotation}`).then(parseQuotati
 
 // Filter quotations so only ones that have not been already transformed into SR will be transformed
 const getUserQuotationsList = salesRoutes => val => {
-  console.log(`${val[1].length} potential quotations for one user to fetch`);
   const quotations = val[1].filter(v => !salesRoutes.has(v));
-  console.log(`Quotations to fetch: ${quotations.length}\n`);
+  console.log(`${quotations.length} (out of ${val[1].length}) quotations for one user to fetch`);
   return Promise.all(quotations.map(fetchQuotation));
 };
 
@@ -95,25 +129,83 @@ const getSalesRouteForIdentity = context => quotationsUsers =>
 const getSalesRouteIdentityInfo = (acc, value, key) => `${acc}\n${key}: ${value}`;
 
 const displaySalesRouteInformation = salesRoutes => {
-  const salesRouteByIdentity = _.countBy(salesRoutes, 'createdBy');
-  const salesRouteByIdentityStr = _.reduce(salesRouteByIdentity, getSalesRouteIdentityInfo, '');
-  console.log(`SalesRoute count by identity:${salesRouteByIdentityStr}\n`);
+  if (salesRoutes && salesRoutes.length) {
+    const salesRouteByIdentity = _.countBy(salesRoutes, 'createdBy');
+    const salesRouteByIdentityStr = _.reduce(salesRouteByIdentity, getSalesRouteIdentityInfo, '');
+    console.log(`\nSalesRoute count by identity: ${salesRouteByIdentityStr}\n`);
+  } else {
+    console.log('\nNo insert needed\n');
+  }
+
   return salesRoutes;
 };
 
 const getRedisToken =
-  ({ salesRoutes, identities }) =>
-  val => {
+  ({ salesRoutes }) =>
+  ({ identities, val }) => {
     const usersTokens = val[1].map(token => token.split(':')[1]);
-    console.log(`Redis users found: ${usersTokens.length}\n`);
     return Promise.all(val[1].map(getUserQuotationsKey(salesRoutes)))
       .then(getSalesRouteForIdentity({ usersTokens, identities }))
       .then(displaySalesRouteInformation);
   };
 
-const createTokenIdentity = (acc = {}, { dist_network: distNetwork, _id }) => ({
+const addMongoIdentities =
+  ({ identities, client }) =>
+  val => {
+    const usersTokens = val[1].map(token => token.split(':')[1]);
+    console.log(`Redis users found: ${usersTokens.length}\n`);
+
+    const identityKeys = Object.keys(identities);
+    const tokenToAdd = _.filter(usersTokens, token => !_.includes(identityKeys, token));
+
+    if (tokenToAdd.length) {
+      console.log(`*******************************`);
+      console.log(`*   Add identities to Mongo   *\n`);
+      console.log(`Token to add to Mongo: ${tokenToAdd.length}`);
+    }
+
+    return _.reduce(
+      tokenToAdd,
+      (prevPromise, token) => {
+        return prevPromise.then(allIdentities => {
+          return getIdentityByToken(token, allIdentities);
+        });
+      },
+      Promise.resolve([])
+    )
+      .then(allIdentities => {
+        if (allIdentities && allIdentities.length) {
+          console.log(`${allIdentities.length} users will be added to Mongo`);
+          const db = client.db(CONFIG.mongoApiDb);
+          return insertIdentities(db, allIdentities);
+        }
+      })
+      .then(identitiesAdded => {
+        if (identitiesAdded && identitiesAdded.length) {
+          console.log(`Get new Mongo identities`);
+          return fetchIdentity(client);
+        }
+      })
+      .then(newIdentities => {
+        if (newIdentities) {
+          console.log(`\n*             End             *`);
+          console.log(`*******************************\n`);
+          return {
+            identities: newIdentities || identities,
+            val,
+          };
+        }
+
+        return {
+          identities,
+          val,
+        };
+      });
+  };
+
+const createTokenIdentity = (acc = {}, { dist_network: distNetwork = {}, _id }) => ({
   ...acc,
-  [distNetwork]: _id,
+  [distNetwork.id]: _id,
 });
 
 const reduceIdentityByToken = (acc, { token, ...identity }) => ({
@@ -259,16 +351,18 @@ const runMigrationProcess = async client => {
   console.log(`SalesRoutes already created: ${salesRoutesSet.size}`);
   console.log(`Mongo fetch time elapsed: ${t2 - t1} ms`);
   console.log(redisBorder);
-  const salesRoutes = await scanAsync(0, 'match', `${CONFIG.coogDbName}*`, 'count', 1e6).then(
-    getRedisToken({ salesRoutes: salesRoutesSet, identities })
-  );
+
+  const redisUsers = scanAsync(0, 'match', `${CONFIG.coogDbName}*`, 'count', 1e6);
+  const salesRoutes = await redisUsers
+    .then(addMongoIdentities({ identities, client }))
+    .then(getRedisToken({ salesRoutes: salesRoutesSet }));
 
   const t3 = performance.now();
   console.log(`Redis fetch time elapsed: ${t3 - t2} ms`);
   console.log(mongoBorder);
 
   if (!salesRoutes.length) {
-    console.log('No insert needed');
+    console.log('No insert needed\n');
     return null;
   }
 
