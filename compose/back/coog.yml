@@ -3,7 +3,6 @@ services:
     extends:
       file: compose/back/common.yml
       service: back-common
-    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_COOG:?}:${IMAGE_VERSION_COOG:?}
     command: ["server", "${COOG_SERVER_WORKERS:?}"]
     depends_on:
       - init
