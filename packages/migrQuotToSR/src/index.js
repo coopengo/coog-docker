@@ -67,9 +67,7 @@ const insertIdentities = (db, identities) =>
     });
 
 const parseQuotation = val => {
-  const quotation = {
-    ...JSON.parse(val),
-  };
+  const quotation = { ...JSON.parse(val) };
 
   const newSR = getSalesRouteFromQuotation(quotation);
   const contractsWithOffer = getOfferFromV1(newSR, quotation.offer);
@@ -176,7 +174,7 @@ const addMongoIdentities =
       .then(allIdentities => {
         if (allIdentities && allIdentities.length) {
           console.log(`${allIdentities.length} users will be added to Mongo`);
-          const db = client.db(CONFIG.mongoApiDb);
+          const db = client.db(CONFIG.mongoIdentityDb);
           return insertIdentities(db, allIdentities);
         }
       })
