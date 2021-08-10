@@ -15,8 +15,8 @@ services:
       - COOG_DB_PASSWORD=${POSTGRES_PASSWORD:?}
       - TRYTOND_ASYNC_CELERY=${CELERY_BROKER_URI:?}
     volumes:
-      - ${COOG_TMP:?}:/workspace/tmp
-      - ${COOG_VOLUME:?}:/workspace/io
+      - ${COOG_TMP_VOLUME:?}:/workspace/tmp
+      - ${COOG_DATA_VOLUME:?}:/workspace/io
     networks:
       - backend
 
