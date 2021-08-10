@@ -5,9 +5,5 @@
 BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
-PREFIX="${1:-  }"
-#section "Vérification des fichiers d'environnement"
-#${BASE_PATH}/bin/env "${PREFIX}"
-
-section "Ajout de services"
-${BASE_PATH}/bin/services "${PREFIX}"
+section "Automatic configuration generation (output in .env)"
+${BASE_PATH}/bin/configure

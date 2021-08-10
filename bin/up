@@ -5,7 +5,7 @@
 BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
-${BASE_PATH}/bin/init "  "
+${BASE_PATH}/bin/init
 
-section "Lancement"
+section "Starting up"
 docker-compose --env-file $BASE_PATH/.env up $@

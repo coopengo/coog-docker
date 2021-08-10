@@ -1,0 +1,56 @@
+#!/bin/bash
+#----------
+# Create COMPOSE_FILE variable to integrate needed services declared in services.env file
+#----------
+export BASE_PATH=`realpath "$(dirname $0)/.."`
+. "${BASE_PATH}/bin/helpers/colors.sh"
+
+# If the custom file does not exist yet, init it
+if [[ ! -f "$BASE_PATH/env.custom" ]]; then
+    touch "$BASE_PATH/env.custom"
+fi
+
+# If disabled services file does not exist yet, init it
+if [[ ! -f "$BASE_PATH/disabled_services" ]]; then
+    touch "$BASE_PATH/disabled_services"
+fi
+
+generate () {
+    set -o allexport
+
+    . "$BASE_PATH/env.custom"
+    . "$BASE_PATH/env.base"
+    for i in $( \
+            (cat "$BASE_PATH/env.base" && cat "$BASE_PATH/env.custom") | \
+            grep -v "^#" | grep -v "^$" | sort -u | \
+            sed -e "s/^\([A-Z0-9_]*\)=.*/\1/"); do
+        echo "$i="$(env | grep "^$i=" | sed -e "s/^[A-Z0-9_]*=\(.*\)/\1/")
+    done
+}
+
+set_services () {
+    SERVICES="docker-compose.yml"
+
+    for path in $(cd $BASE_PATH && ls compose/**/*.yml); do
+        # Remove the "compose/" and the ".yml"
+        key=${path#compose/}
+        service=${key%.yml}
+
+        if [[ "$service" = "back/common" ]]; then
+            continue
+        fi
+        if cat $BASE_PATH/disabled_services | grep $service > /dev/null; then
+            fail "Ignoring $service"
+        else
+            check "Adding $service"
+            SERVICES="$SERVICES:$path"
+        fi
+    done
+
+    echo "COMPOSE_FILE=$SERVICES" >> "$BASE_PATH/.env"
+}
+
+section "Updating .env contents"
+echo "# AUTO GENERATED, DO NOT MODIFY MANUALLY" > "$BASE_PATH/.env"
+(generate) >> "$BASE_PATH/.env"
+set_services

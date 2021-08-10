@@ -5,5 +5,5 @@
 BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
-section "Arrêt"
+section "Stopping"
 docker-compose --env-file $BASE_PATH/.env down $@

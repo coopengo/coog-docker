@@ -1,10 +1,14 @@
 services:
   redis:
     image: redis:5.0.7-alpine
-    env_file:
-      - env/redis.env
     restart: always
+    environment:
+      - ALLOW_EMPTY_PASSWORDS=yes
     command:
       - redis-server
+      - /usr/local/etc/redis/redis.conf
+    volumes:
+      - ${REDIS_DATA_VOLUME:?}:/data
+      - ./defaults/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     networks:
       - backend

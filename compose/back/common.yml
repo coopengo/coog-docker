@@ -19,4 +19,3 @@ services:
       - ${COOG_DATA_VOLUME:?}:/workspace/io
     networks:
       - backend
-
