@@ -1,0 +1,224 @@
+#!/bin/bash
+set -euo pipefail
+
+BASE_PATH=`realpath "$(dirname $0)/../.."`
+. "${BASE_PATH}/bin/helpers/colors.sh"
+
+${BASE_PATH}/bin/configure
+
+help() {
+    echo "manage_db - Manage database"
+    echo " "
+    echo "manage_db action [options] [arguments]"
+    echo " "
+    echo "actions:"
+    echo "  help                      Show this help"
+    echo "  reset                     Clear (or init) the database"
+    echo "  load <file_name>          Load database from file"
+    echo "  dump <file_name>          Dump the current database for safekeeping"
+    echo "  update [modules]          Force an update of the database"
+    echo " "
+    echo "options:"
+    echo "--database <db_name>        The database to operate on"
+    echo "--format <(sql,bin,zip)>    The format to load from / dump database dumps"
+}
+
+if [[ "$#" -lt 1 ]]; then
+    echo "Missing action" >&2
+    help
+    exit 1
+fi
+
+reset() {
+    _start_services postgres
+    _reset_database
+    update
+}
+
+load() {
+    container_name="$project_name"_postgres_1
+    dump_file=$1
+
+    _start_services postgres
+    _reset_database
+
+    echo " "
+    section "Loading database from dump file"
+
+    format="${format:-sql}"
+    if [[ "$format" = "zip" ]]; then
+        unzip -p "$dump_file" > /tmp/tmp_extracted_dump
+        format=sql
+        dump_file=/tmp/tmp_extracted_dump
+    fi
+
+    docker cp "$dump_file" "$container_name":/tmp/dump
+
+    if [[ "$format" = "sql" ]]; then
+        docker-compose exec -- postgres bash -c "cat /tmp/dump | psql -U $user -d $db_name" > /dev/null
+    else
+        docker-compose exec -- postgres pg_restore -U "$user" -d "$db_name" /tmp/dump  > /dev/null
+    fi
+    docker-compose exec -- postgres rm "/tmp/dump"
+}
+
+dump() {
+    echo " "
+    _start_services postgres
+
+    container_name="$project_name"_postgres_1
+    dump_file=$1
+    format="${format:-sql}"
+
+    section "Dumping database $db_name to $dump_file (format $format)"
+
+    if [[ "$format" = "sql" ]] || [[ "$format" = "zip" ]]; then
+        docker-compose exec -- postgres bash -c "pg_dump -U $user $db_name > /tmp/dump" > /dev/null
+    else
+        docker-compose exec -- postgres pg_dump -U "$user" -d "$db_name" -Fc -Z5 -f /tmp/dump > /dev/null
+    fi
+    docker cp "$container_name":/tmp/dump "$dump_file"
+    docker-compose exec -- postgres rm "/tmp/dump"
+
+    if [[ "$format" = "zip" ]]; then
+        mv "$dump_file" /tmp/tmp_extracted_dump
+        zip "$dump_file" /tmp/tmp_extracted_dump
+        rm /tmp/tmp_extracted_dump
+    fi
+}
+
+update() {
+    _start_services postgres coog
+
+    # We need to kill the "init" container because it may lead to deadlocks.
+    # And we are updating the db anyaway
+    docker kill "$project_name"_init_1 > /dev/null
+    docker rm -f "$project_name"_init_1 > /dev/null
+
+    if [[ "$#" = "0" ]]; then
+        args=ir
+    else
+        args=$*
+    fi
+    docker-compose exec -- coog ep admin -d "$db_name" --activate-dependencies -u $args
+}
+
+_load_configuration() {
+    section "Loading required informations"
+
+    project_name=$(source $BASE_PATH/.env && echo $COMPOSE_PROJECT_NAME)
+    if [[ ! "$project_name" ]]; then
+        echo "Could not extract compose project name from .env file"
+        exit 1
+    else
+        echo "Project name: $project_name"
+    fi
+
+    if [[ "${db_name:-not_set}" = "not_set" ]]; then
+        db_name=$(source $BASE_PATH/.env && echo $COOG_MAIN_DATABASE)
+        if [[ ! "$db_name" ]]; then
+            echo "Could not extract database name from .env file"
+            exit 1
+        else
+            echo "Target database: $db_name"
+        fi
+    else
+        echo "Target database: $db_name"
+    fi
+
+    user=$(source $BASE_PATH/.env && echo $POSTGRES_USER)
+    if [[ ! "$user" ]]; then
+        echo "Could not extract user name from .env file"
+        exit 1
+    else
+        echo "Database user: $user"
+    fi
+
+    echo " "
+}
+
+_stop_everything() {
+    section "Stopping everything"
+    (cd $BASE_PATH && docker-compose down)
+}
+
+_start_services() {
+    echo " "
+    section "Starting services $*"
+    (cd $BASE_PATH && docker-compose up -d $*)
+}
+
+_reset_database() {
+    echo " "
+    section "Dropping existing database"
+    docker-compose exec -- postgres dropdb -U "$user" --if-exists "$db_name"
+
+    echo " "
+    section "Recreating database"
+    docker-compose exec -- postgres createdb -U "$user" "$db_name"
+}
+
+_restart() {
+    echo " "
+    (cd "$BASE_PATH" && docker-compose up -d)
+}
+
+command=$1
+shift
+
+while test $# -gt 0; do
+    case "$1" in
+        --database)
+            shift
+            db_name=$1
+            shift
+            ;;
+        --format)
+            shift
+            format=$1
+            if [[ "$format" != "sql" ]] && [[ "$format" != "bin" ]] && [[ "$format" != "zip" ]]; then
+                echo "Invalid file format $format" >&2
+                help
+                exit 1
+            fi
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+case "$command" in
+    help)
+        help
+        exit 0
+        ;;
+    reset)
+        _load_configuration
+        _stop_everything
+        reset $*
+        _restart
+        ;;
+    load)
+        _load_configuration
+        _stop_everything
+        load $*
+        _restart
+        ;;
+    dump)
+        _load_configuration
+        dump $*
+        ;;
+    update)
+        _load_configuration
+        _stop_everything
+        update $*
+        _restart
+        ;;
+    *)
+        echo "Invalid action" >&2
+        help
+        exit 1
+        ;;
+esac

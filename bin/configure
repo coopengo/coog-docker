@@ -54,3 +54,4 @@ section "Updating .env contents"
 echo "# AUTO GENERATED, DO NOT MODIFY MANUALLY" > "$BASE_PATH/.env"
 (generate) >> "$BASE_PATH/.env"
 set_services
+echo " "
