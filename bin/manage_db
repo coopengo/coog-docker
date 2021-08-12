@@ -1,10 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-BASE_PATH=`realpath "$(dirname $0)/../.."`
+BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
-
-${BASE_PATH}/bin/configure
 
 help() {
     echo "manage_db - Manage database"
@@ -17,6 +15,8 @@ help() {
     echo "  load <file_name>          Load database from file"
     echo "  dump <file_name>          Dump the current database for safekeeping"
     echo "  update [modules]          Force an update of the database"
+    echo "  change_admin_password     Change the admin password of the database"
+    echo "  anonymize [level]         Anonymize the database"
     echo " "
     echo "options:"
     echo "--database <db_name>        The database to operate on"
@@ -55,9 +55,9 @@ load() {
     docker cp "$dump_file" "$container_name":/tmp/dump
 
     if [[ "$format" = "sql" ]]; then
-        docker-compose exec -- postgres bash -c "cat /tmp/dump | psql -U $user -d $db_name" > /dev/null
+        docker-compose exec -- postgres bash -c "cat /tmp/dump | psql -U $db_user -d $db_name" > /dev/null
     else
-        docker-compose exec -- postgres pg_restore -U "$user" -d "$db_name" /tmp/dump  > /dev/null
+        docker-compose exec -- postgres pg_restore -U "$db_user" -d "$db_name" /tmp/dump  > /dev/null
     fi
     docker-compose exec -- postgres rm "/tmp/dump"
 }
@@ -67,15 +67,15 @@ dump() {
     _start_services postgres
 
     container_name="$project_name"_postgres_1
-    dump_file=$1
     format="${format:-sql}"
+    dump_file=${1:-/tmp/$db_name-$(date --iso)}.${format}
 
     section "Dumping database $db_name to $dump_file (format $format)"
 
     if [[ "$format" = "sql" ]] || [[ "$format" = "zip" ]]; then
-        docker-compose exec -- postgres bash -c "pg_dump -U $user $db_name > /tmp/dump" > /dev/null
+        docker-compose exec -- postgres bash -c "pg_dump -U $db_user $db_name > /tmp/dump" > /dev/null
     else
-        docker-compose exec -- postgres pg_dump -U "$user" -d "$db_name" -Fc -Z5 -f /tmp/dump > /dev/null
+        docker-compose exec -- postgres pg_dump -U "$db_user" -d "$db_name" -Fc -Z5 -f /tmp/dump > /dev/null
     fi
     docker cp "$container_name":/tmp/dump "$dump_file"
     docker-compose exec -- postgres rm "/tmp/dump"
@@ -103,7 +103,61 @@ update() {
     docker-compose exec -- coog ep admin -d "$db_name" --activate-dependencies -u $args
 }
 
+change_admin_password() {
+    _start_services postgres coog
+
+    # We need to kill the "init" container because it is started automatically,
+    # and we do not need since the DB is supposed to already be up to date
+    docker kill "$project_name"_init_1 > /dev/null
+    docker rm -f "$project_name"_init_1 > /dev/null
+
+    docker-compose exec -- coog ep admin -d "$db_name" -p
+}
+
+anonymize() {
+    echo " "
+    if [[ "$#" = "0" ]]; then
+        echo "Missing anonymization level (0, 1, 2)" >&2
+        exit 1
+    fi
+
+    level=$1
+    if [[ ! -e "$BASE_PATH/bin/resources/anonymize_level_$level.sql" ]]; then
+        echo "Unknown anonymization level $level" >&2
+        exit 1
+    fi
+
+    _start_services postgres
+
+    container_name="$project_name"_postgres_1
+
+    docker cp "$BASE_PATH/bin/resources/anonymize_procedures.sql" "$container_name":/tmp/
+    docker cp "$BASE_PATH/bin/resources/anonymize_level_0.sql" "$container_name":/tmp/anonymize0.sql
+    docker cp "$BASE_PATH/bin/resources/anonymize_level_1.sql" "$container_name":/tmp/anonymize1.sql
+    docker cp "$BASE_PATH/bin/resources/anonymize_level_2.sql" "$container_name":/tmp/anonymize2.sql
+    docker cp "$BASE_PATH/bin/resources/anonymize_remove_procedures.sql" "$container_name":/tmp/
+
+    docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
+        --file /tmp/anonymize_procedures.sql
+    docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
+        --file /tmp/anonymize2.sql
+
+    if [[ "$level" -lt 2 ]]; then
+        docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
+            --file /tmp/anonymize1.sql
+    fi
+
+    if [[ "$level" -lt 1 ]]; then
+        docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
+            --file /tmp/anonymize0.sql
+    fi
+    docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
+        --file /tmp/anonymize_remove_procedures.sql
+}
+
 _load_configuration() {
+    ${BASE_PATH}/bin/configure
+
     section "Loading required informations"
 
     project_name=$(source $BASE_PATH/.env && echo $COMPOSE_PROJECT_NAME)
@@ -126,12 +180,12 @@ _load_configuration() {
         echo "Target database: $db_name"
     fi
 
-    user=$(source $BASE_PATH/.env && echo $POSTGRES_USER)
-    if [[ ! "$user" ]]; then
+    db_user=$(source $BASE_PATH/.env && echo $POSTGRES_USER)
+    if [[ ! "$db_user" ]]; then
         echo "Could not extract user name from .env file"
         exit 1
     else
-        echo "Database user: $user"
+        echo "Database user: $db_user"
     fi
 
     echo " "
@@ -151,11 +205,11 @@ _start_services() {
 _reset_database() {
     echo " "
     section "Dropping existing database"
-    docker-compose exec -- postgres dropdb -U "$user" --if-exists "$db_name"
+    docker-compose exec -- postgres dropdb -U "$db_user" --if-exists "$db_name"
 
     echo " "
     section "Recreating database"
-    docker-compose exec -- postgres createdb -U "$user" "$db_name"
+    docker-compose exec -- postgres createdb -U "$db_user" "$db_name"
 }
 
 _restart() {
@@ -215,6 +269,14 @@ case "$command" in
         _stop_everything
         update $*
         _restart
+        ;;
+    change_admin_password)
+        _load_configuration
+        change_admin_password $*
+        ;;
+    anonymize)
+        _load_configuration
+        anonymize $*
         ;;
     *)
         echo "Invalid action" >&2

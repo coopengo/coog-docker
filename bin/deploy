@@ -6,7 +6,7 @@ BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
 # Check env and services
-${BASE_PATH}/bin/init
+${BASE_PATH}/bin/configure
 
 deploy () {
     # Export .env files to be accessible to deploy command

@@ -36,7 +36,7 @@ set_services () {
         key=${path#compose/}
         service=${key%.yml}
 
-        if [[ "$service" = "back/common" ]]; then
+        if [[ "$service" = "back/common" ]] || [[ "$service" = "back/celery_daily" ]]; then
             continue
         fi
         if cat $BASE_PATH/disabled_services | grep $service > /dev/null; then
@@ -50,8 +50,19 @@ set_services () {
     echo "COMPOSE_FILE=$SERVICES" >> "$BASE_PATH/.env"
 }
 
+init_service_env_files () {
+    mkdir -p "$BASE_PATH"/env
+
+    for f in $(ls "$BASE_PATH"/defaults/env); do
+        if [[ ! -e "$BASE_PATH/env/$f" ]]; then
+            cp "$BASE_PATH"/defaults/env/"$f" "$BASE_PATH"/env/"$f"
+        fi
+    done
+}
+
 section "Updating .env contents"
 echo "# AUTO GENERATED, DO NOT MODIFY MANUALLY" > "$BASE_PATH/.env"
 (generate) >> "$BASE_PATH/.env"
 set_services
+init_service_env_files
 echo " "

@@ -1,9 +1,0 @@
-#!/bin/bash
-#----------
-# Shortcut to check env files and services
-#----------
-BASE_PATH=`realpath "$(dirname $0)/.."`
-. "${BASE_PATH}/bin/helpers/colors.sh"
-
-section "Automatic configuration generation (output in .env)"
-${BASE_PATH}/bin/configure
