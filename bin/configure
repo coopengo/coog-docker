@@ -1,7 +1,19 @@
 #!/bin/bash
-#----------
-# Create COMPOSE_FILE variable to integrate needed services declared in services.env file
-#----------
+
+###############################################################################
+# Used to build the configuration files from the user provided inputs
+#
+# docker-compose does not easily provide a way to propagate high-level
+# configuration to combine multiple env files, so this script is used to do it.
+#
+# The general idea is to inject variables defined in env.custom in env.base
+# in order to generate a ".env" file aggregating everything.
+#
+# By default, all services are enabled. Dpecific (unused) services can be
+# disabled by adding them to the "disabled_services" file
+###############################################################################
+set -euo pipefail
+
 export BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
@@ -16,10 +28,21 @@ if [[ ! -f "$BASE_PATH/disabled_services" ]]; then
 fi
 
 generate () {
+    # We want that variables defined in sub-files to be available in this
+    # process
     set -o allexport
 
+    # Load custom values
     . "$BASE_PATH/env.custom"
+
+    # Load base values, applying modifications based on previously loaded
+    # (env.custom) values
     . "$BASE_PATH/env.base"
+
+    # A little intimdating, but what is actually done here is looking for all
+    # the variables defined in env.base or env.custom, and printing them to
+    # stdout with their value. This is what will actually be stored in the .env
+    # file
     for i in $( \
             (cat "$BASE_PATH/env.base" && cat "$BASE_PATH/env.custom") | \
             grep -v "^#" | grep -v "^$" | sort -u | \
@@ -29,6 +52,13 @@ generate () {
 }
 
 set_services () {
+    # Create the list of services to include in the docker-compose project.
+    #
+    # By default, all services from the "compose" folder are loaded, with the
+    # exception of back/common which is a template for building back-office
+    # services and does not exist as such.
+    #
+    # Services in "disabled_services" will also be removed
     SERVICES="docker-compose.yml"
 
     for path in $(cd $BASE_PATH && ls compose/**/*.yml); do
@@ -36,7 +66,7 @@ set_services () {
         key=${path#compose/}
         service=${key%.yml}
 
-        if [[ "$service" = "back/common" ]] || [[ "$service" = "back/celery_daily" ]]; then
+        if [[ "$service" = "back/common" ]]; then
             continue
         fi
         if cat $BASE_PATH/disabled_services | grep $service > /dev/null; then
@@ -47,10 +77,11 @@ set_services () {
         fi
     done
 
-    echo "COMPOSE_FILE=$SERVICES" >> "$BASE_PATH/.env"
+    echo "COMPOSE_FILE=$SERVICES"
 }
 
 init_service_env_files () {
+    # Create env files for all services if needed
     mkdir -p "$BASE_PATH"/env
 
     for f in $(ls "$BASE_PATH"/defaults/env); do
@@ -62,7 +93,9 @@ init_service_env_files () {
 
 section "Updating .env contents"
 echo "# AUTO GENERATED, DO NOT MODIFY MANUALLY" > "$BASE_PATH/.env"
+
+# We must run this in a sub-process because it modifies the environment
 (generate) >> "$BASE_PATH/.env"
-set_services
+set_services >> "$BASE_PATH/.env"
 init_service_env_files
 echo " "

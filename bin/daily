@@ -1,0 +1,24 @@
+#!/bin/bash
+###############################################################################
+# Runs the daily chain
+#
+# There will usually be two arguments, to indicate how business days should be
+# considered. For instance, to run with 5 business days ahead, using the
+# "french_work_days" configuration:
+#
+#       ./bin/daily 5 french_work_days
+#
+###############################################################################
+BASE_PATH=`realpath "$(dirname $0)/.."`
+. "${BASE_PATH}/bin/helpers/colors.sh"
+
+set -euo pipefail
+
+# Make sure configuration is up to date
+${BASE_PATH}/bin/configure
+
+# Make sure "coog" is up, since we will run the command from inside it
+(cd $BASE_PATH && docker-compose up --no-deps --no-recreate -d coog)
+
+# Actually run the chain
+(cd $BASE_PATH && docker-compose exec -- coog ep daily_v2 $*)

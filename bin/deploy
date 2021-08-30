@@ -1,7 +1,7 @@
 #!/bin/bash
-#----------
-# Allow to deploy a stack to a docker swarm
-#----------
+###############################################################################
+# Deploy using docker swarm
+###############################################################################
 BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
 

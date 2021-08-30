@@ -1,4 +1,9 @@
 #!/bin/bash
+###############################################################################
+# Toolkit for environment management
+#
+# See README file, or --help for more details
+###############################################################################
 set -euo pipefail
 
 BASE_PATH=`realpath "$(dirname $0)/.."`

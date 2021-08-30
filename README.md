@@ -3,33 +3,6 @@
 
 Configuration and tooling for a `docker-compose`-based Coog deployment
 
-<!-- TOC -->
-
-- [Coog Docker](#coog-docker)
-  - [Requirements](#requirements)
-    - [Hardware](#hardware)
-    - [Software](#software)
-    - [Generate certificates for localhost](#generate-certificates-for-localhost)
-  - [Démarrer coog](#démarrer-coog)
-  - [Configuration spécifique client](#configuration-spécifique-client)
-  - [Configurer les variables d'environnements](#configurer-les-variables-denvironnements)
-    - [Configurer les variables d'environnements **systèmes** : ".env"](#configurer-les-variables-denvironnements-systèmes--env)
-    - [Configurer les variables d'environnements **coog** : "./env/*"](#configurer-les-variables-denvironnements-coog--env)
-  - [Mapper le volume avec les bons droits sur le Host](#mapper-le-volume-avec-les-bons-droits-sur-le-host)
-  - [Gérer les services](#gérer-les-services)
-    - [Démarrer un service spécifique](#démarrer-un-service-spécifique)
-    - [Arrêter un service spécifique](#arrêter-un-service-spécifique)
-  - [Activer la chaîne de batch : celery daily (à positionner en crontab)](#activer-la-chaîne-de-batch--celery-daily-à-positionner-en-crontab)
-  - [Initialisation de la base de données (coog module update)](#initialisation-de-la-base-de-données-coog-module-update)
-  - [Scaling de container](#scaling-de-container)
-  - [Base de données](#base-de-données)
-    - [Backup](#backup)
-    - [Restore](#restore)
-    - [Anonymiser une base](#anonymiser-une-base)
-  - [Installer sentry](#installer-sentry)
-
-<!-- /TOC -->
-
 ## Requirements
 
 ### Hardware
@@ -105,7 +78,7 @@ When using any of the commands in the `bin` folder (or manually calling
 `bin/configure`), the values from those files will be combined to generate a
 `.env` file at the root of the repository.
 
-***DO NOT MANUALLY MODIFY THIS FILE**, as it will be overwritten everytime a
+**DO NOT MANUALLY MODIFY THIS FILE**, as it will be overwritten everytime a
 command is called.
 
 If you need to manually launch `docker-compose` commands after modifying the
@@ -263,7 +236,7 @@ The anonymization levels are as follow:
 
 - "2": The database will still be usable. Configuration will still be there,
 and "extra data" fields will be kept so contracts & co are still consistent
-- "1": Same as level 2, but parts of the configuration will be also be
+- "1": Same as level 2, but parts of the configuration will also be
 anonymized, as well as extra data fields, making it difficult to test on
 existing entities. Tests on newly created entities should work though
 - "0": Same as level 1, but fields that could be used to cross-reference
@@ -277,28 +250,28 @@ be anonymized
 As is the case for the `reset` command, this command can be run on another
 database by using the `--database` parameter.
 
+### Run daily chain
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Activer la chaîne de batch : celery daily (à positionner en crontab)
-
-Pour lancer la chaîne de batch quotidienne, on peut spécifier dans la crontab du système :
+The daily chain can be run using the following command:
 
 ```shell
-docker-compose -p coog_batch --project-directory ./coopengo/coog-docker/ -f ./coopengo/coog-docker/docker-compose.daily.yml up
+./bin/daily 5 french_work_days
 ```
+
+There will usually be two arguments, to indicate how business days should be
+considered. The previous example runs with "5" business days ahead, using the
+"french_work_days" configuration.
+
+This command can be set in the crontab of the host to run every day.
+
+**Note: This command uses the mechanisms introduced in Coog 2.12 for daily chain
+configuration in side the application**
+
+## Creating custom services
+
+The `./bin/configure` command, which is used to generate the configuration,
+adds services by looking in the `compose` directory.
+
+That makes adding custom services straightforward, just add a new `yml` file in
+the appropriate sub-directory, re-run `./bin/configure`, and they should be
+detected.

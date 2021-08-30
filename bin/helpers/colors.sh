@@ -7,8 +7,8 @@ export UNDERLINED="\e[4;38m"
 
 color() {
     text=$1
-    color=$2
-    suffix=$3
+    color=${2:-}
+    suffix=${3:-}
     echo -e "${color}${text}${RESET}$suffix"
 }
 
@@ -30,13 +30,13 @@ neutral() {
 }
 
 check() {
-    write "${3}${GREEN}✓${RESET}"
-    light "$1" "$2"
+    write "${3:-}${GREEN}✓${RESET}"
+    light "$1" "${2:-}"
 }
 
 fail() {
-    write "${3}${RED}✗${RESET}"
-    light "$1" "$2"
+    write "${3:-}${RED}✗${RESET}"
+    light "$1" "${2:-}"
 }
 
 export -f color

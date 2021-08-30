@@ -1,7 +1,7 @@
 #!/bin/bash
-#----------
-# Shortcut to docker-compose up after initialisation of env vars and services
-#----------
+###############################################################################
+# Shortcut to docker-compose up. Updates configuration before running
+###############################################################################
 BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
