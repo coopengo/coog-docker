@@ -77,7 +77,7 @@ set_services () {
         fi
     done
 
-    echo "COMPOSE_FILE=$SERVICES"
+    echo "COMPOSE_FILE=$SERVICES" >> "$BASE_PATH/.env"
 }
 
 init_service_env_files () {
@@ -96,6 +96,6 @@ echo "# AUTO GENERATED, DO NOT MODIFY MANUALLY" > "$BASE_PATH/.env"
 
 # We must run this in a sub-process because it modifies the environment
 (generate) >> "$BASE_PATH/.env"
-set_services >> "$BASE_PATH/.env"
+set_services
 init_service_env_files
 echo " "
