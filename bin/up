@@ -2,6 +2,8 @@
 ###############################################################################
 # Shortcut to docker-compose up. Updates configuration before running
 ###############################################################################
+set -euo pipefail
+
 BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
