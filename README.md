@@ -84,6 +84,33 @@ command is called.
 If you need to manually launch `docker-compose` commands after modifying the
 `env.custom` file, make sure to call `bin/configure` first.
 
+### Minimum configuration
+
+This is a minimal `env.custom` file, containing the few environment variables
+that **must** be available.
+
+```shell
+# The version to load. Will be the default for all components, but each can be
+# set separately if required
+IMAGE_VERSION_COOG=coog-2.13.2134
+
+# Where the data will be stored
+FILESYSTEM_ROOT=/coog
+
+# Encryption key used for generating jwt token for API communication
+JWT_ENCRYPTION=change_me
+
+# Token used for communication between API services and the backoffice
+COOG_GATEWAY_TOKEN=api_token_for_api_user
+
+# Not necessary to modify (defaults to "coog"), but usually will be
+COMPOSE_PROJECT_NAME=demo
+```
+
+*Note for developers: when using multiple environments, `FILESYSTEM_ROOT` can
+be set directly in a `.bashrc` or a `.envrc` file so it is not necessary to
+re-define it in every environment*
+
 ### Disabling services
 
 By default, starting the project will start all services defined in the
