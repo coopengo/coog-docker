@@ -3,6 +3,35 @@
 
 Configuration and tooling for a `docker-compose`-based Coog deployment
 
+<!-- TOC -->
+
+- [Coog Docker](#coog-docker)
+  - [Requirements](#requirements)
+    - [Hardware](#hardware)
+    - [Software](#software)
+    - [Permissions](#permissions)
+    - [Generate certificates for localhost](#generate-certificates-for-localhost)
+  - [Configuration](#configuration)
+    - [Minimum configuration](#minimum-configuration)
+    - [Disabling services](#disabling-services)
+    - [Specific services configuration](#specific-services-configuration)
+  - [Commands](#commands)
+    - [Refresh configuration](#refresh-configuration)
+    - [Starting up](#starting-up)
+    - [Shutting down](#shutting-down)
+    - [Initialize the database](#initialize-the-database)
+    - [Upgrade the database](#upgrade-the-database)
+    - [Create a backup](#create-a-backup)
+    - [Load from a backup](#load-from-a-backup)
+    - [Modify admin password](#modify-admin-password)
+    - [Anonymize a database](#anonymize-a-database)
+    - [Run daily chain](#run-daily-chain)
+  - [Creating custom services](#creating-custom-services)
+  - [FAQ](#faq)
+    - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
+
+<!-- /TOC -->
+
 ## Requirements
 
 ### Hardware
@@ -302,3 +331,10 @@ adds services by looking in the `compose` directory.
 That makes adding custom services straightforward, just add a new `yml` file in
 the appropriate sub-directory, re-run `./bin/configure`, and they should be
 detected.
+
+## FAQ
+
+### [PORTAL][B2B] Error: Not allowed by CORS
+
+By default, you should not be able to use the protocol https:// because it is not configured. You must therefore use the protocol http://.
+
