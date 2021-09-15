@@ -86,7 +86,7 @@ BEGIN
         where_statement = ' WHERE ' || where_statement;
     end if;
     i := 1;
-    loop 
+    loop
         if cols_list = '{}' then
             EXIT;
         end if;
@@ -101,7 +101,7 @@ BEGIN
         end if;
     end loop;
     j := 1;
-    loop 
+    loop
         if null_cols_list = '{}' then
             EXIT;
         end if;
