@@ -10,3 +10,6 @@ certs
 
 # Contains service env files, contents will be modified by the user
 env
+
+# Auto-generated for host integration
+docker-compose.host-integration.yaml

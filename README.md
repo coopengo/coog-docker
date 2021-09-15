@@ -28,6 +28,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Run daily chain](#run-daily-chain)
   - [Creating custom services](#creating-custom-services)
   - [FAQ](#faq)
+    - [Using services deployed on localhost](#using_services_deployed_on_localhost)
     - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
 
 <!-- /TOC -->
@@ -334,7 +335,23 @@ detected.
 
 ## FAQ
 
+### Using services deployed on localhost
+
+In some cases (development / debugging), it may be useful to run the API /
+front part of the application with the compose project, using a locally running
+Coog backoffice service.
+
+To do so, you must:
+
+- Ensure your local Coog server listen on all addresses (0.0.0.0)
+- Use the special "host.docker.internal" hostname for your
+CUSTOM_COOG_INTERNAL_URL
+- Enable host integration for the project, by setting the
+"ENABLE_HOST_NETWORK_INTEGRATION" variable to "1" in your `env.custom` file
+
+*Note: This can be done for other services, however the typical use case will
+be for backend developers, hence this particular example*
+
 ### [PORTAL][B2B] Error: Not allowed by CORS
 
 By default, you should not be able to use the protocol https:// because it is not configured. You must therefore use the protocol http://.
-
