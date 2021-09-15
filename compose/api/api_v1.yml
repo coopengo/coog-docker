@@ -18,7 +18,6 @@ services:
       - DEBUG=${API_DEBUG_LEVEL:?}
     command: ["server", "1"]
     depends_on:
-      - coog
       - mongo
     restart: always
     networks:
