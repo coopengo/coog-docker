@@ -200,7 +200,7 @@ The following command will drop an existing database (if needed), then init a
 new empty database. It will ask for the admin password:
 
 ```shell
-./bin/manage_db init
+./bin/manage_db reset
 ```
 
 The name of the database will be the name of the main database of the project
@@ -209,7 +209,7 @@ The name of the database will be the name of the main database of the project
 An additional database can be managed by passing the `--database` parameter:
 
 ```shell
-./bin/manage_db init --database another_database
+./bin/manage_db reset --database another_database
 ```
 
 ### Upgrade the database
