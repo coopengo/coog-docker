@@ -1,0 +1,21 @@
+services:
+  api-identity-manager:
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_API_IDENTITY_MANAGER:?}:${IMAGE_VERSION_API_IDENTITY_MANAGER:?}
+    env_file:
+      - env/api-identity-manager.env
+    environment:
+      - COOG_URL=${COOG_INTERNAL_URL:?}
+      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
+      - JWT_INTERNAL_ENCRYPTION=${JWT_INTERNAL_ENCRYPTION:?}
+
+      - MONGO_HOST=${MONGO_HOST:?}
+      - MONGO_PORT=${MONGO_PORT:?}
+      - MONGO_DB_NAME=${IDENTITY_MANAGER_MAIN_DATABASE:?}
+      - MONGO_USER=${MONGO_USER:?}
+      - MONGO_PASSWORD=${MONGO_PASSWORD:?}
+    depends_on:
+      - mongo
+      - api
+    restart: always
+    networks:
+      - backend

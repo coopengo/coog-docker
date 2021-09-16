@@ -1,0 +1,24 @@
+services:
+  web:
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_WEB:?}:${IMAGE_VERSION_WEB:?}
+    env_file:
+      - env/web.env
+    environment:
+      - COOG_API_COOG_URL=${COOG_INTERNAL_URL:?}
+      - COOG_API_COOG_DB=${COOG_MAIN_DATABASE:?}
+
+      - COOG_API_MONGO_HOST=${MONGO_HOST:?}
+      - COOG_API_MONGO_PORT=${MONGO_PORT:?}
+      - COOG_API_MONGO_USER=${MONGO_USER:?}
+      - COOG_API_MONGO_PASSWORD=${MONGO_PASSWORD:?}
+      - COOG_API_MONGO_DB=${API_V1_MAIN_DATABASE:?}
+
+      - COOG_API_API_PATH=/${API_V1_SUB_ROUTE:?}
+
+      - DEBUG=${API_DEBUG_LEVEL:?}
+    command: ["server", "1"]
+    depends_on:
+      - mongo
+    restart: always
+    networks:
+      - backend

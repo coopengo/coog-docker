@@ -1,0 +1,10 @@
+services:
+  celery-single:
+    extends:
+      file: compose/back/common.yml
+      service: back-common
+    command: ["celery_single"]
+    env_file:
+      - env/back.env
+      - env/celery-single.env
+    restart: always

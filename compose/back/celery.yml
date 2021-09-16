@@ -1,0 +1,10 @@
+services:
+  celery:
+    extends:
+      file: compose/back/common.yml
+      service: back-common
+    command: ["celery", "${COOG_CELERY_WORKERS:?}"]
+    env_file:
+      - env/back.env
+      - env/celery.env
+    restart: always

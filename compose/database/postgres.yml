@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:12-alpine
+    env_file:
+      - env/postgres.env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:?}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?}
+      - ON_ERROR_STOP=0
+    volumes:
+      - ${POSTGRES_DATA_VOLUME:?}:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - backend

@@ -1,0 +1,8 @@
+services:
+  rabbitmq:
+    image: rabbitmq:alpine
+    env_file:
+      - env/rabbitmq.env
+    restart: always
+    networks:
+      - backend

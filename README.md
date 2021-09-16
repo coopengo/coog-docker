@@ -1,299 +1,357 @@
 <!-- TOC ignore:true -->
 # Coog Docker
+
+Configuration and tooling for a `docker-compose`-based Coog deployment
+
 <!-- TOC -->
 
 - [Coog Docker](#coog-docker)
-  - [Prérequis](#prérequis)
-    - [Software/Hardware](#softwarehardware)
-    - [Coog-admin DEPRECATED](#coog-admin-deprecated)
-    - [Documentation externe](#documentation-externe)
-    - [Certificats SSL sur le localhost](#certificats-ssl-sur-le-localhost)
-    - [IMPORTANT](#important)
-  - [Démarrer coog](#démarrer-coog)
-  - [Configuration spécifique client](#configuration-spécifique-client)
-  - [Configurer les variables d'environnements](#configurer-les-variables-denvironnements)
-    - [Configurer les variables d'environnements **systèmes** : ".env"](#configurer-les-variables-denvironnements-systèmes--env)
-    - [Configurer les variables d'environnements **coog** : "./env_files/*"](#configurer-les-variables-denvironnements-coog--env_files)
-  - [Mapper le volume avec les bons droits sur le Host](#mapper-le-volume-avec-les-bons-droits-sur-le-host)
-  - [Gérer les services](#gérer-les-services)
-    - [Démarrer un service spécifique](#démarrer-un-service-spécifique)
-    - [Arrêter un service spécifique](#arrêter-un-service-spécifique)
-  - [Activer la chaîne de batch : celery daily (à positionner en crontab)](#activer-la-chaîne-de-batch--celery-daily-à-positionner-en-crontab)
-  - [Initialisation de la base de données (coog module update)](#initialisation-de-la-base-de-données-coog-module-update)
-  - [Scaling de container](#scaling-de-container)
-  - [Base de données](#base-de-données)
-    - [Backup](#backup)
-    - [Restore](#restore)
-    - [Anonymiser une base](#anonymiser-une-base)
-  - [Installer sentry](#installer-sentry)
+  - [Requirements](#requirements)
+    - [Hardware](#hardware)
+    - [Software](#software)
+    - [Permissions](#permissions)
+    - [Generate certificates for localhost](#generate-certificates-for-localhost)
+  - [Configuration](#configuration)
+    - [Minimum configuration](#minimum-configuration)
+    - [Disabling services](#disabling-services)
+    - [Specific services configuration](#specific-services-configuration)
+  - [Commands](#commands)
+    - [Refresh configuration](#refresh-configuration)
+    - [Starting up](#starting-up)
+    - [Shutting down](#shutting-down)
+    - [Initialize the database](#initialize-the-database)
+    - [Upgrade the database](#upgrade-the-database)
+    - [Create a backup](#create-a-backup)
+    - [Load from a backup](#load-from-a-backup)
+    - [Modify admin password](#modify-admin-password)
+    - [Anonymize a database](#anonymize-a-database)
+    - [Run daily chain](#run-daily-chain)
+  - [Creating custom services](#creating-custom-services)
+  - [FAQ](#faq)
+    - [Using services deployed on localhost](#using_services_deployed_on_localhost)
+    - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
 
 <!-- /TOC -->
 
-## Prérequis
+## Requirements
 
-### Software/Hardware
+### Hardware
 
-- OS : centos 7
-- RAM : 16Gb
-- CPU : 8 CPU
-- HDD : 100Go
-- docker-compose : 3.5
+For a complete test installation (front + back + BDD), the following is a
+minimum:
 
-- 1 serveur de base de données POSTGRESQL 12 sécurisé et backupé
+- 4 CPUs
+- 8 GB RAM
+- 100 GB Storage
 
-### Coog-admin DEPRECATED
+Actual requirements will heavily depend on the number of users / API calls,
+database size, and business lines.
 
-Dans un souci de standardisation et de simplification de son installation, coog-admin a été déprécié au profit de coog-docker (basé uniquement sur docker et docker-compose).
+### Software
 
-### Documentation externe
+- Docker: 20.10+ (<https://docs.docker.com/>)
+- Docker compose: 1.29+ (<https://docs.docker.com/compose>)
 
-Docker : <https://docs.docker.com/engine/install/centos/>
+### Permissions
 
-Docker-compose : <https://docs.docker.com/compose>
+Various components will need access to the filesystem for reading / writing.
+The location on the host where this will happen can be configured (see
+Configuration), the default value being `/coog`.
 
-### Certificats SSL sur le localhost
+- For a development environment, the "simplest" way to manage permissions is to
+allow everything:
 
-    wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-amd64
-    sudo mv mkcert-v1.4.1-linux-amd64 /usr/local/bin/mkcert
-    sudo chmod +x /usr/local/bin/mkcert
-    mkcert -install
-    mkcert -cert-file certs/cert.pem -key-file certs/key.pem "coog.localhost"
+```shell
+sudo chmod -R 1777 /path/to/root
+```
 
-### IMPORTANT
+- In a "real" environment, the folders that we actually need to have access are
+those that can be used when sharing files between the application and other
+systems (or users). Those are the `coog_tmp` / `coog_data` folder (see
+configuration for details on how to configure their path).
+Since the application is run as user 1003, the access rights will usually be
+set like so:
 
-Les commandes `docker-compose` sont à exécuter à la racine du répertoire coog-docker.
+```shell
+sudo chown 1003:1003 /path/to/coog_data
+sudo chown 1003:1003 /path/to/coog_tmp
+```
 
-## Démarrer coog
+### Generate certificates for localhost
 
-    docker-compose up
+- Install mkcert
 
-OU
+```shell
+(cd /tmp && wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-amd64)
+sudo mv /tmp/mkcert-v1.4.1-linux-amd64 /usr/local/bin/mkcert
+sudo chmod +x /usr/local/bin/mkcert
+mkcert -install
+```
 
-    docker-compose up -d #(mode démon)
+- Create a certificat for "coog.localhost" (change the prefix based on the
+project name). The docker-compose project expects "certs" in its root folder
 
-## Configuration spécifique client
+```shell
+mkdir certs && mkcert -cert-file certs/cert.pem -key-file certs/key.pem "coog.localhost"
+```
 
-Il faut alimenter le docker-compose.override.yaml à la racine du projet avec les spécificités clientes si besoin.
+## Configuration
 
-Ce fichier est automatiquement lu par docker-compose et mergé avec le docker-compose.yaml.
+This project's main configuration is generated from two files:
 
-ex: Désactiver les conteneur paybox et changer l'image de référence de coog :
+- `env.base`, which should not be modified, but is the actual template
+- `env.custom`, which can be used to provide mandatory values (versions, etc),
+as well as overriding some parts of the configuration. Documentation for what
+must / can be modified can be found in `env.custom.sample`
 
-    version: "3"
-    
-    services:
-      paybox:
-        image: alpine:latest
-        command: "true"
-        entrypoint: "true"
-      coog:
-          image: ${IMAGE_REGISTRY}/coog-client:${IMAGE_VERSION_COOG}
+When using any of the commands in the `bin` folder (or manually calling
+`bin/configure`), the values from those files will be combined to generate a
+`.env` file at the root of the repository.
 
-Les autres configurations éditables sont :
+**DO NOT MANUALLY MODIFY THIS FILE**, as it will be overwritten everytime a
+command is called.
 
-- .env              (variables liées au docker-compose.yaml)
-- ./env_files/*     (variables liées au container)
+If you need to manually launch `docker-compose` commands after modifying the
+`env.custom` file, make sure to call `bin/configure` first.
 
-## Configurer les variables d'environnements
+### Minimum configuration
 
-### Configurer les variables d'environnements **systèmes** : ".env"
+This is a minimal `env.custom` file, containing the few environment variables
+that **must** be available.
 
-Le fichier .env, à la racine du projet coog-docker, contient les données des versions des conteneurs, ainsi que les différentes options systèmes liées à Docker-compose.
-Il faut le mettre à jour selon ses besoins (version des conteneurs, nom du projet, DNS du serveur etc).
+```shell
+# The version to load. Will be the default for all components, but each can be
+# set separately if required
+IMAGE_VERSION_COOG=coog-2.13.2134
 
-### Configurer les variables d'environnements **coog** : "./env_files/*"
+# Where the data will be stored
+FILESYSTEM_ROOT=/coog
 
-Il suffit de mettre à jour le contenu des .env présent dans le repertoire env_files.
-Le var.env est appelé dans tous les conteneurs coog.
-Penser à faire :
+# Encryption key used for generating jwt token for API communication
+JWT_ENCRYPTION=change_me
 
-    docker-compose up -d
+# Token used for communication between API services and the backoffice
+COOG_GATEWAY_TOKEN=api_token_for_api_user
 
-## Mapper le volume avec les bons droits sur le Host
+# Not necessary to modify (defaults to "coog"), but usually will be
+COMPOSE_PROJECT_NAME=demo
+```
 
-Le répertoire /workspace/io des conteneurs, est mappé avec le répertoire de la machine Host /coog/coog_data
-Le répertoire /workspace/tmp  est mappé avec le répertoire de la machine Host /coog/coog_tmp
+*Note for developers: when using multiple environments, `FILESYSTEM_ROOT` can
+be set directly in a `.bashrc` or a `.envrc` file so it is not necessary to
+re-define it in every environment*
 
-Pour des questions de sécurité, les conteneurs coog ne tournent pas en root.
+### Disabling services
 
-Il est donc indispensable de positionner les bons droits sur les répertoires /coog/coog_data et /coog/coog_tmp qui sont mappés dans les conteneurs.
+By default, starting the project will start all services defined in the
+`compose` folder. Services that you do not need can be disabled by adding them
+in a `disabled_services` file at the root of the project.
 
-Commande à faire sur la machine HOST :
+For instance, to disable the "front/app-b2c" service, run the following command
+at the project's root:
 
-    sudo chown 1003:1003 /coog/coog_data
-    sudo chown 1003:1003 /coog/coog_tmp
+```shell
+echo "front/app-b2c" >> disabled_services
+```
 
-## Gérer les services
+### Specific services configuration
 
-### Démarrer un service spécifique
+There are specific environment files in the `env` folder to customize the
+behaviour of specific services.
 
-    docker-compose up <service>
+Documentation for what can be done and how is in the `defaults/env` folder.
 
-**Exemple :**
+## Commands
 
-    docker-compose up coog
+**docker-compose commands will usually work**, however when modifying
+`env.custom` (or updating the project), you must call `bin/configure` first.
+Using the provided commands below will take care of this for you.
 
-### Arrêter un service spécifique
+### Refresh configuration
 
-    docker-compose down <service>
+```shell
+./bin/configure
+```
 
-**Exemple :**
+### Starting up
 
-    docker-compose down coog
+```shell
+./bin/up
+```
 
-## Activer la chaîne de batch : celery daily (à positionner en crontab)
+or (run in background)
 
-Pour lancer la chaîne de batch quotidienne, on peut spécifier dans la crontab du système :
+```shell
+./bin/up -d
+```
 
-    docker-compose -p coog_batch --project-directory ./coopengo/coog-docker/ -f ./coopengo/coog-docker/docker-compose.daily.yml up
+Note thate `bin/up` is juste a wrapper around `docker-compose up` that first
+calls `bin/configure`. Any parameters passed to it will be forwarded to
+`docker-compose`
 
-## Initialisation de la base de données (coog module update)
+### Shutting down
 
-Init DB :
+```shell
+./bin/down
+```
 
-    ep  admin -u ir res -d coog
+### Initialize the database
 
-## Scaling de container
+The following command will drop an existing database (if needed), then init a
+new empty database. It will ask for the admin password:
 
-Il est possible de scaler des conteneurs de cette manière :
+```shell
+./bin/manage_db reset
+```
 
-    docker-compose up --scale coog=5
+The name of the database will be the name of the main database of the project
+(defaults to "coog").
 
-## Base de données
+An additional database can be managed by passing the `--database` parameter:
 
-### Backup 
+```shell
+./bin/manage_db reset --database another_database
+```
 
-Les données susceptibles d'être à backuper se situent dans le répertoire de la machine host "/coog" .
-Ce répertoire correspond au point de montage de coog, ainsi que celui des bases de données.
+### Upgrade the database
 
-Pour backuper postgres, il faut utiliser la commande pg_dump. Voir la documentation officielle PostgreSql :
+The following command will update the database.
 
-- <https://www.postgresql.org/docs/current/backup.html>
+```shell
+./bin/manage_db update
+```
 
-Ex d'utilisation au travers de la commande docker :
-
-    docker exec -it coog-docker_postgres_1 pg_dump -d coog -U coog
-
-Pour backuper le répertoire Workspace de Coog, il faut utiliser la commande tar sur le répertoire /coog au niveau de la machine Host.
-
-Ex de commande tar :
-
-    tar -zcvpf /backup/coog-$(date +%d-%m-%Y).tar.gz /coog/coog_data
-
-### Restore
-
-    docker exec -it coog-docker_postgres_1 psql <dbname> < <dumpfile>
-
-### Anonymiser une base
-
-Le but est d'appliquer ces requêtes au sein de la BDD que l'on souhaite anonymiser :
-
-    docker exec -it coog-docker_coog_1 ep anon_queries 1
-
-Exemple de copie d'une base coog et de son anonymisation :
-
-    docker exec -it coog-docker_postgres_1 psql --quiet -c "create database anon_db;" -U coog
-    docker exec -t coog-docker_postgres_1 pg_dump -d coog -U coog -c -O > dump_to_anon.sql
-    cat dump_to_anon.sql | docker exec -i coog-docker_postgres_1 psql -U coog -d anon_db
-    docker exec -it coog-docker_coog_1 ep anon_queries 1 | docker exec -i coog-docker_postgres_1 psql -U coog -d anon_db
-
-## Installer sentry
-
-Il est possible d'installer des outils d'aide à la gestion d'erreurs.
-Ce sont des outils non adhérant à Coog et qui reste à la charge de l'utilisateur.
-
-Un exemple de configuration pour lever Sentry (à placer dans le docker-compose.override.yaml) :
-
-    version: '3'
-    
-    volumes:
-      pgdbsentry:
-    
-    services:
-      redissentry:
-        image: redis
-        networks:
-          - backend
-    
-      postgressentry:
-        image: postgres
-        environment:
-          POSTGRES_USER: sentry
-          POSTGRES_PASSWORD: sentry
-          POSTGRES_DB: sentry
-        volumes:
-          - pgdbsentry:/var/lib/postgresql/data
-        networks:
-          - backend
-    
-      sentry:
-        image: sentry
-        links:
-         - redissentry
-         - postgressentry
-        environment:
-          SENTRY_SECRET_KEY: '!!!SECRET!!!'
-          SENTRY_POSTGRES_HOST: postgressentry
-          SENTRY_DB_USER: sentry
-          SENTRY_DB_PASSWORD: sentry
-          SENTRY_REDIS_HOST: redissentry
-        networks:
-          - backend
-          - frontend
-        labels:
-          - traefik.http.routers.sentry.rule=Host(`sentry.localhost`)
-          - traefik.http.routers.sentry.entrypoints=http
-          - traefik.port=9000
-        depends_on:
-          - reverse-proxy
-    
-      cron:
-        image: sentry
-        links:
-         - redissentry
-         - postgressentry
-        command: "sentry run cron"
-        environment:
-          SENTRY_SECRET_KEY: '!!!SECRET!!!'
-          SENTRY_POSTGRES_HOST: postgressentry
-          SENTRY_DB_USER: sentry
-          SENTRY_DB_PASSWORD: sentry
-          SENTRY_REDIS_HOST: redis_sentry
-        networks:
-          - backend
-          - frontend
-        depends_on:
-          - reverse-proxy
-    
-      worker:
-        image: sentry
-        links:
-         - redissentry
-         - postgressentry
-        command: "sentry run worker"
-        environment:
-          SENTRY_SECRET_KEY: '!!!SECRET!!!'
-          SENTRY_POSTGRES_HOST: postgressentry
-          SENTRY_DB_USER: sentry
-          SENTRY_DB_PASSWORD: sentry
-          SENTRY_REDIS_HOST: redissentry
-        networks:
-          - backend
-          - frontend
-        depends_on:
-          - reverse-proxy
-
-Une fois levée, il faut initialiser la BDD de cette manière :
-
-    docker exec -it demo_sentry_1 sentry upgrade
-  
-Sentry est ainsi disponible à l'adresse : <http://sentry.localhost:8080/>
-
-Il reste à finaliser la configuration du backend COOG avec ces variables d'environnement (à setter dans le conteneur Coog, fichier var.env):
-
-    COOG_SENTRY_PUB=<public_key>
-    COOG_SENTRY_SEC=<private_key>
-    COOG_SENTRY_PROJECT=<project_id>
-    COOG_SENTRY_PROTOCOL=http
-    COOG_SENTRY_HOST=<[external-]server-ip>
-    COOG_SENTRY_PORT=9000
+Additional parameters will be modules to install on the database:
+
+```shell
+./bin/manage_db update contract claim loan
+```
+
+As is the case for the `reset` command, this command can be run on another
+database by using the `--database` parameter.
+
+### Create a backup
+
+The following command will create a backup of the database in `/tmp/backup_file`
+
+```shell
+./bin/manage_db dump /tmp/backup_file
+```
+
+Default format is a flat "sql" file, however this can be controlled using the
+`--format` option, to use a binary format, or zip the sql output
+
+```shell
+./bin/manage_db dump --format bin /tmp/backup_file
+```
+
+If the backup file name is not provided, it will be generated with the database
+name, the current date, and the format extension. It will then be moved to `/tmp`
+
+As is the case for the `reset` command, this command can be run on another
+database by using the `--database` parameter.
+
+**Note: This command can be used while the application is running without
+interrupting the services**
+
+### Load from a backup
+
+The following command will load the `/tmp/backup_file` backup in the database
+
+```shell
+./bin/manage_db load /tmp/backup_file
+```
+
+Default behavior assumes a flat "sql" file, however this will crash if the
+input file is actually a binary file (or a zipped sql file). Same as above,
+this can be controlled using the `--format` parameter
+
+```shell
+./bin/manage_db load --format sip /tmp/backup_file.zip
+```
+
+As is the case for the `reset` command, this command can be run on another
+database by using the `--database` parameter.
+
+### Modify admin password
+
+The admin password for the database can be modifid using the following command:
+
+```shell
+./bin/manage_db change_admin_password
+```
+
+As is the case for the `reset` command, this command can be run on another
+database by using the `--database` parameter.
+
+### Anonymize a database
+
+The following command can be used to anonymize the database. **This is not
+reversible**.
+
+The anonymization levels are as follow:
+
+- "2": The database will still be usable. Configuration will still be there,
+and "extra data" fields will be kept so contracts & co are still consistent
+- "1": Same as level 2, but parts of the configuration will also be
+anonymized, as well as extra data fields, making it difficult to test on
+existing entities. Tests on newly created entities should work though
+- "0": Same as level 1, but fields that could be used to cross-reference
+information from another database (ex: party codes, contract numbers) will also
+be anonymized
+
+```shell
+./bin/manage_db anonymize [level]
+```
+
+As is the case for the `reset` command, this command can be run on another
+database by using the `--database` parameter.
+
+### Run daily chain
+
+The daily chain can be run using the following command:
+
+```shell
+./bin/daily 5 french_work_days
+```
+
+There will usually be two arguments, to indicate how business days should be
+considered. The previous example runs with "5" business days ahead, using the
+"french_work_days" configuration.
+
+This command can be set in the crontab of the host to run every day.
+
+**Note: This command uses the mechanisms introduced in Coog 2.12 for daily chain
+configuration in side the application**
+
+## Creating custom services
+
+The `./bin/configure` command, which is used to generate the configuration,
+adds services by looking in the `compose` directory.
+
+That makes adding custom services straightforward, just add a new `yml` file in
+the appropriate sub-directory, re-run `./bin/configure`, and they should be
+detected.
+
+## FAQ
+
+### Using services deployed on localhost
+
+In some cases (development / debugging), it may be useful to run the API /
+front part of the application with the compose project, using a locally running
+Coog backoffice service.
+
+To do so, you must:
+
+- Ensure your local Coog server listen on all addresses (0.0.0.0)
+- Use the special "host.docker.internal" hostname for your
+CUSTOM_COOG_INTERNAL_URL
+- Enable host integration for the project, by setting the
+"ENABLE_HOST_NETWORK_INTEGRATION" variable to "1" in your `env.custom` file
+
+*Note: This can be done for other services, however the typical use case will
+be for backend developers, hence this particular example*
+
+### [PORTAL][B2B] Error: Not allowed by CORS
+
+By default, you should not be able to use the protocol https:// because it is not configured. You must therefore use the protocol http://.
