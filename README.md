@@ -286,7 +286,7 @@ database by using the `--database` parameter.
 
 ### Anonymize a database
 
-To anonymize a database, download use the file `anonymize_coo_db.sql` in the `bin/resources/` folder and use the following script replacing the values between `<>`:
+To anonymize a database, download use the file `anonymize_coog_db.sql` in the `bin/resources/` folder and use the following script replacing the values between `<>`:
 
     # Create a copy of the db to anonymize
     
