@@ -175,6 +175,7 @@ BEGIN
     PERFORM anon_table('res_user', 'name', 'email', 'id: not in :(select id from res_user where login = ''admin'');id: not in :(select "user" from "res_user-res_group" where "group" in (select id from res_group where name=''Coog Do Not Anonymize''))');
     PERFORM anon_table('claim_ij_subscription', 'ssn');
     update res_user set login = md5(login) where login != 'admin';
+    -- Set admin user's password to 'admin' when anonymizing a database
     update res_user set password_hash = '$pbkdf2-sha512$25000$9J7T2rtXKiUE4PwfY.x9Tw$Of5naHuwI71tuLLZluyq0dA.X4yq5fewhDImuzaDkVYnmAHKeIyLvOqLIgWB34m5SlFHOCyQd9CHD9ISQ/TE9g' where login = 'admin';
     PERFORM anon_table('ir_attachment', 'name', 'data');
     PERFORM anon_table('account_invoice', '', 'comment, description');
