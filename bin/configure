@@ -1,0 +1,125 @@
+#!/bin/bash
+
+###############################################################################
+# Used to build the configuration files from the user provided inputs
+#
+# docker-compose does not easily provide a way to propagate high-level
+# configuration to combine multiple env files, so this script is used to do it.
+#
+# The general idea is to inject variables defined in env.custom in env.base
+# in order to generate a ".env" file aggregating everything.
+#
+# By default, all services are enabled. Dpecific (unused) services can be
+# disabled by adding them to the "disabled_services" file
+###############################################################################
+set -euo pipefail
+
+export BASE_PATH=`realpath "$(dirname $0)/.."`
+. "${BASE_PATH}/bin/helpers/colors.sh"
+
+# If the custom file does not exist yet, init it
+if [[ ! -f "$BASE_PATH/env.custom" ]]; then
+    touch "$BASE_PATH/env.custom"
+fi
+
+# If disabled services file does not exist yet, init it
+if [[ ! -f "$BASE_PATH/disabled_services" ]]; then
+    touch "$BASE_PATH/disabled_services"
+fi
+
+generate () {
+    # We want that variables defined in sub-files to be available in this
+    # process
+    set -o allexport
+
+    # Load custom values
+    . "$BASE_PATH/env.custom"
+
+    # Load base values, applying modifications based on previously loaded
+    # (env.custom) values
+    . "$BASE_PATH/env.base"
+
+    # A little intimdating, but what is actually done here is looking for all
+    # the variables defined in env.base or env.custom, and printing them to
+    # stdout with their value. This is what will actually be stored in the .env
+    # file
+    for i in $( \
+            (cat "$BASE_PATH/env.base" && cat "$BASE_PATH/env.custom") | \
+            grep -v "^#" | grep -v "^$" | sort -u | \
+            sed -e "s/^\([A-Z0-9_]*\)=.*/\1/"); do
+        echo "$i="$(env | grep "^$i=" | sed -e "s/^[A-Z0-9_]*=\(.*\)/\1/")
+    done
+}
+
+set_services () {
+    # Create the list of services to include in the docker-compose project.
+    #
+    # By default, all services from the "compose" folder are loaded, with the
+    # exception of back/common which is a template for building back-office
+    # services and does not exist as such.
+    #
+    # Services in "disabled_services" will also be removed
+    SERVICES="docker-compose.yml"
+
+    for path in $(cd $BASE_PATH && ls compose/**/*.yml); do
+        # Remove the "compose/" and the ".yml"
+        key=${path#compose/}
+        service=${key%.yml}
+
+        if [[ "$service" = "back/common" ]]; then
+            continue
+        fi
+        if cat $BASE_PATH/disabled_services | grep -v "^#" | grep $service > /dev/null; then
+            fail "Ignoring $service"
+        else
+            check "Adding $service"
+            SERVICES="$SERVICES:$path"
+        fi
+    done
+
+    echo "COMPOSE_FILE=$SERVICES" >> "$BASE_PATH/.env"
+}
+
+init_service_env_files () {
+    # Create env files for all services if needed
+    mkdir -p "$BASE_PATH"/env
+
+    for f in $(ls "$BASE_PATH"/defaults/env); do
+        if [[ ! -e "$BASE_PATH/env/$f" ]]; then
+            cp "$BASE_PATH"/defaults/env/"$f" "$BASE_PATH"/env/"$f"
+        fi
+    done
+}
+
+check_host_integration() {
+    filename="$BASE_PATH/docker-compose.host-integration.yaml"
+
+    # Load custom values
+    . "$BASE_PATH/env.custom"
+
+    if [[ "${ENABLE_HOST_NETWORK_INTEGRATION:-}" = "1" ]]; then
+        echo ""
+        echo "Warning: Host network integration enabled"
+
+        echo "services:" > "$filename"
+        for service in $(docker-compose config | yq -r '.services | keys[]'); do
+            echo "  $service:" >> "$filename"
+            echo "    extra_hosts:" >> "$filename"
+            echo '      - "host.docker.internal:host-gateway"' >> "$filename"
+        done
+
+        sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.host-integration.yaml/" "$BASE_PATH/.env"
+    else
+        rm -f "$filename"
+    fi
+}
+
+section "Updating .env contents"
+echo "# AUTO GENERATED, DO NOT MODIFY MANUALLY" > "$BASE_PATH/.env"
+
+# We must run this in a sub-process because it modifies the environment
+(generate) >> "$BASE_PATH/.env"
+set_services
+init_service_env_files
+(check_host_integration)
+echo " "

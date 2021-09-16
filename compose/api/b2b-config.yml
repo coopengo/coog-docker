@@ -1,0 +1,15 @@
+services:
+  api-b2b-config:
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_API_B2B_CONFIG:?}:${IMAGE_VERSION_API_B2B_CONFIG:?}
+    env_file:
+      - env/api-b2b-config.env
+    environment:
+      - COOG_GATEWAY_URL=${API_GATEWAY_INTERNAL_URL:?}
+      - COOG_URL=${COOG_INTERNAL_URL:?}
+      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
+      - JWT_INTERNAL_ENCRYPTION=${JWT_INTERNAL_ENCRYPTION:?}
+    depends_on:
+      - mongo
+    restart: always
+    networks:
+      - backend

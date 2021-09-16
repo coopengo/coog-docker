@@ -1,0 +1,10 @@
+services:
+  init:
+    extends:
+      file: compose/back/common.yml
+      service: back-common
+    command: ["admin", "-cu", "ir", "res", "-d", "${COOG_MAIN_DATABASE:?}"]
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure

@@ -1,0 +1,16 @@
+services:
+  coog:
+    extends:
+      file: compose/back/common.yml
+      service: back-common
+    command: ["server", "${COOG_SERVER_WORKERS:?}"]
+    depends_on:
+      - init
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.coog.rule=Host(`${PROJECT_HOSTNAME:?}`)
+      - traefik.http.routers.coog.entrypoints=http
+      - traefik.http.routers.coog_s.rule=Host(`${PROJECT_HOSTNAME:?}`)
+      - traefik.http.routers.coog_s.entrypoints=https
+      - traefik.http.routers.coog_s.tls=true
+    restart: always

@@ -1,0 +1,22 @@
+#!/bin/bash
+###############################################################################
+# Deploy using docker swarm
+###############################################################################
+BASE_PATH=`realpath "$(dirname $0)/.."`
+. "${BASE_PATH}/bin/helpers/colors.sh"
+
+# Check env and services
+${BASE_PATH}/bin/configure
+
+deploy () {
+    # Export .env files to be accessible to deploy command
+    set -o allexport
+    . "${BASE_PATH}/.env"
+
+    # Get stacks file to use from COMPOSE_FILE variable from builded .env file
+    STACK_FILES="-c ${BASE_PATH}/$(echo ${COMPOSE_FILE} | sed -E "s|:| -c ${BASE_PATH}/|g")"
+
+    docker stack deploy ${STACK_FILES} "$COMPOSE_PROJECT_NAME"
+}
+section "Deploying"
+(deploy)

@@ -1,0 +1,14 @@
+services:
+  app-b2c:
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_APP_B2C:?}:${IMAGE_VERSION_APP_B2C:?}
+    env_file:
+      - env/app-b2c.env
+    environment:
+      - COOG_URL=${COOG_INTERNAL_URL:?}
+      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
+      - JWT_INTERNAL_ENCRYPTION=${JWT_INTERNAL_ENCRYPTION:?}
+    depends_on:
+      - mongo
+      - api
+    networks:
+      - backend
