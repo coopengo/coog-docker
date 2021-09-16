@@ -73,7 +73,7 @@ dump() {
 
     container_name="$project_name"_postgres_1
     format="${format:-sql}"
-    dump_file=${1:-/tmp/$db_name-$(date --iso)}.${format}
+    dump_file=${1:-/tmp/$db_name-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
 
     section "Dumping database $db_name to $dump_file (format $format)"
 
