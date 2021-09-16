@@ -301,6 +301,8 @@ To anonymize a database, download the file `anonymize_coog_db.sql` in the `bin/r
     pg_dump -U $PG_USER -d $COPY -Fc > $COPY.dump
     dropdb -e -U $PG_USER $COPY
 
+Some variables are adjustable to control the behavior of the script. They are situated in the declaration of the anon_db function.
+
 ### Run daily chain
 
 The daily chain can be run using the following command:
