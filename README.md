@@ -186,16 +186,20 @@ Ex de commande tar :
 
 ### Anonymiser une base
 
-Le but est d'appliquer ces requêtes au sein de la BDD que l'on souhaite anonymiser :
+Pour anonymiser une base de données, il faut télécharger le script `anonymize_coo_db.sql` dans le dossier `scripts/` et taper les commandes suivante :
 
-    docker exec -it coog-docker_coog_1 ep anon_queries 1
-
-Exemple de copie d'une base coog et de son anonymisation :
-
-    docker exec -it coog-docker_postgres_1 psql --quiet -c "create database anon_db;" -U coog
-    docker exec -t coog-docker_postgres_1 pg_dump -d coog -U coog -c -O > dump_to_anon.sql
-    cat dump_to_anon.sql | docker exec -i coog-docker_postgres_1 psql -U coog -d anon_db
-    docker exec -it coog-docker_coog_1 ep anon_queries 1 | docker exec -i coog-docker_postgres_1 psql -U coog -d anon_db
+    # Créer une copie de la base à anonymiser
+    
+    PG_USER=<nom_de_l_utilisateur>
+    COPY=<nom_de_la_copie>
+    DB_NAME=<nom_de_la_db>
+    
+    createdb -e -U $PG_USER DB_COPY -T DB_NAME
+    psql -U <nom_de_l'utilisateur> -d <nom_de_la_copie> 2>&1 /dev/null << cat $(pwd)/scripts/anonymize_coog_db.sql
+    
+    # Création d'un dump de la base
+    pg_dump -U $PG_USER -d $COPY -Fc > $COPY.dump
+    dropdb -e -U $PG_USER $COPY
 
 ## Installer sentry
 
