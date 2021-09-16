@@ -286,22 +286,15 @@ database by using the `--database` parameter.
 
 ### Anonymize a database
 
-To anonymize a database, download the file `anonymize_coog_db.sql` in the `bin/resources/` folder and use the following script replacing the values between `<>`:
+The following command can be used to anonymize the database. **This is not
+reversible**.
 
-    # Create a copy of the db to anonymize
-    
-    PG_USER=<user_name>
-    DB_NAME=<db_name>
-    COPY=<db_copy_name>
-    
-    createdb -e -U $PG_USER DB_COPY -T DB_NAME
-    psql -U $PG_USER -d $COPY < cat /path/to/anonymize_coog_db.sql
-    
-    # Create a dump of the copy
-    pg_dump -U $PG_USER -d $COPY -Fc > $COPY.dump
-    dropdb -e -U $PG_USER $COPY
+```shell
+./bin/manage_db anonymize
+```
 
-Some variables are adjustable to control the behavior of the script. They are situated in the declaration of the anon_db function.
+As is the case for the `reset` command, this command can be run on another
+database by using the `--database` parameter.
 
 ### Run daily chain
 
