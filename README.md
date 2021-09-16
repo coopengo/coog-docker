@@ -295,7 +295,7 @@ To anonymize a database, download the file `anonymize_coog_db.sql` in the `bin/r
     COPY=<db_copy_name>
     
     createdb -e -U $PG_USER DB_COPY -T DB_NAME
-    psql -U $PG_USER -d $COPY 2>&1 /dev/null << cat $(pwd)/scripts/anonymize_coog_db.sql
+    psql -U $PG_USER -d $COPY < cat /path/to/anonymize_coog_db.sql
     
     # Create a dump of the copy
     pg_dump -U $PG_USER -d $COPY -Fc > $COPY.dump

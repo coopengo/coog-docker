@@ -128,8 +128,7 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
-DO $$
-
+CREATE OR REPLACE FUNCTION anon_db() RETURNS void as $$
 DECLARE
 -- Les variables suivantes ne seront pas prises en compte si la personne morale est souscriptrice d'un contrat
 
@@ -183,8 +182,16 @@ BEGIN
     PERFORM anon_table('account_statement_line', '', 'description');
     PERFORM anon_table('account_payment', '', 'description');
 
-END $$;
+END
+$$ LANGUAGE plpgsql;
 
+DO $$
+BEGIN
+    PERFORM anon_db();
+END;
+$$;
+
+drop function anon_db();
 drop function col_exist(text, text);
 drop function table_exist(text);
 drop function anon_table(text, text, text, text);
