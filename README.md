@@ -289,6 +289,9 @@ database by using the `--database` parameter.
 The following command can be used to anonymize the database. **This is not
 reversible**.
 
+The script can be customized by changing the values of the variables
+declared in the anon_db function.
+
 ```shell
 ./bin/manage_db anonymize
 ```
