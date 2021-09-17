@@ -130,16 +130,18 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION anon_db() RETURNS void as $$
 DECLARE
--- Les variables suivantes ne seront pas prises en compte si la personne morale est souscriptrice d'un contrat
+-- The following variables will not be taken into account if the company is subscribed to a contract
 
--- Variable qui indique si l'on doit anonymiser les personnes morales.
--- true : Indique que les personnes morales seront anonymisées
+-- This variable controls wether companies should be anonymized or not
+-- true: Means companies should be anonymized
+-- false: Keep companies as is
     anonymize_companies boolean := true;
--- Variable qui indique si l'on doit garder la raison sociale des personnes morales.
--- true : Indique que le nom sera gardé en clair dans la base même si le reste des informations est anonymisé
+-- This variable controls wether the name of companies should be anonymized, even if the rest of the fields are anonymized
+-- true: Means companies names should be kept untouched
+-- false: Means companies names should be anonymized
     keep_company_name boolean := false;
 
--- Ne pas modifier les variables sous ce commentaire
+-- Do not modify variables under this comment
     anon_parties_where_clause text := 'id: not in :(select party from bank union select party from insurer)';
     anon_only_persons_where_clause text := 'id: not in :(select id from party_party where not is_person)';
     anon_party_names_where_clause text := '';
