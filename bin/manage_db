@@ -121,43 +121,15 @@ change_admin_password() {
 
 anonymize() {
     echo " "
-    if [[ "$#" = "0" ]]; then
-        echo "Missing anonymization level (0, 1, 2)" >&2
-        exit 1
-    fi
-
-    level=$1
-    if [[ ! -e "$BASE_PATH/bin/resources/anonymize_level_$level.sql" ]]; then
-        echo "Unknown anonymization level $level" >&2
-        exit 1
-    fi
 
     _start_services postgres
 
     container_name="$project_name"_postgres_1
 
-    docker cp "$BASE_PATH/bin/resources/anonymize_procedures.sql" "$container_name":/tmp/
-    docker cp "$BASE_PATH/bin/resources/anonymize_level_0.sql" "$container_name":/tmp/anonymize0.sql
-    docker cp "$BASE_PATH/bin/resources/anonymize_level_1.sql" "$container_name":/tmp/anonymize1.sql
-    docker cp "$BASE_PATH/bin/resources/anonymize_level_2.sql" "$container_name":/tmp/anonymize2.sql
-    docker cp "$BASE_PATH/bin/resources/anonymize_remove_procedures.sql" "$container_name":/tmp/
+    docker cp "$BASE_PATH/bin/resources/anonymize_coog_db.sql" "$container_name":/tmp/anonymize.sql
 
     docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
-        --file /tmp/anonymize_procedures.sql
-    docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
-        --file /tmp/anonymize2.sql
-
-    if [[ "$level" -lt 2 ]]; then
-        docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
-            --file /tmp/anonymize1.sql
-    fi
-
-    if [[ "$level" -lt 1 ]]; then
-        docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
-            --file /tmp/anonymize0.sql
-    fi
-    docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
-        --file /tmp/anonymize_remove_procedures.sql
+        --file /tmp/anonymize.sql
 }
 
 _load_configuration() {

@@ -289,19 +289,11 @@ database by using the `--database` parameter.
 The following command can be used to anonymize the database. **This is not
 reversible**.
 
-The anonymization levels are as follow:
-
-- "2": The database will still be usable. Configuration will still be there,
-and "extra data" fields will be kept so contracts & co are still consistent
-- "1": Same as level 2, but parts of the configuration will also be
-anonymized, as well as extra data fields, making it difficult to test on
-existing entities. Tests on newly created entities should work though
-- "0": Same as level 1, but fields that could be used to cross-reference
-information from another database (ex: party codes, contract numbers) will also
-be anonymized
+The script can be customized by changing the values of the variables
+declared in the anon_db function.
 
 ```shell
-./bin/manage_db anonymize [level]
+./bin/manage_db anonymize
 ```
 
 As is the case for the `reset` command, this command can be run on another
