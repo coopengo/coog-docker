@@ -28,7 +28,9 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Run daily chain](#run-daily-chain)
   - [Creating custom services](#creating-custom-services)
   - [FAQ](#faq)
-    - [Using services deployed on localhost](#using_services_deployed_on_localhost)
+    - [Using services deployed on localhost](#using-services-deployed-on-localhost)
+    - [Network error on configuration](#network-error-on-configuration)
+    - [Configuration error](#configuration-error)
     - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
 
 <!-- /TOC -->
@@ -343,6 +345,40 @@ CUSTOM_COOG_INTERNAL_URL
 
 *Note: This can be done for other services, however the typical use case will
 be for backend developers, hence this particular example*
+
+### Network error on configuration
+
+The following error may happen if you work with multiple projects on the same
+machine (with different `COMPOSE_PROJECT_NAME`):
+
+```
+Starting up
+Creating network "<PROJECT_NAME>-coog-backend" with the default driver
+ERROR: Pool overlaps with other one on this address space
+```
+
+This happens because the internal networks of the projects are overlapping.
+
+To solve this, you should set the following variables to different values for
+each projects (usually, increasing the third number should be enough):
+
+```
+CUSTOM_NETWORK_BACKEND_SUBNET=                # Backend subnet mask, defaults to 10.0.1.0/24
+CUSTOM_NETWORK_FRONTEND_SUBNET=               # Frontend subnet mask, defaults to 10.0.2.0/24
+```
+
+### Configuration error
+
+When running `./bin/configure` (or any other command that triggers it), you may
+encounter the following error (or a similar one, with a different parameter
+name). This is because the minimal configuration was not provided in the
+`env.custom` file, and you should double-check if all required values from the
+`env.custom.sample` file are provided.
+
+```
+Updating .env contents
+/home/jwhatever/docker/env.base: line 38: IMAGE_VERSION_COOG: parameter null or not set
+```
 
 ### [PORTAL][B2B] Error: Not allowed by CORS
 
