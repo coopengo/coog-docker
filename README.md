@@ -15,6 +15,8 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Minimum configuration](#minimum-configuration)
     - [Disabling services](#disabling-services)
     - [Specific services configuration](#specific-services-configuration)
+    - [Overriding services](#overriding-services)
+  - [Tracking configuration changes](#tracking-configuration-changes)
   - [Commands](#commands)
     - [Refresh configuration](#refresh-configuration)
     - [Starting up](#starting-up)
@@ -161,7 +163,44 @@ echo "front/app-b2c" >> disabled_services
 There are specific environment files in the `env` folder to customize the
 behaviour of specific services.
 
-Documentation for what can be done and how is in the `defaults/env` folder.
+For each service, there are sample files in the `defaults/env` folder, where
+a few recommended values can be found (mostly for `back.env`, which is the
+configuration for the backoffice component)
+
+### Overriding existing services
+
+If a `override.yml` file is found at the root of the repository, it will be
+appended to the list of configurations that will be load by the compose
+project. This can be useful to add custom configurations to services without
+modifying the repository contents.
+
+## Tracking configuration changes
+
+For non-develop environments, tracking the history of modifications can be
+useful (in order to better understand the changes, and keep a possibility to
+rollback some configurations).
+
+To do so, you must create a `custom` folder at the root of the repository.
+
+This folder can contain:
+
+- a `env.custom` file
+- a `disabled_services` file
+- a `override.yml` file
+- a `compose/custom` folder, in which you can add custom services to load
+
+**WARNING: The custom configuration from the `custom` folder will be loaded
+before the configuration defined directly in the root folder.** This means, for
+instance, that the `env.custom` file may overwrite variables which were defined
+in the `custom/env.custom` file.
+
+This is intentional, the general idea being that the `custom` folder will be
+managed using a source-control management tool (git...), and will maybe be
+shared by multiple users, or just track various environments using branches.
+
+So, for a particular compose project, the configuration files at the root of
+the repository are more specific than the `custom` folder, so they must take
+precedence.
 
 ## Commands
 

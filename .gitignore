@@ -4,6 +4,10 @@
 # Will be modified by the user
 disabled_services
 env.custom
+override.yml
+
+# custom folder can contain all custom configuration for source controlling it
+custom
 
 # Will be created / filled-up if needed by the user
 certs

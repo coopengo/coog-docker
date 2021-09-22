@@ -21,16 +21,33 @@ export BASE_PATH=`realpath "$(dirname $0)/.."`
 if [[ ! -f "$BASE_PATH/env.custom" ]]; then
     touch "$BASE_PATH/env.custom"
 fi
+echo Will load "$BASE_PATH"/env.custom
+
+if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
+    echo Will load "$BASE_PATH"/custom/env.custom
+fi
 
 # If disabled services file does not exist yet, init it
 if [[ ! -f "$BASE_PATH/disabled_services" ]]; then
     touch "$BASE_PATH/disabled_services"
 fi
+echo Will load "$BASE_PATH"/disabled_services
+
+if [[ -f "$BASE_PATH/custom/disabled_services" ]]; then
+    echo Will load "$BASE_PATH"/custom/disabled_services
+fi
+echo ""
 
 generate () {
     # We want that variables defined in sub-files to be available in this
     # process
     set -o allexport
+
+    # Load configuration value from custom folder first, in case the local
+    # env.custom wants to override it
+    if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
+        . "$BASE_PATH/custom/env.custom"
+    fi
 
     # Load custom values
     . "$BASE_PATH/env.custom"
@@ -44,9 +61,13 @@ generate () {
     # stdout with their value. This is what will actually be stored in the .env
     # file
     for i in $( \
-            (cat "$BASE_PATH/env.base" && cat "$BASE_PATH/env.custom") | \
-            grep -v "^#" | grep -v "^$" | sort -u | \
-            sed -e "s/^\([A-Z0-9_]*\)=.*/\1/"); do
+            (cat "$BASE_PATH/env.base" && cat "$BASE_PATH/env.custom" \
+                && ( \
+                    ([[ -f "$BASE_PATH/custom/env.custom" ]] && \
+                        cat "$BASE_PATH/custom/env.custom") \
+                    || echo "")) \
+            | grep -v "^#" | grep -v "^$" | sed -e "s/^\([A-Z0-9_]*\)=.*/\1/" \
+            | sort -u); do
         echo "$i="$(env | grep "^$i=" | sed -e "s/^[A-Z0-9_]*=\(.*\)/\1/")
     done
 }
@@ -61,9 +82,9 @@ set_services () {
     # Services in "disabled_services" will also be removed
     SERVICES="docker-compose.yml"
 
-    for path in $(cd $BASE_PATH && ls compose/**/*.yml); do
-        # Remove the "compose/" and the ".yml"
-        key=${path#compose/}
+    for path in $(cd $BASE_PATH && ls compose/**/*.yml custom/compose/**/*.yml); do
+        # Remove the "custom/", "compose/" and the ".yml"
+        key=${path#*compose/}
         service=${key%.yml}
 
         if [[ "$service" = "back/common" ]]; then
@@ -72,10 +93,27 @@ set_services () {
         if cat $BASE_PATH/disabled_services | grep -v "^#" | grep $service > /dev/null; then
             fail "Ignoring $service"
         else
-            check "Adding $service"
-            SERVICES="$SERVICES:$path"
+            if [[ -f "$BASE_PATH/custom/disabled_services" ]]; then
+                if cat $BASE_PATH/custom/disabled_services | grep -v "^#" | grep $service > /dev/null; then
+                    fail "Ignoring $service"
+                else
+                    check "Adding $service"
+                    SERVICES="$SERVICES:$path"
+                fi
+            else
+                check "Adding $service"
+                SERVICES="$SERVICES:$path"
+            fi
         fi
     done
+
+    if [[ -f "$BASE_PATH"/custom/override.yml ]]; then
+        SERVICES="$SERVICES:custom/override.yml"
+    fi
+
+    if [[ -f "$BASE_PATH"/override.yml ]]; then
+        SERVICES="$SERVICES:override.yml"
+    fi
 
     echo "COMPOSE_FILE=$SERVICES" >> "$BASE_PATH/.env"
 }
@@ -93,6 +131,10 @@ init_service_env_files () {
 
 check_host_integration() {
     filename="$BASE_PATH/docker-compose.host-integration.yaml"
+
+    if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
+        . "$BASE_PATH/custom/env.custom"
+    fi
 
     # Load custom values
     . "$BASE_PATH/env.custom"
