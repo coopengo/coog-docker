@@ -187,7 +187,7 @@ _load_configuration() {
     fi
 
     POSTGRES_HOST=$(. $BASE_PATH/.env && echo $POSTGRES_HOST)
-    [[ "$POSTGRES_HOST" = "posgres" ]] && USE_LOCAL_POSTGRES=1 \
+    [[ "$POSTGRES_HOST" = "postgres" ]] && USE_LOCAL_POSTGRES=1 \
         || USE_LOCAL_POSTGRES=0
 
     echo " "
