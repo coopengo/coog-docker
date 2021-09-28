@@ -3,7 +3,7 @@ services:
     extends:
       file: compose/back/common.yml
       service: back-common
-    command: ["admin", "-cu", "ir", "res", "-d", "${COOG_MAIN_DATABASE:?}"]
+    command: ["admin", "-cu", "ir"]
     restart: on-failure
     deploy:
       restart_policy:
