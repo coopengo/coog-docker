@@ -29,6 +29,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Anonymize a database](#anonymize-a-database)
     - [Run daily chain](#run-daily-chain)
   - [Creating custom services](#creating-custom-services)
+  - [Debug tools](#debug-tools)
   - [FAQ](#faq)
     - [Using services deployed on localhost](#using-services-deployed-on-localhost)
     - [Network error on configuration](#network-error-on-configuration)
@@ -365,6 +366,24 @@ adds services by looking in the `compose` directory.
 That makes adding custom services straightforward, just add a new `yml` file in
 the appropriate sub-directory, re-run `./bin/configure`, and they should be
 detected.
+
+## Debug tools
+
+The backoffice application includes some useful tools for improving the
+performance analysis / debugging experience.
+
+Most notably:
+
+- Setting `COOG_UWSGI_STATS=1` in `env.custom` will enable statistics
+collection for the Uwsgi server on top of which the backoffice application
+runs. Those statistics can be accessed using the `bin/tools/uwsgi_stats`
+command, and are printed as json data
+- Setting `COOG_UWSGI_TRACEBACKER=1` in `env.custom` will enable the
+`bin/tools/uwsgi_tracebacks` command, that can be used to dump the current
+traceback of the Python processes / threads of the Uwsgi server. Useful when a
+process seems "stuck", or for detecting slow downs using a sampling approach
+
+Those two options have no sensible overhead, but are still disabled by default.
 
 ## FAQ
 
