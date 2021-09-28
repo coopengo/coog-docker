@@ -13,4 +13,7 @@ services:
       - traefik.http.routers.coog_s.rule=Host(`${PROJECT_HOSTNAME:?}`)
       - traefik.http.routers.coog_s.entrypoints=https
       - traefik.http.routers.coog_s.tls=true
+    environment:
+      - ENABLE_UWSGI_STATS=${COOG_UWSGI_STATS:?}
+      - ENABLE_UWSGI_TRACEBACKER=${COOG_UWSGI_TRACEBACKER:?}
     restart: always

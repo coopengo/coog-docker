@@ -1,0 +1,21 @@
+#!/bin/bash
+###############################################################################
+# Check the statistics for the backoffice server
+###############################################################################
+set -euo pipefail
+BASE_PATH=`realpath "$(dirname $0)/../.."`
+
+stats_enabled=$(. $BASE_PATH/.env && echo $COOG_UWSGI_STATS)
+
+if [[ "$stats_enabled" != "1" ]]; then
+    echo Stats disabled, set the COOG_UWSGI_STATS variable to 1 to enable them >&2
+    exit 2
+fi
+
+coog_running=$(docker-compose ps --services | grep "^coog$" || true)
+if [[ ! "$coog_running" ]]; then
+    echo Coog service is not running >&2
+    exit 2
+fi
+
+docker-compose exec coog uwsgi --connect-and-read /tmp/uwsgi_stats
