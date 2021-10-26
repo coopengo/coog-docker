@@ -1,0 +1,35 @@
+services:
+  b2c-back:
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_B2C_BACK:?}:${IMAGE_VERSION_B2C_BACK:?}
+    depends_on:
+      - postgres
+    env_file:
+      - env/b2c_back.env
+    environment:
+      - HOST=${BACKEND_HOST:-0.0.0.0}
+      - PORT=1337
+      - DATABASE_CLIENT=postgres
+      - DATABASE_NAME=${POSTGRES_B2C_DB:?}
+      - DATABASE_HOST=${POSTGRES_B2C_HOST:?}
+      - DATABASE_PORT=${POSTGRES_B2C_PORT:?}
+      - DATABASE_USERNAME=${POSTGRES_B2C_USER:?}
+      - DATABASE_PASSWORD=${POSTGRES_B2C_PASSWORD:?}
+      - URL=${B2C_BACKEND_URL:?}
+      - STRAPI_PLUGIN_I18N_INIT_LOCALE_CODE=fr
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.b2cback.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/v1/customer`)
+      - traefik.http.routers.b2cback.entrypoints=http
+      - traefik.http.routers.b2cback.middlewares=b2cback
+      - traefik.http.middlewares.b2cback.replacepathregex.regex=/v1/customer(/|$$)(.*)
+      - traefik.http.middlewares.b2cback.replacepathregex.replacement=/$$2
+      - traefik.http.routers.b2cback_s.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/v1/customer`)
+      - traefik.http.routers.b2cback_s.middlewares=b2cback_s
+      - traefik.http.middlewares.b2cback_s.replacepathregex.regex=/v1/customer(/|$$)(.*)
+      - traefik.http.middlewares.b2cback_s.replacepathregex.replacement=/$$2
+      - traefik.http.routers.b2cback_s.entrypoints=https
+      - traefik.http.routers.b2cback_s.tls=true
+    restart: always
+    networks:
+      - backend
+      - frontend
