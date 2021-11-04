@@ -1,0 +1,15 @@
+services:
+  api-b2c:
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_API_B2C:?}:${IMAGE_VERSION_API_B2C:?}
+    env_file:
+      - env/api-b2c.env
+    environment:
+      - COOG_URL=${COOG_INTERNAL_URL:?}
+      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
+      - JWT_INTERNAL_ENCRYPTION=${JWT_INTERNAL_ENCRYPTION:?}
+      - COOG_DOCUMENT_TOKEN_SECRET=${TRYTOND_DOCUMENT_API__DOCUMENT_TOKEN_SECRET:?}
+    depends_on:
+      - mongo
+    restart: always
+    networks:
+      - backend
