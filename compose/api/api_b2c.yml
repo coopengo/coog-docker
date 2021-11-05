@@ -8,8 +8,6 @@ services:
       - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
       - JWT_INTERNAL_ENCRYPTION=${JWT_INTERNAL_ENCRYPTION:?}
       - COOG_DOCUMENT_TOKEN_SECRET=${TRYTOND_DOCUMENT_API__DOCUMENT_TOKEN_SECRET:?}
-    depends_on:
-      - mongo
     restart: always
     networks:
       - backend
