@@ -4,7 +4,7 @@ services:
     depends_on:
       - postgres
     env_file:
-      - env/b2c_back.env
+      - env/b2c-back.env
     environment:
       - HOST=${BACKEND_HOST:-0.0.0.0}
       - PORT=1337

@@ -1,0 +1,25 @@
+services:
+  b2c-front:
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_B2C_FRONT:?}:${IMAGE_VERSION_B2C_FRONT:?}
+    env_file:
+      - env/b2c-front.env
+    environment:
+      - GATSBY_API_URL=${B2C_BACKEND_EXTERNAL_URL:?}
+      - ENABLE_GATSBY_REFRESH_ENDPOINT=true
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.b2cfront.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/customer`)
+      - traefik.http.routers.b2cfront.entrypoints=http
+      - traefik.http.routers.b2cfront.middlewares=b2cfront
+      - traefik.http.middlewares.b2cfront.replacepathregex.regex=/customer(/|$$)(.*)
+      - traefik.http.middlewares.b2cfront.replacepathregex.replacement=/$$2
+      - traefik.http.routers.b2cfront_s.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/customer`)
+      - traefik.http.routers.b2cfront_s.middlewares=b2cfront_s
+      - traefik.http.middlewares.b2cfront_s.replacepathregex.regex=/customer(/|$$)(.*)
+      - traefik.http.middlewares.b2cfront_s.replacepathregex.replacement=/$$2
+      - traefik.http.routers.b2cfront_s.entrypoints=https
+      - traefik.http.routers.b2cfront_s.tls=true
+    restart: always
+    networks:
+      - backend
+      - frontend

@@ -1,7 +1,8 @@
 services:
   portal:
     image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_PORTAL:?}:${IMAGE_VERSION_PORTAL:?}
-    command: ["server", "1"]
+    entrypoint: ["ep"]
+    command: ["server"]
     env_file:
       - env/portal.env
     labels:
