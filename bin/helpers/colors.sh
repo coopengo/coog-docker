@@ -2,6 +2,7 @@
 export RESET="\e[0m"
 export GREY="\e[2;37m"
 export GREEN="\e[1;32m"
+export YELLOW="\e[1;33m"
 export RED="\e[1;31m"
 export UNDERLINED="\e[4;38m"
 
@@ -34,6 +35,11 @@ check() {
     light "$1" "${2:-}"
 }
 
+warning() {
+    write "${3:-}${YELLOW}▲${RESET}"
+    light "$1" "${2:-}"
+}
+
 fail() {
     write "${3:-}${RED}✗${RESET}"
     light "$1" "${2:-}"
@@ -45,4 +51,5 @@ export -f write
 export -f section
 export -f neutral
 export -f check
+export -f warning
 export -f fail
