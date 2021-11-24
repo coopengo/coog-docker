@@ -162,7 +162,7 @@ check_configuration() {
     # Check for variables that are not required for compatibility, but are
     # strongly recommended :)
     if [[ "$COOG_PASSPHRASE" = "" ]]; then
-        warning "COOG_PASSPHRASE should not be empty"
+        warning "COOG_PASSPHRASE should not be empty in a production environment"
     fi
 }
 
