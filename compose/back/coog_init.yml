@@ -3,7 +3,7 @@ services:
     extends:
       file: compose/back/common.yml
       service: back-common
-    command: ["admin", "-cu", "ir"]
+    command: ["admin", "-cu", "ir", "res"]
     restart: on-failure
     deploy:
       restart_policy:
