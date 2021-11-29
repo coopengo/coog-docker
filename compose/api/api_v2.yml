@@ -1,6 +1,8 @@
 services:
   api:
     image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_API:?}:${IMAGE_VERSION_API:?}
+    env_file:
+      - env/api-v2.env
     environment:
       - COOG_URL=${COOG_INTERNAL_URL:?}
       - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
@@ -14,7 +16,6 @@ services:
       - MONGO_DB_NAME=${API_V2_MAIN_DATABASE:?}
       - MONGO_USER=${MONGO_USER:?}
       - MONGO_PASSWORD=${MONGO_PASSWORD:?}
-      - TALEND_API_URL=${TALEND_API_URL:-}
     depends_on:
       - mongo
     restart: always
