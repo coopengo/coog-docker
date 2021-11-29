@@ -84,7 +84,7 @@ dump() {
 
     container_name="$project_name"_postgres_1
     format="${format:-sql}"
-    dump_file=${1:-/tmp/$db_name-$(date --iso)}.${format}
+    dump_file=${1:-/tmp/$db_name-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
 
     section "Dumping database $db_name to $dump_file (format $format)"
 
@@ -111,8 +111,8 @@ update() {
 
     # We need to kill the "init" container because it may lead to deadlocks.
     # And we are updating the db anyaway
-    docker kill "$project_name"_init_1 > /dev/null
-    docker rm -f "$project_name"_init_1 > /dev/null
+    docker kill "$project_name"-init-1 > /dev/null
+    docker rm -f "$project_name"-init-1 > /dev/null
 
     if [[ "$#" = "0" ]]; then
         args=ir

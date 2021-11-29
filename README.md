@@ -354,9 +354,15 @@ considered. The previous example runs with "5" business days ahead, using the
 "french_work_days" configuration.
 
 This command can be set in the crontab of the host to run every day.
+In that case, you must make sure that `docker-compose` is available in the path.
+Example command:
+
+```shell
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin /path/to/bin/daily 5 french_work_days
+```
 
 **Note: This command uses the mechanisms introduced in Coog 2.12 for daily chain
-configuration in side the application**
+configuration inside the application**
 
 ## Creating custom services
 

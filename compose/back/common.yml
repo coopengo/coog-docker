@@ -4,7 +4,7 @@ services:
     env_file:
       # For some reason, we need to specify a relative path here
       - ../../env/back.env
-    entrypoint: ["ep"]
+    entrypoint: ['ep']
     environment:
       - LOG_LEVEL=${COOG_LOG_LEVEL:?}
       - TRYTOND_WEB__CORS=${CORS_WHITELIST:?}
@@ -16,8 +16,8 @@ services:
       - COOG_DB_PASSWORD=${POSTGRES_PASSWORD:?}
       - TRYTOND_ASYNC_CELERY=${CELERY_BROKER_URI:?}
       - TRYTOND_DATABASE_NAMES=${COOG_DATABASES:?}
-      - TRYTOND_SESSION__PASSPHRASE=${TRYTOND_SESSION__PASSPHRASE:?}
-      - TRYTOND_DOCUMENT_API__DOCUMENT_TOKEN_SECRET=${TRYTOND_DOCUMENT_API__DOCUMENT_TOKEN_SECRET:?}
+      - TRYTOND_SESSION__PASSPHRASE=${COOG_PASSPHRASE:-}
+      - TRYTOND_DOCUMENT_API__DOCUMENT_TOKEN_SECRET=${DOCUMENT_TOKEN_SECRET:?}
     volumes:
       - ${COOG_TMP_VOLUME:?}:/workspace/tmp
       - ${COOG_DATA_VOLUME:?}:/workspace/io

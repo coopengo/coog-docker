@@ -8,6 +8,11 @@
 #
 #       ./bin/daily 5 french_work_days
 #
+# WARNING: If used in a crontab, you must make sure that docker-compose is
+# available in the path. Example command:
+#
+#       PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin /path/to/bin/daily 5 french_work_days
+#
 ###############################################################################
 BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"

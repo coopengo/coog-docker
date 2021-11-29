@@ -156,6 +156,16 @@ check_host_integration() {
     fi
 }
 
+check_configuration() {
+    . "$BASE_PATH/.env"
+
+    # Check for variables that are not required for compatibility, but are
+    # strongly recommended :)
+    if [[ "$COOG_PASSPHRASE" = "" ]]; then
+        warning "COOG_PASSPHRASE should not be empty in a production environment"
+    fi
+}
+
 section "Updating .env contents"
 echo "# AUTO GENERATED, DO NOT MODIFY MANUALLY" > "$BASE_PATH/.env"
 
@@ -164,4 +174,5 @@ echo "# AUTO GENERATED, DO NOT MODIFY MANUALLY" > "$BASE_PATH/.env"
 set_services
 init_service_env_files
 (check_host_integration)
+(check_configuration)
 echo " "
