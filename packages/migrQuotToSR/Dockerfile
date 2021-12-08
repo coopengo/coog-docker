@@ -1,4 +1,4 @@
-FROM node:10.15-alpine
+FROM node:lts-alpine
 
 RUN set -eux; \
   addgroup -g 1003 coog ; \
