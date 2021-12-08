@@ -4,6 +4,7 @@ const redis = require('redis');
 const { promisify } = require('util');
 const { MongoClient } = require('mongodb');
 const request = require('axios');
+const fs = require('fs/promises');
 
 const { getSalesRouteFromQuotation } = require('./transformToSR');
 const { getOfferFromV1 } = require('./transformOfferToV2');
@@ -46,8 +47,8 @@ const getIdentityByToken = (token, allIdentities) => {
       },
     ])
     .catch(err => {
-      console.log(`Error ${_.get(err, 'response.status')} for ${token}:`);
-      console.log(_.get(err, 'response.data'));
+      console.log(`Error ${_.get(err, 'response.status', err)} for ${token}:`);
+      console.log(_.get(err, 'response.data', _.get(err, 'response')));
     });
 };
 
@@ -61,8 +62,8 @@ const insertIdentities = (db, identities) =>
     .collection('identities')
     .insertMany(identities, { check_keys: false })
     .then(displaySuccessInsertLoadIdentities)
-    .catch(() => {
-      console.log(`Error: ${identities}`);
+    .catch(e => {
+      console.log(`Error: ${e}`);
       return identities;
     });
 
@@ -150,56 +151,129 @@ const getRedisToken =
 const addMongoIdentities =
   ({ identities, client }) =>
   val => {
-    const usersTokens = val[1].map(token => token.split(':')[1]);
-    console.log(`Redis users found: ${usersTokens.length}\n`);
+    if (CONFIG.getIdentitiesFrom === 'api') {
+      const usersTokens = val[1].map(token => token.split(':')[1]);
+      console.log(`Redis users found: ${usersTokens.length}\n`);
 
-    const identityKeys = Object.keys(identities);
-    const tokenToAdd = _.filter(usersTokens, token => !_.includes(identityKeys, token));
+      const identityKeys = Object.keys(identities);
+      const tokenToAdd = _.filter(usersTokens, token => !_.includes(identityKeys, token));
 
-    if (tokenToAdd.length) {
-      console.log(`*******************************`);
-      console.log(`*   Add identities to Mongo   *\n`);
-      console.log(`Token to add to Mongo: ${tokenToAdd.length}`);
-    }
+      if (tokenToAdd.length) {
+        console.log(`*******************************`);
+        console.log(`*   Add identities to Mongo   *\n`);
+        console.log(`Tokens to add to Mongo: ${tokenToAdd.length}`);
+      }
 
-    return _.reduce(
-      tokenToAdd,
-      (prevPromise, token) => {
-        return prevPromise.then(allIdentities => {
-          return getIdentityByToken(token, allIdentities);
-        });
-      },
-      Promise.resolve([])
-    )
-      .then(allIdentities => {
-        if (allIdentities && allIdentities.length) {
-          console.log(`${allIdentities.length} users will be added to Mongo`);
-          const db = client.db(CONFIG.mongoIdentityDb);
-          return insertIdentities(db, allIdentities);
-        }
-      })
-      .then(identitiesAdded => {
-        if (identitiesAdded && identitiesAdded.length) {
-          console.log(`Get new Mongo identities`);
-          return fetchIdentity(client);
-        }
-      })
-      .then(newIdentities => {
-        if (newIdentities) {
-          console.log(`\n*             End             *`);
-          console.log(`*******************************\n`);
+      return _.reduce(
+        tokenToAdd,
+        (prevPromise, token) => {
+          return prevPromise.then(allIdentities => {
+            return getIdentityByToken(token, allIdentities);
+          });
+        },
+        Promise.resolve([])
+      )
+        .then(allIdentities => {
+          if (allIdentities && allIdentities.length) {
+            console.log(`${allIdentities.length} users will be added to Mongo`);
+            const db = client.db(CONFIG.mongoIdentityDb);
+            return insertIdentities(db, allIdentities);
+          }
+        })
+        .then(identitiesAdded => {
+          if (identitiesAdded && identitiesAdded.length) {
+            console.log(`Get new Mongo identities`);
+            return fetchIdentity(client);
+          }
+        })
+        .then(newIdentities => {
+          if (newIdentities) {
+            console.log(`\n*             End             *`);
+            console.log(`*******************************\n`);
+            return {
+              identities: newIdentities || identities,
+              val,
+            };
+          }
+
           return {
-            identities: newIdentities || identities,
+            identities,
             val,
           };
-        }
+        });
+    }
 
-        return {
-          identities,
-          val,
-        };
-      });
+    return {
+      identities,
+      val,
+    };
   };
+
+const insertMongoIdentitiesFromFile = client => {
+  return fs
+    .readFile('./src/data.csv', 'utf8')
+    .then(data => {
+      if (!data) {
+        console.log('Identities file is empty.');
+        return;
+      }
+
+      const dataJson = [];
+
+      try {
+        const lines = data.split('\n');
+        lines.shift();
+
+        _.forEach(lines, line => {
+          const columns = line.split(',');
+          const obj = {};
+
+          if (columns.length === 3) {
+            _.forEach(columns, (col, idx) => {
+              const value = col.trim();
+
+              switch (idx) {
+                case 0:
+                  if (_.isFinite(parseInt(value))) {
+                    obj.coogId = parseInt(value);
+                  }
+                  break;
+                case 1:
+                  obj.token = value;
+                  break;
+                case 2:
+                  if (_.isFinite(parseInt(value))) {
+                    obj.dist_network = { id: parseInt(value) };
+                  }
+                  break;
+                default:
+                  break;
+              }
+            });
+          }
+
+          if (obj.coogId && obj.token && obj.dist_network) {
+            dataJson.push(obj);
+          }
+        });
+      } catch (e) {
+        console.log('Error getting data from identities file');
+        console.log(e);
+      }
+
+      console.log(`${dataJson.length} identities will be inserted.`);
+
+      return dataJson;
+    })
+    .then(allIdentities => {
+      const db = client.db(CONFIG.mongoIdentityDb);
+      return insertIdentities(db, allIdentities);
+    })
+    .catch(err => {
+      console.log('Error reading identities file');
+      console.log(err);
+    });
+};
 
 const createTokenIdentity = (acc = {}, { dist_network: distNetwork = {}, _id }) => ({
   ...acc,
@@ -343,11 +417,28 @@ const redisBorder = `
 
 const runMigrationProcess = async client => {
   console.log(mongoBorder);
-  const t1 = performance.now();
-  const [identities, salesRoutesSet] = await Promise.all([fetchIdentity(client), fetchExistingSalesRoutes(client)]);
+
+  if (CONFIG.getIdentitiesFrom === 'csv') {
+    const t1 = performance.now();
+    console.log(`*******************************`);
+    console.log(`*        From CSV file        *`);
+    console.log(`*   Add identities to Mongo   *\n`);
+
+    await insertMongoIdentitiesFromFile(client);
+
+    console.log(`\n*             End             *`);
+    console.log(`*******************************\n`);
+    const t2 = performance.now();
+    console.log(`Get & insert identities time elapsed: ${t2 - t1} ms`);
+  }
+
   const t2 = performance.now();
+
+  const [identities, salesRoutesSet] = await Promise.all([fetchIdentity(client), fetchExistingSalesRoutes(client)]);
+
+  const t3 = performance.now();
   console.log(`SalesRoutes already created: ${salesRoutesSet.size}`);
-  console.log(`Mongo fetch time elapsed: ${t2 - t1} ms`);
+  console.log(`Mongo fetch time elapsed: ${t3 - t2} ms`);
   console.log(redisBorder);
 
   const redisUsers = scanAsync(0, 'match', `${CONFIG.coogDbName}*`, 'count', 1e6);
@@ -355,8 +446,8 @@ const runMigrationProcess = async client => {
     .then(addMongoIdentities({ identities, client }))
     .then(getRedisToken({ salesRoutes: salesRoutesSet }));
 
-  const t3 = performance.now();
-  console.log(`Redis fetch time elapsed: ${t3 - t2} ms`);
+  const t4 = performance.now();
+  console.log(`Redis fetch time elapsed: ${t4 - t3} ms`);
   console.log(mongoBorder);
 
   if (!salesRoutes.length) {
@@ -367,8 +458,8 @@ const runMigrationProcess = async client => {
   console.log(`Starting insertion of ${salesRoutes.length} salesRoutes`);
 
   return batchInsertSalesRoute(client, salesRoutes).then(() => {
-    const t4 = performance.now();
-    console.log(`Mongo insert time elapsed: ${t4 - t3} ms`);
+    const t5 = performance.now();
+    console.log(`Mongo insert time elapsed: ${t5 - t4} ms`);
     return null;
   });
 };
