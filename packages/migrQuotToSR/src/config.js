@@ -13,6 +13,7 @@ const envVarsSchema = Joi.object({
   GET_IDENTITIES_FROM: Joi.string()
     .pattern(/^(csv|api)$/)
     .default('csv'),
+  IDENTITIES_FILE_NAME: Joi.string().default('data.csv'),
 })
   .unknown()
   .required();
@@ -36,6 +37,7 @@ const CONFIG = {
   mongoIdentityDb: envVars.MONGO_IDENTITY_DB,
   apiIdentityManagerInternalUrl: envVars.API_IDENTITY_MANAGER_INTERNAL_URL,
   getIdentitiesFrom: envVars.GET_IDENTITIES_FROM,
+  identitiesFileName: envVars.IDENTITIES_FILE_NAME,
 };
 
 module.exports = CONFIG;

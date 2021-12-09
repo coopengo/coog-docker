@@ -1,0 +1,26 @@
+services:
+  mongo:
+    image: mongo
+    hostname: mongo_migration
+    env_file:
+      - ./mongo.env
+    restart: always
+
+  redis:
+    image: redis
+    hostname: redis_migration
+    restart: always
+    volumes:
+      - ./import:/data
+
+  migrquot2sr:
+    build: ./
+    # image: cooghub/migrquot2sr:latest
+    env_file:
+      - ./migrquot2sr.env
+    restart: 'no'
+    volumes:
+      - ./import:/workdir/import
+    depends_on:
+      - mongo
+      - redis

@@ -4,13 +4,15 @@ const redis = require('redis');
 const { promisify } = require('util');
 const { MongoClient } = require('mongodb');
 const request = require('axios');
-const fs = require('fs/promises');
+const fsProm = require('fs/promises');
+const fs = require('fs');
 
 const { getSalesRouteFromQuotation } = require('./transformToSR');
 const { getOfferFromV1 } = require('./transformOfferToV2');
 
 const tStart = performance.now();
 const CONFIG = require('./config');
+const IMPORT_DIR = '/workdir/import/';
 
 /**
  * In Redis, table 7 (by default)
@@ -21,18 +23,36 @@ const CONFIG = require('./config');
  * "zzz" : Containing token with expire and max age
  */
 
-let scanAsync;
-let sscanAsync;
-let getAsync;
-
 const redisClient = redis.createClient({
   url: CONFIG.redisURL,
   db: CONFIG.redisDb,
 });
 
-scanAsync = promisify(redisClient.scan).bind(redisClient);
-sscanAsync = promisify(redisClient.sscan).bind(redisClient);
-getAsync = promisify(redisClient.get).bind(redisClient);
+const scanAsync = promisify(redisClient.scan).bind(redisClient);
+const sscanAsync = promisify(redisClient.sscan).bind(redisClient);
+const getAsync = promisify(redisClient.get).bind(redisClient);
+
+const logStream = fs.createWriteStream(`${IMPORT_DIR}logs.txt`, { flags: 'a' });
+
+const addDigits = (text, length = 2) => {
+  if (`${text}`.length < length) {
+    return `0${text}`;
+  }
+
+  return text;
+};
+
+const log = text => {
+  _.forEach(text.split('\n'), line => {
+    console.log(line);
+
+    const date = new Date();
+    const strDate = `${date.getFullYear()}/${addDigits(date.getMonth() + 1)}/${addDigits(date.getDate())} ${addDigits(
+      date.getHours()
+    )}:${addDigits(date.getMinutes())}:${addDigits(date.getSeconds())}:${addDigits(date.getMilliseconds(), 3)}`;
+    logStream.write(`${strDate} ${line}\n`);
+  });
+};
 
 const getIdentityByToken = (token, allIdentities) => {
   return request
@@ -47,25 +67,55 @@ const getIdentityByToken = (token, allIdentities) => {
       },
     ])
     .catch(err => {
-      console.log(`Error ${_.get(err, 'response.status', err)} for ${token}:`);
-      console.log(_.get(err, 'response.data', _.get(err, 'response')));
+      log(`Error ${_.get(err, 'response.status', err)} for ${token}:`);
+      log(_.get(err, 'response.data', _.get(err, 'response')));
     });
 };
 
 const displaySuccessInsertLoadIdentities = identities => {
-  console.log(`Successfully added ${identities.result.n} identities\n`);
+  log(`Successfully added ${identities.result.n} identities\n`);
   return identities.ops;
 };
+
+const fetchIdentities = db => db.collection('identities').find({}).toArray();
+
+const fetchSalesroutes = (db, query = [{}]) =>
+  db
+    .collection('salesroutes')
+    .find(...query)
+    .toArray();
+
+const createTokenIdentity = (acc = {}, { dist_network: distNetwork = {}, _id }) => ({
+  ...acc,
+  [distNetwork.id]: _id,
+});
+
+const reduceIdentityByToken = (acc, { token, ...identity }) => ({
+  ...acc,
+  [token]: createTokenIdentity(acc[token], identity),
+});
+
+const mapPartialIdentities = (identities = []) => {
+  log(`Identities found: ${identities.length}`);
+  return identities.reduce(reduceIdentityByToken, {});
+};
+
+const fetchMongoIdentity = db => db.collection('identities').find({}).toArray().then(mapPartialIdentities);
 
 const insertIdentities = (db, identities) =>
   db
     .collection('identities')
-    .insertMany(identities, { check_keys: false })
+    .insertMany(identities, { checkKeys: false })
     .then(displaySuccessInsertLoadIdentities)
     .catch(e => {
-      console.log(`Error: ${e}`);
+      log(`Error: ${e}`);
       return identities;
     });
+
+const fetchIdentity = client => {
+  const Identity = client.db(CONFIG.mongoIdentityDb);
+  return fetchMongoIdentity(Identity);
+};
 
 const parseQuotation = val => {
   const quotation = { ...JSON.parse(val) };
@@ -83,7 +133,7 @@ const fetchQuotation = quotation => getAsync(`q:${quotation}`).then(parseQuotati
 // Filter quotations so only ones that have not been already transformed into SR will be transformed
 const getUserQuotationsList = salesRoutes => val => {
   const quotations = val[1].filter(v => !salesRoutes.has(v));
-  console.log(`${quotations.length} (out of ${val[1].length}) quotations for one user to fetch`);
+  log(`${quotations.length} (out of ${val[1].length}) quotations for one user to fetch`);
   return Promise.all(quotations.map(fetchQuotation));
 };
 
@@ -131,9 +181,9 @@ const displaySalesRouteInformation = salesRoutes => {
   if (salesRoutes && salesRoutes.length) {
     const salesRouteByIdentity = _.countBy(salesRoutes, 'createdBy');
     const salesRouteByIdentityStr = _.reduce(salesRouteByIdentity, getSalesRouteIdentityInfo, '');
-    console.log(`\nSalesRoute count by identity: ${salesRouteByIdentityStr}\n`);
+    log(`\nSalesRoute count by identity: ${salesRouteByIdentityStr}\n`);
   } else {
-    console.log('\nNo insert needed\n');
+    log('\nNo insert needed\n');
   }
 
   return salesRoutes;
@@ -153,15 +203,15 @@ const addMongoIdentities =
   val => {
     if (CONFIG.getIdentitiesFrom === 'api') {
       const usersTokens = val[1].map(token => token.split(':')[1]);
-      console.log(`Redis users found: ${usersTokens.length}\n`);
+      log(`Redis users found: ${usersTokens.length}\n`);
 
       const identityKeys = Object.keys(identities);
       const tokenToAdd = _.filter(usersTokens, token => !_.includes(identityKeys, token));
 
       if (tokenToAdd.length) {
-        console.log(`*******************************`);
-        console.log(`*   Add identities to Mongo   *\n`);
-        console.log(`Tokens to add to Mongo: ${tokenToAdd.length}`);
+        log(`*******************************`);
+        log(`*   Add identities to Mongo   *\n`);
+        log(`Tokens to add to Mongo: ${tokenToAdd.length}`);
       }
 
       return _.reduce(
@@ -175,21 +225,25 @@ const addMongoIdentities =
       )
         .then(allIdentities => {
           if (allIdentities && allIdentities.length) {
-            console.log(`${allIdentities.length} users will be added to Mongo`);
+            log(`${allIdentities.length} users will be added to Mongo`);
             const db = client.db(CONFIG.mongoIdentityDb);
             return insertIdentities(db, allIdentities);
           }
+
+          return null;
         })
         .then(identitiesAdded => {
           if (identitiesAdded && identitiesAdded.length) {
-            console.log(`Get new Mongo identities`);
+            log(`Get new Mongo identities`);
             return fetchIdentity(client);
           }
+
+          return null;
         })
         .then(newIdentities => {
           if (newIdentities) {
-            console.log(`\n*             End             *`);
-            console.log(`*******************************\n`);
+            log(`\n*             End             *`);
+            log(`*******************************\n`);
             return {
               identities: newIdentities || identities,
               val,
@@ -210,22 +264,27 @@ const addMongoIdentities =
   };
 
 const insertMongoIdentitiesFromFile = client => {
-  return fs
-    .readFile('./src/data.csv', 'utf8')
+  return fsProm
+    .readFile(`${IMPORT_DIR}${CONFIG.identitiesFileName}`, 'utf8')
     .then(data => {
       if (!data) {
-        console.log('Identities file is empty.');
-        return;
+        log('Identities file is empty.');
+        return null;
       }
 
       const dataJson = [];
 
       try {
         const lines = data.split('\n');
-        lines.shift();
+        const headers = lines.shift();
+        let separator = ';';
+
+        if (headers.split(',').length === 3) {
+          separator = ',';
+        }
 
         _.forEach(lines, line => {
-          const columns = line.split(',');
+          const columns = line.split(separator);
           const obj = {};
 
           if (columns.length === 3) {
@@ -234,16 +293,16 @@ const insertMongoIdentitiesFromFile = client => {
 
               switch (idx) {
                 case 0:
-                  if (_.isFinite(parseInt(value))) {
-                    obj.coogId = parseInt(value);
+                  if (_.isFinite(parseInt(value, 10))) {
+                    obj.coogId = parseInt(value, 10);
                   }
                   break;
                 case 1:
                   obj.token = value;
                   break;
                 case 2:
-                  if (_.isFinite(parseInt(value))) {
-                    obj.dist_network = { id: parseInt(value) };
+                  if (_.isFinite(parseInt(value, 10))) {
+                    obj.dist_network = { id: parseInt(value, 10) };
                   }
                   break;
                 default:
@@ -257,68 +316,61 @@ const insertMongoIdentitiesFromFile = client => {
           }
         });
       } catch (e) {
-        console.log('Error getting data from identities file');
-        console.log(e);
+        log('Error getting data from identities file');
+        log(e);
       }
 
-      console.log(`${dataJson.length} identities will be inserted.`);
+      log(`${dataJson.length} identities found in file.`);
 
       return dataJson;
     })
     .then(allIdentities => {
       const db = client.db(CONFIG.mongoIdentityDb);
-      return insertIdentities(db, allIdentities);
+
+      return fetchIdentities(db).then(currentIdentities => ({
+        newIdentities: allIdentities,
+        currentIdentities,
+      }));
+    })
+    .then(({ newIdentities, currentIdentities }) => {
+      const identitiesToAdd = newIdentities.filter(
+        ({ coogId, token, dist_network: { id: distNetId } }) =>
+          !_.find(currentIdentities, { coogId, token, dist_network: { id: distNetId } })
+      );
+
+      if (identitiesToAdd.length) {
+        log(`${identitiesToAdd.length} new identities will be inserted.`);
+        const db = client.db(CONFIG.mongoIdentityDb);
+        return insertIdentities(db, identitiesToAdd);
+      }
+
+      log('No new identities will be inserted.');
+      return null;
     })
     .catch(err => {
-      console.log('Error reading identities file');
-      console.log(err);
+      log('Error reading identities file');
+      log(err);
     });
 };
-
-const createTokenIdentity = (acc = {}, { dist_network: distNetwork = {}, _id }) => ({
-  ...acc,
-  [distNetwork.id]: _id,
-});
-
-const reduceIdentityByToken = (acc, { token, ...identity }) => ({
-  ...acc,
-  [token]: createTokenIdentity(acc[token], identity),
-});
-
-const mapPartialIdentities = (identities = []) => {
-  console.log(`Identities found: ${identities.length}`);
-  return identities.reduce(reduceIdentityByToken, {});
-};
-
-const fetchMongoIdentity = db => db.collection('identities').find({}).toArray().then(mapPartialIdentities);
 
 const mapPartialSalesRoutes = (salesRoutes = []) => new Set(salesRoutes.map(({ title }) => title));
 
 // Get Mongo SR already transformed (so with a title), and get only title field
 const fetchMongoSalesRoute = db =>
-  db
-    .collection('salesroutes')
-    .find(
-      {
-        title: {
-          $exists: true,
-        },
+  fetchSalesroutes(db, [
+    {
+      title: {
+        $exists: true,
       },
-      {
-        title: 1,
-      }
-    )
-    .toArray()
-    .then(mapPartialSalesRoutes);
+    },
+    {
+      title: 1,
+    },
+  ]).then(mapPartialSalesRoutes);
 
 const fetchExistingSalesRoutes = client => {
   const SalesRoute = client.db(CONFIG.mongoApiDb);
   return fetchMongoSalesRoute(SalesRoute);
-};
-
-const fetchIdentity = client => {
-  const Identity = client.db(CONFIG.mongoIdentityDb);
-  return fetchMongoIdentity(Identity);
 };
 
 // Limit key to 36 characters of offer.data
@@ -364,22 +416,22 @@ const parseSalesRoute = ({ contracts, ...salesRoute }) => ({
 });
 
 const displaySuccessInsertLoad = salesRoutes => {
-  console.log(`Successfully added ${salesRoutes.result.n} salesRoute(s)`);
+  log(`Successfully added ${salesRoutes.result.n} salesRoute(s)`);
   return displaySalesRouteInformation(salesRoutes.ops);
 };
 
 const insertSalesRoutes = (db, salesRoutes, exponent, offset) =>
   db
     .collection('salesroutes')
-    .insertMany(salesRoutes, { check_keys: false })
+    .insertMany(salesRoutes, { checkKeys: false })
     .then(displaySuccessInsertLoad)
     .catch(() => {
       if (exponent === 0) {
         const newSalesRoute = parseSalesRoute(salesRoutes[0]);
         return db.collection('salesroutes').insertOne(newSalesRoute).then(displaySuccessInsertLoad);
       }
-      console.log(`Error happen at offset: ${offset}, salesRoute amount: ${salesRoutes.length}, exponent: ${exponent}`);
-      console.log(`Reducing exponent at: ${exponent - 1}\n`);
+      log(`Error happen at offset: ${offset}, salesRoute amount: ${salesRoutes.length}, exponent: ${exponent}`);
+      log(`Reducing exponent at: ${exponent - 1}\n`);
       // eslint-disable-next-line no-use-before-define
       return splitBatchByExponent(db, salesRoutes, exponent - 1, offset);
     });
@@ -416,20 +468,20 @@ const redisBorder = `
 `;
 
 const runMigrationProcess = async client => {
-  console.log(mongoBorder);
+  log(mongoBorder);
 
   if (CONFIG.getIdentitiesFrom === 'csv') {
     const t1 = performance.now();
-    console.log(`*******************************`);
-    console.log(`*        From CSV file        *`);
-    console.log(`*   Add identities to Mongo   *\n`);
+    log(`*******************************`);
+    log(`*        From CSV file        *`);
+    log(`*   Add identities to Mongo   *\n`);
 
     await insertMongoIdentitiesFromFile(client);
 
-    console.log(`\n*             End             *`);
-    console.log(`*******************************\n`);
+    log(`\n*             End             *`);
+    log(`*******************************\n`);
     const t2 = performance.now();
-    console.log(`Get & insert identities time elapsed: ${t2 - t1} ms`);
+    log(`Get & insert identities time elapsed: ${t2 - t1} ms`);
   }
 
   const t2 = performance.now();
@@ -437,9 +489,9 @@ const runMigrationProcess = async client => {
   const [identities, salesRoutesSet] = await Promise.all([fetchIdentity(client), fetchExistingSalesRoutes(client)]);
 
   const t3 = performance.now();
-  console.log(`SalesRoutes already created: ${salesRoutesSet.size}`);
-  console.log(`Mongo fetch time elapsed: ${t3 - t2} ms`);
-  console.log(redisBorder);
+  log(`SalesRoutes already created: ${salesRoutesSet.size}`);
+  log(`Mongo fetch time elapsed: ${t3 - t2} ms`);
+  log(redisBorder);
 
   const redisUsers = scanAsync(0, 'match', `${CONFIG.coogDbName}*`, 'count', 1e6);
   const salesRoutes = await redisUsers
@@ -447,34 +499,75 @@ const runMigrationProcess = async client => {
     .then(getRedisToken({ salesRoutes: salesRoutesSet }));
 
   const t4 = performance.now();
-  console.log(`Redis fetch time elapsed: ${t4 - t3} ms`);
-  console.log(mongoBorder);
+  log(`Redis fetch time elapsed: ${t4 - t3} ms`);
+  log(mongoBorder);
 
   if (!salesRoutes.length) {
-    console.log('No insert needed\n');
-    return null;
+    log('No salesroutes insert needed\n');
+    return client;
   }
 
-  console.log(`Starting insertion of ${salesRoutes.length} salesRoutes`);
+  log(`Starting insertion of ${salesRoutes.length} salesRoutes`);
 
   return batchInsertSalesRoute(client, salesRoutes).then(() => {
     const t5 = performance.now();
-    console.log(`Mongo insert time elapsed: ${t5 - t4} ms`);
-    return null;
+    log(`Mongo insert time elapsed: ${t5 - t4} ms`);
+    return client;
   });
+};
+
+const exportMongoData = async client => {
+  const dbIdentity = client.db(CONFIG.mongoIdentityDb);
+  const dbSR = client.db(CONFIG.mongoApiDb);
+
+  await fetchIdentities(dbIdentity)
+    .then(docs => {
+      return fsProm.writeFile(`${IMPORT_DIR}identities.json`, JSON.stringify(docs));
+    })
+    .then(() => {
+      log('Done writing Identities to identities.json.');
+    })
+    .catch(e => {
+      log('Error writing Identities to file');
+      log(e);
+    });
+
+  return fetchSalesroutes(dbSR)
+    .then(docs => {
+      return fsProm.writeFile(`${IMPORT_DIR}salesroutes.json`, JSON.stringify(docs));
+    })
+    .then(() => {
+      log('Done writing SalesRoutes to salesroutes.json.');
+
+      return client;
+    })
+    .catch(e => {
+      log('Error getting SalesRoutes for export');
+      log(e);
+
+      return client;
+    });
 };
 
 const getMongoAuth = () => (CONFIG.mongoUser ? `${CONFIG.mongoUser}:${CONFIG.mongoPassword}@` : '');
 const getMongoHost = () => CONFIG.mongoURL;
 
+log(`Mongo connection to ${CONFIG.mongoURL} with user ${CONFIG.mongoUser}`);
+log(`Database for Identities is ${CONFIG.mongoIdentityDb}`);
+log(`Database for SalesRoutes is ${CONFIG.mongoApiDb}`);
+
 MongoClient.connect(`mongodb://${getMongoAuth()}${getMongoHost()}`, { useUnifiedTopology: true })
   .then(runMigrationProcess)
-  .then(() => {
+  .then(exportMongoData)
+  .then(client => {
+    client.close();
+
     const tEnd = performance.now();
-    console.log(`Total time execution: ${tEnd - tStart} ms`);
+    log(`\nTotal time execution: ${tEnd - tStart} ms\n`);
+    log('You can get your Mongo dumps in the /import directory. You might need to change owner/chmod.');
     process.exit(0);
   })
   .catch(err => {
-    console.log(err);
+    log(err);
     process.exit(err.status || 2);
   });
