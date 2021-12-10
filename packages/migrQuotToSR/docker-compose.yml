@@ -14,8 +14,8 @@ services:
       - ./migration:/data
 
   migrquot2sr:
-    build: ./
-    # image: cooghub/trash:migrquot2sr-1.12.2149
+    # build: ./
+    image: cooghub/trash:migrquot2sr-1.0.2149
     env_file:
       - ./migrquot2sr.env
     restart: 'no'
