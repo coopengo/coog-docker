@@ -12,7 +12,7 @@ const { getOfferFromV1 } = require('./transformOfferToV2');
 
 const tStart = performance.now();
 const CONFIG = require('./config');
-const IMPORT_DIR = '/workdir/import/';
+const MIGRATION_DIR = '/workdir/migration/';
 
 /**
  * In Redis, table 7 (by default)
@@ -32,7 +32,7 @@ const scanAsync = promisify(redisClient.scan).bind(redisClient);
 const sscanAsync = promisify(redisClient.sscan).bind(redisClient);
 const getAsync = promisify(redisClient.get).bind(redisClient);
 
-const logStream = fs.createWriteStream(`${IMPORT_DIR}logs.txt`, { flags: 'a' });
+const logStream = fs.createWriteStream(`${MIGRATION_DIR}logs.txt`, { flags: 'a' });
 
 const addDigits = (text, length = 2) => {
   if (`${text}`.length < length) {
@@ -43,13 +43,14 @@ const addDigits = (text, length = 2) => {
 };
 
 const log = text => {
-  _.forEach(text.split('\n'), line => {
+  _.forEach(`${text}`.split('\n'), line => {
     console.log(line);
 
     const date = new Date();
     const strDate = `${date.getFullYear()}/${addDigits(date.getMonth() + 1)}/${addDigits(date.getDate())} ${addDigits(
       date.getHours()
     )}:${addDigits(date.getMinutes())}:${addDigits(date.getSeconds())}:${addDigits(date.getMilliseconds(), 3)}`;
+
     logStream.write(`${strDate} ${line}\n`);
   });
 };
@@ -265,7 +266,7 @@ const addMongoIdentities =
 
 const insertMongoIdentitiesFromFile = client => {
   return fsProm
-    .readFile(`${IMPORT_DIR}${CONFIG.identitiesFileName}`, 'utf8')
+    .readFile(`${MIGRATION_DIR}${CONFIG.identitiesFileName}`, 'utf8')
     .then(data => {
       if (!data) {
         log('Identities file is empty.');
@@ -522,7 +523,7 @@ const exportMongoData = async client => {
 
   await fetchIdentities(dbIdentity)
     .then(docs => {
-      return fsProm.writeFile(`${IMPORT_DIR}identities.json`, JSON.stringify(docs));
+      return fsProm.writeFile(`${MIGRATION_DIR}identities.json`, JSON.stringify(docs));
     })
     .then(() => {
       log('Done writing Identities to identities.json.');
@@ -534,7 +535,7 @@ const exportMongoData = async client => {
 
   return fetchSalesroutes(dbSR)
     .then(docs => {
-      return fsProm.writeFile(`${IMPORT_DIR}salesroutes.json`, JSON.stringify(docs));
+      return fsProm.writeFile(`${MIGRATION_DIR}salesroutes.json`, JSON.stringify(docs));
     })
     .then(() => {
       log('Done writing SalesRoutes to salesroutes.json.');
@@ -564,7 +565,7 @@ MongoClient.connect(`mongodb://${getMongoAuth()}${getMongoHost()}`, { useUnified
 
     const tEnd = performance.now();
     log(`\nTotal time execution: ${tEnd - tStart} ms\n`);
-    log('You can get your Mongo dumps in the /import directory. You might need to change owner/chmod.');
+    log('You can get your Mongo dumps in the /migration directory. You might need to change owner/chmod.\n');
     process.exit(0);
   })
   .catch(err => {
