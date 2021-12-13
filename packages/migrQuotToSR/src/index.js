@@ -36,7 +36,7 @@ const logStream = fs.createWriteStream(`${MIGRATION_DIR}logs.txt`, { flags: 'a' 
 
 const addDigits = (text, length = 2) => {
   if (`${text}`.length < length) {
-    return `0${text}`;
+    return addDigits(`0${text}`, length);
   }
 
   return text;
@@ -134,7 +134,7 @@ const fetchQuotation = quotation => getAsync(`q:${quotation}`).then(parseQuotati
 // Filter quotations so only ones that have not been already transformed into SR will be transformed
 const getUserQuotationsList = salesRoutes => val => {
   const quotations = val[1].filter(v => !salesRoutes.has(v));
-  log(`${quotations.length} (out of ${val[1].length}) quotations for one user to fetch`);
+  // log(`${quotations.length} (out of ${val[1].length}) quotations for one user to fetch`);
   return Promise.all(quotations.map(fetchQuotation));
 };
 
@@ -180,11 +180,11 @@ const getSalesRouteIdentityInfo = (acc, value, key) => `${acc}\n${key}: ${value}
 
 const displaySalesRouteInformation = salesRoutes => {
   if (salesRoutes && salesRoutes.length) {
-    const salesRouteByIdentity = _.countBy(salesRoutes, 'createdBy');
-    const salesRouteByIdentityStr = _.reduce(salesRouteByIdentity, getSalesRouteIdentityInfo, '');
-    log(`\nSalesRoute count by identity: ${salesRouteByIdentityStr}\n`);
+    // const salesRouteByIdentity = _.countBy(salesRoutes, 'createdBy');
+    // const salesRouteByIdentityStr = _.reduce(salesRouteByIdentity, getSalesRouteIdentityInfo, '');
+    // log(`\nSalesRoute count by identity: ${salesRouteByIdentityStr}\n`);
   } else {
-    log('\nNo insert needed\n');
+    log('No insert needed\n');
   }
 
   return salesRoutes;
@@ -196,6 +196,10 @@ const getRedisToken =
     const usersTokens = val[1].map(token => token.split(':')[1]);
     return Promise.all(val[1].map(getUserQuotationsKey(salesRoutes)))
       .then(getSalesRouteForIdentity({ usersTokens, identities }))
+      .then(salesRoutes => {
+        log(`SalesRoute transformed: ${salesRoutes.length}\n`);
+        return salesRoutes;
+      })
       .then(displaySalesRouteInformation);
   };
 
@@ -479,7 +483,7 @@ const runMigrationProcess = async client => {
 
     await insertMongoIdentitiesFromFile(client);
 
-    log(`\n*             End             *`);
+    log(`*             End             *`);
     log(`*******************************\n`);
     const t2 = performance.now();
     log(`Get & insert identities time elapsed: ${t2 - t1} ms`);
@@ -491,7 +495,7 @@ const runMigrationProcess = async client => {
 
   const t3 = performance.now();
   log(`SalesRoutes already created: ${salesRoutesSet.size}`);
-  log(`Mongo fetch time elapsed: ${t3 - t2} ms`);
+  log(`\nMongo fetch time elapsed: ${t3 - t2} ms`);
   log(redisBorder);
 
   const redisUsers = scanAsync(0, 'match', `${CONFIG.coogDbName}*`, 'count', 1e6);
@@ -512,7 +516,7 @@ const runMigrationProcess = async client => {
 
   return batchInsertSalesRoute(client, salesRoutes).then(() => {
     const t5 = performance.now();
-    log(`Mongo insert time elapsed: ${t5 - t4} ms`);
+    log(`\nMongo insert time elapsed: ${t5 - t4} ms\n`);
     return client;
   });
 };
@@ -522,28 +526,30 @@ const exportMongoData = async client => {
   const dbSR = client.db(CONFIG.mongoApiDb);
 
   await fetchIdentities(dbIdentity)
-    .then(docs => {
-      return fsProm.writeFile(`${MIGRATION_DIR}identities.json`, JSON.stringify(docs));
+    .then(async docs => {
+      await fsProm.writeFile(`${MIGRATION_DIR}identities.json`, JSON.stringify(docs));
+      return docs.length;
     })
-    .then(() => {
-      log('Done writing Identities to identities.json.');
+    .then(length => {
+      log(`Exported ${length} Identities to identities.json`);
     })
     .catch(e => {
-      log('Error writing Identities to file');
+      log('Error exporting Identities from Mongo');
       log(e);
     });
 
   return fetchSalesroutes(dbSR)
-    .then(docs => {
-      return fsProm.writeFile(`${MIGRATION_DIR}salesroutes.json`, JSON.stringify(docs));
+    .then(async docs => {
+      await fsProm.writeFile(`${MIGRATION_DIR}salesroutes.json`, JSON.stringify(docs));
+      return docs.length;
     })
-    .then(() => {
-      log('Done writing SalesRoutes to salesroutes.json.');
+    .then(length => {
+      log(`Exported ${length} SalesRoutes to salesroutes.json`);
 
       return client;
     })
     .catch(e => {
-      log('Error getting SalesRoutes for export');
+      log('Error exporting SalesRoutes from Mongo');
       log(e);
 
       return client;
@@ -553,6 +559,7 @@ const exportMongoData = async client => {
 const getMongoAuth = () => (CONFIG.mongoUser ? `${CONFIG.mongoUser}:${CONFIG.mongoPassword}@` : '');
 const getMongoHost = () => CONFIG.mongoURL;
 
+log('**********************************************************************\n');
 log(`Mongo connection to ${CONFIG.mongoURL} with user ${CONFIG.mongoUser}`);
 log(`Database for Identities is ${CONFIG.mongoIdentityDb}`);
 log(`Database for SalesRoutes is ${CONFIG.mongoApiDb}`);
