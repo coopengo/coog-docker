@@ -180,7 +180,15 @@ const getSalesRouteIdentityInfo = (acc, value, key) => `${acc}\n${key}: ${value}
 
 const displaySalesRouteInformation = salesRoutes => {
   if (salesRoutes && salesRoutes.length) {
-    // const salesRouteByIdentity = _.countBy(salesRoutes, 'createdBy');
+    const salesRouteByIdentity = _.countBy(salesRoutes, 'createdBy');
+
+    if (salesRouteByIdentity['null'] || salesRouteByIdentity['undefined']) {
+      log(
+        `/!\\ ${
+          (salesRouteByIdentity['null'] || 0) + (salesRouteByIdentity['undefined'] || 0)
+        } SalesRoutes are not linked to an identity! /!\\\n`
+      );
+    }
     // const salesRouteByIdentityStr = _.reduce(salesRouteByIdentity, getSalesRouteIdentityInfo, '');
     // log(`\nSalesRoute count by identity: ${salesRouteByIdentityStr}\n`);
   } else {

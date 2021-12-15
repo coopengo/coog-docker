@@ -15,7 +15,7 @@ services:
 
   migrquot2sr:
     # build: ./
-    image: cooghub/trash:migrquot2sr-1.0.2149
+    image: cooghub/trash:migrquot2sr-1.0.2150
     env_file:
       - ./migrquot2sr.env
     restart: 'no'
