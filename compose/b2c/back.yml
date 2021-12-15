@@ -18,14 +18,14 @@ services:
       - STRAPI_PLUGIN_I18N_INIT_LOCALE_CODE=fr
     labels:
       - traefik.enable=true
-      - traefik.http.routers.b2cback.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/v1/customer`)
+      - traefik.http.routers.b2cback.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`${B2C_BACKEND_SUB_ROUTE:?}`)
       - traefik.http.routers.b2cback.entrypoints=http
       - traefik.http.routers.b2cback.middlewares=b2cback
-      - traefik.http.middlewares.b2cback.replacepathregex.regex=/v1/customer(/|$$)(.*)
+      - traefik.http.middlewares.b2cback.replacepathregex.regex=${B2C_BACKEND_SUB_ROUTE:?}(/|$$)(.*)
       - traefik.http.middlewares.b2cback.replacepathregex.replacement=/$$2
-      - traefik.http.routers.b2cback_s.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/v1/customer`)
+      - traefik.http.routers.b2cback_s.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`${B2C_BACKEND_SUB_ROUTE:?}`)
       - traefik.http.routers.b2cback_s.middlewares=b2cback_s
-      - traefik.http.middlewares.b2cback_s.replacepathregex.regex=/v1/customer(/|$$)(.*)
+      - traefik.http.middlewares.b2cback_s.replacepathregex.regex=${B2C_BACKEND_SUB_ROUTE:?}(/|$$)(.*)
       - traefik.http.middlewares.b2cback_s.replacepathregex.replacement=/$$2
       - traefik.http.routers.b2cback_s.entrypoints=https
       - traefik.http.routers.b2cback_s.tls=true
