@@ -17,3 +17,4 @@ env/*.env
 
 # Auto-generated for host integration
 docker-compose.host-integration.yaml
+coog/postgresql_data

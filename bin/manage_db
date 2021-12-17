@@ -51,7 +51,9 @@ load() {
         exit 1
     fi
     _start_services postgres
+    sleep 5
     _reset_database
+    sleep 1
 
     echo " "
     section "Loading database from dump file"
