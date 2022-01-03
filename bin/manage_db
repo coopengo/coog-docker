@@ -66,9 +66,13 @@ load() {
     docker cp "$dump_file" "$container_name":/tmp/dump
 
     if [[ "$format" = "sql" ]]; then
-        docker-compose exec -- postgres bash -c "cat /tmp/dump | psql -U $db_user -d $db_name" > /dev/null
+        docker-compose exec -- postgres \
+            bash -c "cat /tmp/dump | psql -U $db_user -d $db_name" \
+            > /dev/null
     else
-        docker-compose exec -- postgres pg_restore -U "$db_user" -d "$db_name" /tmp/dump  > /dev/null
+        docker-compose exec -- postgres \
+            pg_restore -U "$db_user" --no-owner --role "$db_user" -j 4 \
+            -d "$db_name" /tmp/dump
     fi
     docker-compose exec -- postgres rm "/tmp/dump"
 }
@@ -111,7 +115,7 @@ update() {
 
     # We need to kill the "init" container because it may lead to deadlocks.
     # And we are updating the db anyaway
-    docker kill "$project_name"-init-1 > /dev/null
+    sleep 1
     docker rm -f "$project_name"-init-1 > /dev/null
 
     if [[ "$#" = "0" ]]; then
