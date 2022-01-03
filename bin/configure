@@ -121,17 +121,84 @@ set_services () {
     fi
 
     echo "COMPOSE_FILE=$SERVICES" >> "$BASE_PATH/.env"
+    echo ""
+}
+
+_migrate_env_folder() {
+    if [[ -d "$BASE_PATH/custom/env" ]]; then
+        echo There appear to already be an "env" folder in the custom repository,
+        echo should we overwrite, discard the root env folder, or abort?
+
+        while true; do
+            read -p "[(O)verwrite / (D)iscard / (A)bort]: " action
+            case $action in
+                [Oo]*)
+                    rm -r "$BASE_PATH/custom/env"
+                    mv "$BASE_PATH/env" "$BASE_PATH/custom/env"
+                    return 0
+                    ;;
+                [Dd]*)
+                    rm -r "$BASE_PATH/env"
+                    return 0
+                    ;;
+                [Aa]*)
+                    echo "As you wish"
+                    exit 1
+                    ;;
+            esac
+        done
+    else
+        mv "$BASE_PATH/env" "$BASE_PATH/custom/env"
+    fi
 }
 
 init_service_env_files () {
-    # Create env files for all services if needed
-    mkdir -p "$BASE_PATH"/env
+    if [[ -d "$BASE_PATH/custom" ]]; then
+        env_path="$BASE_PATH/custom/env"
+        if [[ ! -L "$BASE_PATH/env" ]] && [[ -d "$BASE_PATH/env" ]]; then
+            echo Custom configuration folder found, and root env folder as well
+            echo ""
+            echo Environment files will be migrated from root env folder into
+            echo "the custom folder (this is strongly recommended)"
+            echo ""
 
+            while true; do
+                read -p "Migrate env folder [Y/n]: " yn
+                case "$yn" in
+                    "")
+                        _migrate_env_folder
+                        break
+                        ;;
+                    [Yy]*)
+                        _migrate_env_folder
+                        break
+                        ;;
+                    [Nn]*)
+                        echo "As you wish, still using root folder for now"
+                        env_path="$BASE_PATH/env"
+                        break
+                        ;;
+                esac
+            done
+        fi
+    else
+        env_path="$BASE_PATH/env"
+    fi
+
+    # Create env files for missing services
+    mkdir -p "$env_path"
     for f in $(ls "$BASE_PATH"/defaults/env); do
-        if [[ ! -e "$BASE_PATH/env/$f" ]]; then
-            cp "$BASE_PATH"/defaults/env/"$f" "$BASE_PATH"/env/"$f"
+        if [[ ! -e "$env_path/$f" ]]; then
+            cp "$BASE_PATH/defaults/env/$f" "$env_path/$f"
         fi
     done
+
+    if [[ "$env_path" = "$BASE_PATH/custom/env" ]]; then
+        # Make "BASE_PATH/env" a symlink pointing on custom/env
+        rm -rf "$BASE_PATH/env"  # clean up
+        ln -s "$BASE_PATH/custom/env" "$BASE_PATH/env"
+    fi
+    echo ""
 }
 
 check_host_integration() {
@@ -147,8 +214,7 @@ check_host_integration() {
     fi
 
     if [[ "${ENABLE_HOST_NETWORK_INTEGRATION:-}" = "1" ]]; then
-        echo ""
-        echo "Warning: Host network integration enabled"
+        section "Enabling Host network integration"
 
         echo "services:" > "$filename"
         for service in $(docker-compose config | yq -r '.services | keys[]'); do
@@ -178,8 +244,15 @@ echo "# AUTO GENERATED, DO NOT MODIFY MANUALLY" > "$BASE_PATH/.env"
 
 # We must run this in a sub-process because it modifies the environment
 (generate) >> "$BASE_PATH/.env"
+
+section "Selecting services"
 set_services
+
+section "Creating missing env files"
 init_service_env_files
+
 (check_host_integration)
+
+section "Checking configuration"
 (check_configuration)
 echo " "
