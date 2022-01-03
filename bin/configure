@@ -107,6 +107,7 @@ set_services () {
             fail "Ignoring $service"
         else
             check "Adding $service"
+            SERVICES="$SERVICES:$path"
         fi
     done
     shopt -u nullglob

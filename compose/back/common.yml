@@ -4,6 +4,7 @@ services:
     env_file:
       # For some reason, we need to specify a relative path here
       - ../../env/back.env
+      - ../../custom/env/back.env
     entrypoint: ['ep']
     environment:
       - LOG_LEVEL=${COOG_LOG_LEVEL:?}
