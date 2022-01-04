@@ -3,7 +3,7 @@ services:
     extends:
       file: compose/back/common.yml
       service: back-common
-    command: ["celery", "${COOG_CELERY_WORKERS:?}"]
+    command: ["celery", "${COOG_CELERY_WORKERS:?}", "${COOG_CELERY_CUSTOM_QUEUES}"]
     env_file:
       - env/back.env
       - env/celery.env
