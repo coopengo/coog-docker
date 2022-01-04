@@ -229,7 +229,7 @@ check_host_integration() {
     fi
 }
 
-check_configuration() {
+check_configuration_requirements() {
     . "$BASE_PATH/.env"
 
     # Check for variables that are not required for compatibility, but are
@@ -237,6 +237,18 @@ check_configuration() {
     if [[ "$COOG_PASSPHRASE" = "" ]]; then
         warning "COOG_PASSPHRASE should not be empty in a production environment"
     fi
+}
+
+_find_duplicates() {
+    ( \
+        (env && (cat "$BASE_PATH"/.env | grep -v '^ *#' )) \
+        ) | grep "=" | sed -e "s/^\([A-Z0-9_]*\)=.*/\1/" | sort | uniq -c | grep -v -F 1 | awk -F " " '{print $2}'
+}
+
+check_configuration_shadowing() {
+    for key in $(_find_duplicates); do
+        warning "Variable $key will use value ${!key} as defined from global environment values"
+    done
 }
 
 section "Updating .env contents"
@@ -254,5 +266,6 @@ init_service_env_files
 (check_host_integration)
 
 section "Checking configuration"
-(check_configuration)
+(check_configuration_requirements)
+(check_configuration_shadowing)
 echo " "
