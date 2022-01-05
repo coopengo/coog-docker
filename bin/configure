@@ -35,6 +35,14 @@ fi
 if [[ -f "$BASE_PATH/custom/disabled_services" ]]; then
     echo Will load "$BASE_PATH"/custom/disabled_services
 fi
+
+if [[ -f "$BASE_PATH"/custom/override.yml ]]; then
+    echo Will load "$BASE_PATH"/custom/override.yml
+fi
+
+if [[ -f "$BASE_PATH"/override.yml ]]; then
+    echo Will load "$BASE_PATH"/override.yml
+fi
 echo ""
 
 generate () {
@@ -251,11 +259,28 @@ check_configuration_shadowing() {
     done
 }
 
+check_traefik_configuration() {
+    TRAEFIK_CONFIGURATION_FOLDER="$BASE_PATH/defaults/traefik"
+    if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
+        . "$BASE_PATH/custom/env.custom"
+    fi
+    if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
+        . "$BASE_PATH/custom/env.custom"
+    fi
+
+    if [[ "$TRAEFIK_CONFIGURATION_FOLDER" = "$BASE_PATH"/defaults/traefik ]]; then
+        warning "TRAEFIK_CONFIGURATION_FOLDER should be set to a non default value in a production environment"
+        if [[ -d "$BASE_PATH/custom" ]]; then
+            echo "A custom folder exists, you should probably use it to store your traefik configuration"
+        fi
+    fi
+}
+
 section "Updating .env contents"
 echo "# AUTO GENERATED, DO NOT MODIFY MANUALLY" > "$BASE_PATH/.env"
-
 # We must run this in a sub-process because it modifies the environment
 (generate) >> "$BASE_PATH/.env"
+echo ""
 
 section "Selecting services"
 set_services
@@ -268,4 +293,6 @@ init_service_env_files
 section "Checking configuration"
 (check_configuration_requirements)
 (check_configuration_shadowing)
+(check_traefik_configuration)
+
 echo " "
