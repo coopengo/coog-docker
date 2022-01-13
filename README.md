@@ -189,6 +189,8 @@ This folder can contain:
 - a `disabled_services` file
 - a `override.yml` file
 - a `compose/custom` folder, in which you can add custom services to load
+- a `env` filder which will be used to store the environment variable values
+for the various services
 
 **WARNING: The custom configuration from the `custom` folder will be loaded
 before the configuration defined directly in the root folder.** This means, for

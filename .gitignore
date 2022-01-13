@@ -13,8 +13,7 @@ custom
 certs
 
 # Contains service env files, contents will be modified by the user
-env/*.env
+/env
 
 # Auto-generated for host integration
 docker-compose.host-integration.yaml
-coog/postgresql_data
