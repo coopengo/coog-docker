@@ -2,16 +2,12 @@
 ###############################################################################
 # Runs the daily chain
 #
-# There will usually be two arguments, to indicate how business days should be
-# considered. For instance, to run with 5 business days ahead, using the
-# "french_work_days" configuration:
-#
-#       ./bin/daily 5 french_work_days
+#       ./bin/daily [optional date]
 #
 # WARNING: If used in a crontab, you must make sure that docker-compose is
 # available in the path. Example command:
 #
-#       PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin /path/to/bin/daily 5 french_work_days
+#       PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin /path/to/bin/daily $(date --iso) > /path/to/logs/daily_$(date --iso).log 2>&1
 #
 ###############################################################################
 BASE_PATH=`realpath "$(dirname $0)/.."`
@@ -19,11 +15,31 @@ BASE_PATH=`realpath "$(dirname $0)/.."`
 
 set -euo pipefail
 
+COMPOSE_FILES=docker-compose.daily.yml
+if [[ -e "$BASE_PATH/custom/daily.override.yml" ]]; then
+    echo Will load "$BASE_PATH/custom/daily.override.yml"
+    COMPOSE_FILES+=:custom/daily.override.yml
+fi
+
 # Make sure configuration is up to date
 ${BASE_PATH}/bin/configure
 
-# Make sure "coog" is up, since we will run the command from inside it
-(cd $BASE_PATH && docker-compose up --no-deps --no-recreate -d coog)
+if [[ $(cd "$BASE_PATH" && COMPOSE_FILE="$COMPOSE_FILES" \
+        docker-compose ps --services --filter "status=running") ]]; then
+    >&2 fail "Already running"
+    echo ""
+    (cd "$BASE_PATH" && COMPOSE_FILE="$COMPOSE_FILES" \
+        docker-compose ps)
+    exit 1
+elif [[ $(cd "$BASE_PATH" && COMPOSE_FILE="$COMPOSE_FILES" \
+        docker-compose ps --services --filter "status=stopped") ]]; then
+    warning "Previous container still present, it will be cleaned up"
+    echo ""
+    (cd "$BASE_PATH" && COMPOSE_FILE="$COMPOSE_FILES" \
+        docker-compose ps)
+    echo ""
+fi
 
-# Actually run the chain
-(cd $BASE_PATH && docker-compose exec -- coog ep daily_v2 $*)
+(cd "$BASE_PATH" && \
+    COMPOSE_FILE="$COMPOSE_FILES" DAILY_DATE="${1:-$(date --iso)}" \
+    docker-compose up --abort-on-container-exit --force-recreate --exit-code-from daily)
