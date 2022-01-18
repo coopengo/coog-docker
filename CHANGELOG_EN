@@ -1,1 +1,122 @@
-* FEA#20322 Rework of docker-compose structure for easier override
+## 2021-09-16 Refactoring
+
+### Rationale
+
+Commit 3a6b810 from 16th of september 2021 fundamentally changed how the project
+behaves.
+
+Before, most of the environment variables required were mixed together in the
+`var.env` file, with some informations copied across various variables (ex:
+database connexion information).
+
+Furthermore, the only way to actually configure the project (enabling /
+disabling / modifying services) was to modify the repository, which made any
+update complicated.
+
+This refactoring solves both those issues by first reworking how environment
+variables are configured, and second by offering the possibility to move all
+configuration in a custom folder, separate from the git repository. For more
+information, see the README at the top of this repository.
+
+### Migrating
+
+*Note: the details of what is discussed below can be found in the README*
+
+#### Disabling services
+
+Rather than modifying the `docker-compose.yml` file to comment out services that
+are not needed, it is now possible to list the services to disable in the
+`disabled_services` file.
+
+#### Modifying / Adding services
+
+If a `override.yml` file is found, it will be loaded after the various service
+files. As per the docker-compose specification, this can be leveraged to modify
+the configuration of those services.
+
+Also, adding new services is as easy as adding a `my_service.yml` file in the
+`custom/compose` folder.
+
+#### Daily Batch run
+
+The `bin` folder includes a few scripts that aims to simplify the use /
+exploitation of the solution (database dumps / restoration, manual updates, etc.)
+
+Among thos, the `bin/daily` script can be used to trigger the daily batch run.
+The appropriate command line for use in a crontab can be found in the README.
+
+#### Environemnt variables migration
+
+The basic logic of the project is as follow:
+
+- The `env.custom` file contains environment variables that are defining how the
+various services will communicate with one another
+- The files in the `env` folder (most notably `back.env` for the backoffice
+configuration) can be used to configure the environment variables for each
+service individually
+
+**The `.env` file is automatically generated from the `env.custom` file and must
+not be manually modified (modification will be overwritten on the next start of
+the application)**
+
+Variables to add:
+
+|-----------------------|------------------------------------------------------------------------|
+| Name                  | Usage                                                                  |
+|-----------------------|------------------------------------------------------------------------|
+| FILESYSTEM_ROOT       | Base mount points for the filesystem                                   |
+| IMAGE_VERSION_DEFAULT | Standard image version, used to initialize the versions for all images |
+|-----------------------|------------------------------------------------------------------------|
+
+To manage the images for the project, set `IMAGE_VERSION_DEFAULT` is enough to
+set the version for all components. If needed, it is still possible to set the
+version for a specific component with the `IMAGE_VERSION_<component>` variables.
+
+Similarly, the name of the images are the defaults from Coopengo, but they can
+be overriden with the `CUSTOM_IMAGE_NAME_<component>` variables.
+
+Global environment variables mapping:
+
+|-------------------------|--------------------------------|---------------|
+| Previous Variable       | New Variable                   | Default Value |
+|                         |                                | is consistent |
+|-------------------------|--------------------------------|---------------|
+| NETWORK_BACKEND_NAME    | CUSTOM_NETWORK_BACKEND_NAME    | Yes           |
+| NETWORK_BACKEND_SUBNET  | CUSTOM_NETWORK_BACKEND_SUBNET  | Yes           |
+| NETWORK_FRONTEND_NAME   | CUSTOM_NETWORK_FRONTEND_NAME   | Yes           |
+| NETWORK_FRONTEND_SUBNET | CUSTOM_NETWORK_FRONTEND_SUBNET | Yes           |
+| COOG_TMP                | CUSTOM_COOG_TMP_VOLUME         | Yes           |
+| COOG_VOLUME             | CUSTOM_COOG_DATA_VOLUME        | Yes           |
+| POSTGRES_DATA_VOLUME    | CUSTOM_POSTGRES_DATA_VOLUME    | Yes           |
+| MONGODB_DATA_VOLUME     | CUSTOM_MONGODB_DATA_VOLUME     | Yes           |
+| IMAGE_REGISTRY          | CUSTOM_IMAGE_REGISTRY          |               |
+| COOG_DB_NAME            | COOG_MAIN_DATABASE             |               |
+|-------------------------|--------------------------------|---------------|
+
+Backoffice configuration mapping (`env/back.env`):
+
+|---------------------------|--------------------|---------------|----------------------------------------------------------------------------------------|
+| Previous Variable         | New Variable       | File          | Comment                                                                                |
+|---------------------------|--------------------|---------------|----------------------------------------------------------------------------------------|
+| TRYTOND_\*                | TRYTOND_\*         | `back.env`    | The connexion informations to other internal services are no longer necessary          |
+| WHITELIST                 | CORS_WHITELIST     | `env.custom`  | Default value is consistent                                                            |
+| COOG_API_\*               |                    |               | Those were only connexions to internal services and are no longer needed               |
+| BASE_PATH                 |                    |               | Removed                                                                                |
+| \*\_DB_\*                 | CUSTOM_POSTGRES_\* | `env.custom`  | In case of inconsistency (ADMIN_DB_\* / COOG_DB_\* / COOG_POSTGRES_\*), prefer COOG_\* |
+| COOG_WEB_TOKEN            | COOG_GATEWAY_TOKEN | `env.custom`  |                                                                                        |
+| JWT_(INTERNAL)_ENCRYPTION | JWT_ENCRYPTION     | `env.custom`  |                                                                                        |
+| MONGO_\*                  | CUSTOM_MONGO_\*    | `env.custso`  | If the values are standard (host / port), no need to set them                          |
+| LOG_LEVEL                 | COOG_LOG_LEVEL     | `env.custom`  |                                                                                        |
+|---------------------------|--------------------|---------------|----------------------------------------------------------------------------------------|
+
+*Note: For the other services, the only values in the `.env` files were to
+configure how to interact with internal services. They are no longer necessary
+as this kind of information is now configured once and for all in `env.custom`
+and automatically propagated. Those `.env` files are usually empty now*
+
+Other:
+
+- It is possible to define how many processes we want for the backoffice /
+celery processes with the `COOG_CELERY_WORKERS` and `COOG_SERVER_WORKERS` variables
+- It is possible to force which batches can be run by the celery service using
+the `COOG_CELERY_CUSTOM_QUEUES` variable
