@@ -1,1 +1,128 @@
-* FEA#20322 Ré-écriture du projet pour faciliter la customisation
+## 2021-09-16 Refactoring
+
+### Motifs
+
+Le commit 3a6b810 en date du 16 septembre 2021 a complètement changé le mode de
+fonctionnement du projet.
+
+Auparavant, la majorité des variables d'environnement se retrouvaient pêle-mêle
+dans le fichier `var.env`, avec certaines données représentant la même
+information dans des noms de variables différents.
+
+En outre, la seule façon de modifier la structure du projet (activation / ajout
+/ modification de services) était de modifier le dépôt, ce qui rendait les
+mises à jour difficiles.
+
+Cette refonte adresse ces deux problèmes en rationalisant la saisie des
+variables d'environnement d'une part, et en permettant de déporter toutes les
+modifications dans un dossier séparé hors du dépôt git principal. Pour plus
+d'informations sur le nouveau mode de fonctionnement, se référer au README à la
+racine du dépôt.
+
+### Guide de migration
+
+*Note : Le détail des fonctionnalités mentionnées ici se trouve dans le README
+à la racine du dépôt*
+
+#### Désactivation de services
+
+Plutôt que de modifier le fichier `docker-compose.yml` pour commenter les
+services à désactiver, il est maintenant possible de simplement lister les
+services à désactiver dans le fichier `disabled_services`.
+
+#### Modification de services / Ajout de services
+
+Il est possible d'ajouter un fichier `override.yml` qui sera s'il est présent
+chargé à la suite des autres fichiers de service. Suivant la spécification
+docker-compose, ce fichier peut être utilisé pour modifier la configuration des
+services chargées auparavant.
+
+En outre, l'ajout de nouveaux services peut être effectué simplement via
+l'ajout de fichiers `.yml` dans le dossier `custom/compose`.
+
+#### Plan batch
+
+Le dossier `bin` contient plusieurs scripts utilitaires permettant de
+simplifier l'exploitation (restauration / dumps de bases, mises à jour
+manuelles, etc.)
+
+Notamment, le script `bin/daily` permet de déclencher le plan batch. La ligne
+de commande à utiliser se trouve dans le README.
+
+#### Migration des variables d'environnement
+
+La logique du dépôt est la suivante :
+
+- Le fichier `env.custom` permet de définir les variables structurantes liées à
+l'infrastructure
+- Les différents fichiers du dossier `env` (en particulier `back.env` pour la
+configuration backoffice) permettent de configurer individuellement les
+variables d'environnement des différents services
+
+**Le fichier `.env` est généré automatiquement à partir du fichier `env.custom`
+et ne doit pas être modifié manuellement (les modifications seront écrasées au
+prochain redémarrage)**
+
+Variables à ajouter :
+
+|-----------------------|-------------------------------------------------------------------------|
+| Nom                   | Usage                                                                   |
+|-----------------------|-------------------------------------------------------------------------|
+| FILESYSTEM_ROOT       | Point de montage par défaut pour les VOLUME                             |
+| IMAGE_VERSION_DEFAULT | Version de l'image standard, initialise les autres valeurs d'images     |
+|-----------------------|-------------------------------------------------------------------------|
+
+Pour la gestion des images, renseigner `IMAGE_VERSION_DEFAULT` suffit pour
+déterminer la version à utiliser pour toutes les images. Si besoin, il est
+possible de changer la version d'un composant via la variable
+`IMAGE_VERSION_<composant>`.
+
+De même, les noms des images sont les valeurs par défaut de Coopengo, mais il
+est possible d'utiliser une autre image via les variables
+`CUSTOM_IMAGE_NAME_<composant>`.
+
+Correspondances des variables d'environnement globales :
+
+|-------------------------|--------------------------------|-------------------|
+| Ancienne Variable       | Nouvelle Variable              | Valeur par défaut |
+|                         |                                | cohérente         |
+|-------------------------|--------------------------------|-------------------|
+| NETWORK_BACKEND_NAME    | CUSTOM_NETWORK_BACKEND_NAME    | Oui               |
+| NETWORK_BACKEND_SUBNET  | CUSTOM_NETWORK_BACKEND_SUBNET  | Oui               |
+| NETWORK_FRONTEND_NAME   | CUSTOM_NETWORK_FRONTEND_NAME   | Oui               |
+| NETWORK_FRONTEND_SUBNET | CUSTOM_NETWORK_FRONTEND_SUBNET | Oui               |
+| COOG_TMP                | CUSTOM_COOG_TMP_VOLUME         | Oui               |
+| COOG_VOLUME             | CUSTOM_COOG_DATA_VOLUME        | Oui               |
+| POSTGRES_DATA_VOLUME    | CUSTOM_POSTGRES_DATA_VOLUME    | Oui               |
+| MONGODB_DATA_VOLUME     | CUSTOM_MONGODB_DATA_VOLUME     | Oui               |
+| IMAGE_REGISTRY          | CUSTOM_IMAGE_REGISTRY          |                   |
+| COOG_DB_NAME            | COOG_MAIN_DATABASE             |                   |
+|-------------------------|--------------------------------|-------------------|
+
+Correspondances des variables d'environnement du back (`env/back.env`) :
+
+|---------------------------|--------------------|---------------|---------------------------------------------------------------------------------------------------------------------|
+| Ancienne Variable         | Nouvelle Variable  | Localisation  | Commentaire                                                                                                         |
+|---------------------------|--------------------|---------------|---------------------------------------------------------------------------------------------------------------------|
+| TRYTOND_\*                | TRYTOND_\*         | `back.env`    | Les variables de connexion aux autres services internes sont automatiquement renseignées, et ne servent plus à rien |
+| WHITELIST                 | CORS_WHITELIST     | `env.custom`  | Valeur par défaut cohérente                                                                                         |
+| COOG_API_\*               |                    |               | Uniquement des variables de connexions, gérées automatiquement                                                      |
+| BASE_PATH                 |                    |               | Supprimée                                                                                                           |
+| \*\_DB_\*                 | CUSTOM_POSTGRES_\* | `env.custom`  | En cas d'incohérence (ADMIN_DB_\* / COOG_DB_\* / COOG_POSTGRES_\*), privilégier COOG_\*                             |
+| COOG_WEB_TOKEN            | COOG_GATEWAY_TOKEN | `env.custom`  |                                                                                                                     |
+| JWT_(INTERNAL)_ENCRYPTION | JWT_ENCRYPTION     | `env.custom`  |                                                                                                                     |
+| MONGO_\*                  | CUSTOM_MONGO_\*    | `env.custsom` | Si valeur standards (host / port), pas nécessaire de les renseigner                                                 |
+| LOG_LEVEL                 | COOG_LOG_LEVEL     | `env.custom`  |                                                                                                                     |
+|---------------------------|--------------------|---------------|---------------------------------------------------------------------------------------------------------------------|
+
+*Note : Pour les autres services, les variables existantes étaient renseignées
+en doublon, mais sont maintenant set une seule fois dans `env.custom` et
+propagées où nécessaire. Les fichiers `.env` existent si nécessaire, mais sont
+pour l'instant en général vides*
+
+Autres :
+
+- Il est possible de définir le nombre de process à utiliser pour l'application
+/ celery via les variables `COOG_CELERY_WORKERS` / `COOG_SERVER_WORKERS`
+- Il est possible d'indiquer la liste des batchs à traiter pour les workers
+celery via la variable `COOG_CELERY_CUSTOM_QUEUES`
