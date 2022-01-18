@@ -1,0 +1,15 @@
+networks:
+  backend:
+    external:
+      name: ${NETWORK_BACKEND_NAME:?}
+
+services:
+  daily:
+    extends:
+      file: compose/back/common.yml
+      service: back-common
+    env_file:
+      - env/back.env
+      - env/celery.env
+    command: ["daily_v2", "$DAILY_DATE"]
+    restart: "no"
