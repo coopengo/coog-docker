@@ -1,3 +1,6 @@
+* A partir de la version 2203, la valeur par défaut de la variable
+`IMAGE_REGISTRY` sera cooghub
+
 ## 2021-09-16 Refactoring
 
 ### Motifs
