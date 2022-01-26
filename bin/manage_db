@@ -116,7 +116,7 @@ update() {
     # We need to kill the "init" container because it may lead to deadlocks.
     # And we are updating the db anyaway
     sleep 1
-    docker rm -f "$project_name"-init-1 > /dev/null
+    docker rm -f "$project_name"_init_1 > /dev/null
 
     if [[ "$#" = "0" ]]; then
         args=ir
@@ -134,7 +134,7 @@ change_admin_password() {
 
     # We need to kill the "init" container because it is started automatically,
     # and we do not need since the DB is supposed to already be up to date
-    docker kill "$project_name"_init_1 > /dev/null
+    sleep 1
     docker rm -f "$project_name"_init_1 > /dev/null
 
     docker-compose exec -- coog ep admin -d "$db_name" -p
