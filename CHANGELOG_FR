@@ -1,3 +1,4 @@
+* BUG#22169 Augmentation du timeout d'ack de RabbitMQ
 * BUG#22147 Typo dans le nom d'un container docker
 
 ## 2021-09-16 Refactoring
