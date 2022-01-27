@@ -35,6 +35,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Network error on configuration](#network-error-on-configuration)
     - [Configuration error](#configuration-error)
     - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
+    - [Celery error: PreconditionFailed](#celery-error-preconditionfailed)
 
 <!-- /TOC -->
 
@@ -453,3 +454,25 @@ Updating .env contents
 ### [PORTAL][B2B] Error: Not allowed by CORS
 
 By default, you should not be able to use the protocol https:// because it is not configured. You must therefore use the protocol http://.
+
+### Celery error: PreconditionFailed
+
+In some cases (long jobs or batch panifications), recent (> 3.8.16) versions of
+rabbitmq may raise a "PreconditionFailed" error, which triggers a celery node
+restart. Sample log:
+
+```
+# Node is up
+2022-01-25T17:09:44.540530415Z [2022-01-25 17:09:44,540: INFO/MainProcess] celery@9268f28e1bd4 ready.
+...
+# Some job exceeds the timeout
+2022-01-25T17:43:46.900229245Z amqp.exceptions.PreconditionFailed: (0, 0): (406) PRECONDITION_FAILED - delivery acknowledgement on channel 1 timed out. Timeout value used: 1800000 ms. This timeout value can be configured, see consumers doc guide to learn more
+# Celery node restarts
+2022-01-25T17:43:49.370191389Z Welcome on board, Coog Celery is preparing to start
+...
+```
+
+Default timeout is increased to 48 hours (up from 30 minutes), and can be
+further increased by copying the `defaults/rabbitmq` folder somewhere,
+modifying the value in `timeout.conf`, and setting the path to the folder in
+the `CUSTOM_RABBITMQ_FOLDER` environment variable.
