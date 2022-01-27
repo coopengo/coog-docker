@@ -6,3 +6,5 @@ services:
     restart: always
     networks:
       - backend
+    volumes:
+      - ${RABBITMQ_CONFIG:?}:/etc/rabbitmq/conf.d
