@@ -1,5 +1,4 @@
-* A partir de la version 2203, la valeur par défaut de la variable
-`IMAGE_REGISTRY` sera cooghub
+* A partir de la version 2203, la valeur par défaut de la variable `IMAGE_REGISTRY` sera cooghub
 * BUG#22169 Augmentation du timeout d'ack de RabbitMQ
 * BUG#22147 Typo dans le nom d'un container docker
 
