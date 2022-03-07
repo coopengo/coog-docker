@@ -51,7 +51,11 @@ load() {
         exit 1
     fi
     _start_services postgres
+    # Workaround due to some performance issues on Macos (and Windows). These are related to volume performance, the way volumes are mounted, and the underlying osx/windows filesystem.
+    sleep 5
     _reset_database
+    # Workaround due to some performance issues on Macos (and Windows). These are related to volume performance, the way volumes are mounted, and the underlying osx/windows filesystem.
+    sleep 1
 
     echo " "
     section "Loading database from dump file"
@@ -113,9 +117,10 @@ update() {
     fi
     _start_services coog
 
+    # Workaround due to some performance issues on Macos (and Windows). These are related to volume performance, the way volumes are mounted, and the underlying osx/windows filesystem.
+    sleep 1
     # We need to kill the "init" container because it may lead to deadlocks.
     # And we are updating the db anyaway
-    sleep 1
     docker rm -f "$project_name"_init_1 > /dev/null
 
     if [[ "$#" = "0" ]]; then

@@ -1,3 +1,5 @@
+
+* From version 2203 onward, default value for `IMAGE_REGISTRY` will be cooghub
 * BUG#22169 Increase default ack timeout for RabbitMQ
 * BUG#22147 Typo in docker container name
 
