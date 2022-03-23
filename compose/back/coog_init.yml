@@ -4,6 +4,8 @@ services:
       file: compose/back/common.yml
       service: back-common
     command: ["admin", "-cu", "ir", "res", "--activate-dependencies"]
+    environment:
+      - LOG_LEVEL=INFO
     restart: on-failure
     deploy:
       restart_policy:

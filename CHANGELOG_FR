@@ -1,3 +1,4 @@
+* BUG#22763 Utilisation du niveau de log INFO lors de la mise à jour
 * BUG#22169 Augmentation du timeout d'ack de RabbitMQ
 * BUG#22147 Typo dans le nom d'un container docker
 
