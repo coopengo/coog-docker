@@ -19,6 +19,8 @@ services:
       - TRYTOND_SESSION__PASSPHRASE=${COOG_PASSPHRASE:-}
       - TRYTOND_DOCUMENT_API__DOCUMENT_TOKEN_SECRET=${DOCUMENT_TOKEN_SECRET?}
     volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
       - ${COOG_TMP_VOLUME:?}:/workspace/tmp
       - ${COOG_DATA_VOLUME:?}:/workspace/io
     networks:
