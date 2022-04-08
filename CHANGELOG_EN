@@ -1,4 +1,3 @@
-* BUG#22764 Use server timezone in coog containers
 * BUG#22763 Use INFO log level for init container
 * BUG#22169 Increase default ack timeout for RabbitMQ
 * BUG#22147 Typo in docker container name
