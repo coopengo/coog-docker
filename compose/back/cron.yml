@@ -1,0 +1,12 @@
+services:
+  cron:
+    extends:
+      file: compose/back/common.yml
+      service: back-common
+    command: ["cron"]
+    environment:
+      - LOG_LEVEL=INFO
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure

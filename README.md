@@ -27,7 +27,6 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Load from a backup](#load-from-a-backup)
     - [Modify admin password](#modify-admin-password)
     - [Anonymize a database](#anonymize-a-database)
-    - [Run daily chain](#run-daily-chain)
   - [Creating custom services](#creating-custom-services)
   - [Debug tools](#debug-tools)
   - [FAQ](#faq)
@@ -343,33 +342,6 @@ declared in the anon_db function.
 
 As is the case for the `reset` command, this command can be run on another
 database by using the `--database` parameter.
-
-### Run daily chain
-
-The daily chain can be run using the following command:
-
-```shell
-./bin/daily [optional date]
-```
-
-If no date is specified, the current system date will be used.
-
-There will usually be two arguments, to indicate how business days should be
-This command can be set in the crontab of the host to run every day.
-In that case, you must make sure that `docker-compose` is available in the path.
-Example command:
-
-```shell
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin /path/to/bin/daily $(date --iso) > /path/to/logs/daily_$(date --iso).log 2>&1
-```
-
-**Note: This command uses the mechanisms introduced in Coog 2.12 for daily chain
-configuration inside the application**
-
-Technically, this starts a dedicated service, defined in the
-`docker-compose.daily.yml` file. The definition for this service can be
-modified by adding a `daily.override.yml` file in the `custom` folder.
-
 
 ## Creating custom services
 

@@ -112,7 +112,11 @@ set_services () {
         elif [[ -f "$BASE_PATH/custom/disabled_services" ]] && \
                 cat $BASE_PATH/custom/disabled_services | grep -v "^#" | \
                 grep -E "^$service$" > /dev/null; then
-            fail "Ignoring $service"
+            if [[ "$service" == "back/cron" ]]; then
+                warning "Ignoring back/cron, this will disable batch chains / daily executions"
+            else
+                fail "Ignoring $service"
+            fi
         else
             check "Adding $service"
             SERVICES="$SERVICES:$path"
