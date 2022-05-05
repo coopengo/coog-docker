@@ -1,3 +1,4 @@
+* FEA#23066 From 22.14 onward, use native tryton cron for daily chains
 * BUG#22763 Use INFO log level for init container
 * From version 2203 onward, default value for `IMAGE_REGISTRY` will be cooghub
 * BUG#22169 Increase default ack timeout for RabbitMQ
