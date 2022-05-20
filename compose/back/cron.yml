@@ -1,9 +1,9 @@
 services:
-  init:
+  cron:
     extends:
       file: compose/back/common.yml
       service: back-common
-    command: ["admin", "-cu", "ir", "res", "--activate-dependencies"]
+    command: ["cron"]
     environment:
       - LOG_LEVEL=INFO
     restart: on-failure

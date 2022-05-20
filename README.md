@@ -27,7 +27,6 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Load from a backup](#load-from-a-backup)
     - [Modify admin password](#modify-admin-password)
     - [Anonymize a database](#anonymize-a-database)
-    - [Run daily chain](#run-daily-chain)
   - [Creating custom services](#creating-custom-services)
   - [Debug tools](#debug-tools)
   - [FAQ](#faq)
@@ -35,6 +34,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Network error on configuration](#network-error-on-configuration)
     - [Configuration error](#configuration-error)
     - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
+    - [Celery error: PreconditionFailed](#celery-error-preconditionfailed)
 
 <!-- /TOC -->
 
@@ -343,33 +343,6 @@ declared in the anon_db function.
 As is the case for the `reset` command, this command can be run on another
 database by using the `--database` parameter.
 
-### Run daily chain
-
-The daily chain can be run using the following command:
-
-```shell
-./bin/daily [optional date]
-```
-
-If no date is specified, the current system date will be used.
-
-There will usually be two arguments, to indicate how business days should be
-This command can be set in the crontab of the host to run every day.
-In that case, you must make sure that `docker-compose` is available in the path.
-Example command:
-
-```shell
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin /path/to/bin/daily $(date --iso) > /path/to/logs/daily_$(date --iso).log 2>&1
-```
-
-**Note: This command uses the mechanisms introduced in Coog 2.12 for daily chain
-configuration inside the application**
-
-Technically, this starts a dedicated service, defined in the
-`docker-compose.daily.yml` file. The definition for this service can be
-modified by adding a `daily.override.yml` file in the `custom` folder.
-
-
 ## Creating custom services
 
 The `./bin/configure` command, which is used to generate the configuration,
@@ -453,3 +426,25 @@ Updating .env contents
 ### [PORTAL][B2B] Error: Not allowed by CORS
 
 By default, you should not be able to use the protocol https:// because it is not configured. You must therefore use the protocol http://.
+
+### Celery error: PreconditionFailed
+
+In some cases (long jobs or batch panifications), recent (> 3.8.16) versions of
+rabbitmq may raise a "PreconditionFailed" error, which triggers a celery node
+restart. Sample log:
+
+```
+# Node is up
+2022-01-25T17:09:44.540530415Z [2022-01-25 17:09:44,540: INFO/MainProcess] celery@9268f28e1bd4 ready.
+...
+# Some job exceeds the timeout
+2022-01-25T17:43:46.900229245Z amqp.exceptions.PreconditionFailed: (0, 0): (406) PRECONDITION_FAILED - delivery acknowledgement on channel 1 timed out. Timeout value used: 1800000 ms. This timeout value can be configured, see consumers doc guide to learn more
+# Celery node restarts
+2022-01-25T17:43:49.370191389Z Welcome on board, Coog Celery is preparing to start
+...
+```
+
+Default timeout is increased to 48 hours (up from 30 minutes), and can be
+further increased by copying the `defaults/rabbitmq` folder somewhere,
+modifying the value in `timeout.conf`, and setting the path to the folder in
+the `CUSTOM_RABBITMQ_FOLDER` environment variable.
