@@ -1,0 +1,14 @@
+services:
+  b2c-back-init:
+    extends:
+      file: compose/b2c/back_common.yml
+      service: b2c-back-common
+    # Limit resources to simulate saas deployment
+    # mem_limit: 200m
+    # cpu_count: 1
+    # cpus: 0.2
+    entrypoint: ["yarn", "build", "--no-optimization"]
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
