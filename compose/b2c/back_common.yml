@@ -5,7 +5,7 @@ services:
     env_file:
       # For some reason, we need to specify a relative path here
       # Might bug, I need to set the full path... (ex: /home/xxx/coog/coog-docker/env/b2c-back.env)
-      - ../env/b2c-back.env
+      - ../../env/b2c-back.env
     environment:
       - HOST=${BACKEND_HOST:-0.0.0.0}
       - PORT=1337
