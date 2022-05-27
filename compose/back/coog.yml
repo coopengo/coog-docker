@@ -5,7 +5,8 @@ services:
       service: back-common
     command: ["server", "${COOG_SERVER_WORKERS:?}"]
     depends_on:
-      - init
+      init:
+        condition: service_completed_successfully
     labels:
       - traefik.enable=true
       - traefik.http.routers.coog.rule=Host(`${PROJECT_HOSTNAME:?}`)
