@@ -157,7 +157,7 @@ BEGIN
             if col_test > 0 then
                 -- md5 is faster, but less safe
                 -- cols_hashed_statement := cols_hashed_statement || cols_list[i] || '=md5(' || cols_list[i] || '),';
-                cols_hashed_statement := cols_hashed_statement || cols_list[i] || '=encode(digest(random()::varchar || ' || cols_list[i] || ', ''sha256''),''hex''),';
+                cols_hashed_statement := cols_hashed_statement || cols_list[i] || '=left(encode(digest(random()::varchar || ' || cols_list[i] || ', ''sha256''),''hex''), 16),';
             end if;
             i := i + 1;
         end if;
