@@ -1,3 +1,4 @@
+* FEA#23348 Utiliser l'algorithme sha256 "salé" pour l'anonymisation
 * FEA#23292 Attendre la fin de l'initialisation avant le démarrage des services backoffice
 * FEA#23066 À partir de la version 22.14, utilisation du cron natif de tryton pour les chaînes de batch
 * BUG#22763 Utilisation du niveau de log INFO lors de la mise à jour
