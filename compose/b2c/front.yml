@@ -6,7 +6,6 @@ services:
     depends_on:
       b2c-front-init:
         condition: service_completed_successfully
-    entrypoint: ["serve", "-l", "5000", "/workdir/public"]
     labels:
       - traefik.enable=true
       - traefik.http.routers.b2cfront.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`${B2C_FRONT_PATH_PREFIX:?}`)
