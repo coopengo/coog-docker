@@ -57,6 +57,12 @@ database size, and business lines.
 - Docker: 20.10+ (<https://docs.docker.com/>)
 - Docker compose: 1.29+ (<https://docs.docker.com/compose>)
 
+*Note : The project works with docker-compose versions >=2.6, but it has not
+been extensively tested. There should not be many problems, however there may
+still be some bugs lying around in this version
+
+The tests that were done were on versions 22.14+*
+
 ### Permissions
 
 Various components will need access to the filesystem for reading / writing.
