@@ -1,3 +1,6 @@
+BREAKING :
+* FEA#22379 Possibilité de configurer globalement les paramètres de logs. Le comportement par défaut est de mettre en place une rotation des logs afin d'éviter la surcharge sur les serveurs rarement redémarrés
+
 * FEA#22291 Vérification de la compatibilité avec docker-compose >2
 * FEA#23348 Utiliser l'algorithme sha256 "salé" pour l'anonymisation
 * FEA#23292 Attendre la fin de l'initialisation avant le démarrage des services backoffice
