@@ -1,3 +1,4 @@
+* FEA#22291 Check compatibility with docker-compose >2
 * FEA#23348 Switch anonymisation algorithm to salted sha256
 * FEA#23292 Wait for init completion before starting back containers
 * FEA#23066 From 22.14 onward, use native tryton cron for daily chains
