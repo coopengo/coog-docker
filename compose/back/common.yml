@@ -18,6 +18,7 @@ services:
       - TRYTOND_DATABASE_NAMES=${COOG_DATABASES:?}
       - TRYTOND_SESSION__PASSPHRASE=${COOG_PASSPHRASE:-}
       - TRYTOND_DOCUMENT_API__DOCUMENT_TOKEN_SECRET=${DOCUMENT_TOKEN_SECRET?}
+      - TRYTOND_BATCH__ENABLE_CELERY_AUTO_SCALING=1
     volumes:
       # Do not enable this unless it does not trigger warnings when starting
       # the server up :)
