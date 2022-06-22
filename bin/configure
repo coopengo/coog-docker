@@ -209,6 +209,34 @@ init_service_env_files () {
     echo ""
 }
 
+activate_logging() {
+    filename="$BASE_PATH/docker-compose.logging.yaml"
+
+    . "$BASE_PATH/.env"
+
+    logging_configuration_template="${LOGGING_CONFIGURATION_TEMPLATE-none}"
+    if [[ "$logging_configuration_template" = "none" ]]; then
+        rm -f "$filename"
+        exit 0
+    elif [[ "$logging_configuration_template" = "default" ]]; then
+        logging_configuration_template="$BASE_PATH/default_logging_configuration.yml"
+    elif [[ ! -e "$logging_configuration_template" ]]; then
+        >&2 echo "$logging_configuration_template does not exist"
+        exit 1
+    fi
+
+    section "Logging configuration"
+    cp "$logging_configuration_template" "$filename"
+    echo "" >> "$filename"
+    echo "services:" >> "$filename"
+    for service in $(docker-compose config | yq -r '.services | keys[]'); do
+        echo "  $service:" >> "$filename"
+        echo '    logging: *default-logging' >> "$filename"
+    done
+
+    sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.logging.yaml/" "$BASE_PATH/.env"
+}
+
 check_host_integration() {
     filename="$BASE_PATH/docker-compose.host-integration.yaml"
 
@@ -287,6 +315,8 @@ set_services
 
 section "Creating missing env files"
 init_service_env_files
+
+(activate_logging)
 
 (check_host_integration)
 
