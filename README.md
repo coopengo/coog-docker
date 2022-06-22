@@ -16,6 +16,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Disabling services](#disabling-services)
     - [Specific services configuration](#specific-services-configuration)
     - [Overriding services](#overriding-services)
+    - [Logging configuration](#logging-configuration)
   - [Tracking configuration changes](#tracking-configuration-changes)
   - [Commands](#commands)
     - [Refresh configuration](#refresh-configuration)
@@ -36,6 +37,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Configuration error](#configuration-error)
     - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
     - [Celery error: PreconditionFailed](#celery-error-preconditionfailed)
+    - [Purge logs](#purge-logs)
 
 <!-- /TOC -->
 
@@ -169,12 +171,28 @@ For each service, there are sample files in the `defaults/env` folder, where
 a few recommended values can be found (mostly for `back.env`, which is the
 configuration for the backoffice component)
 
-### Overriding existing services
+### Overriding services
 
 If a `override.yml` file is found at the root of the repository, it will be
 appended to the list of configurations that will be load by the compose
 project. This can be useful to add custom configurations to services without
 modifying the repository contents.
+
+### Logging configuration
+
+Docker has some configuration options for logging management. The goal is
+usually to avoid creating GBs of logging data on production servers. The
+reference documentation is [here](https://docs.docker.com/config/containers/logging/configure/)
+
+This project allows to easily configure a common configuration for all
+services, by setting the `LOGGING_CONFIGURATION_TEMPLATE` environment variable.
+It accepts three possible values:
+
+-   "none": No default configuration will be injected
+-   "default": The configuration in `default_logging_configuration.yml` will be
+used. This is the default value
+-   /path/to/template: A path to a template file, with the same structure than
+the default above
 
 ## Tracking configuration changes
 
@@ -476,3 +494,18 @@ Default timeout is increased to 48 hours (up from 30 minutes), and can be
 further increased by copying the `defaults/rabbitmq` folder somewhere,
 modifying the value in `timeout.conf`, and setting the path to the folder in
 the `CUSTOM_RABBITMQ_FOLDER` environment variable.
+
+### Purge logs
+
+If no log rotation is configured (it should on production servers), you can use
+the following command to purge a container logs:
+
+```bash
+truncate -s 0 $(docker inspect --format='{{.LogPath}}' <container_name_or_id>)
+```
+
+*Note: if you are unlucky (the command was executed at the same time that a log
+was written), you may end up in a state where the log file is unusable. In that
+case, you can try truncating again*
+
+Reference [here](https://stackoverflow.com/questions/42510002/docker-how-to-clear-the-logs-properly-for-a-docker-container)
