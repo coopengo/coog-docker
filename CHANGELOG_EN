@@ -1,3 +1,6 @@
+BREAKING:
+* FEA#22379 Allow to globally configure logging. Default behaviour will add a logging rotation to avoid bloating on long running servers
+
 * FEA#22291 Check compatibility with docker-compose >2
 * FEA#23348 Switch anonymisation algorithm to salted sha256
 * FEA#23292 Wait for init completion before starting back containers
