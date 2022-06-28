@@ -1,0 +1,5 @@
+x-logging: &default-logging
+  options:
+    max-size: "100m"
+    max-file: "5"
+  driver: local

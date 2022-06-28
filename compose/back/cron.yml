@@ -4,6 +4,9 @@ services:
       file: compose/back/common.yml
       service: back-common
     command: ["cron"]
+    depends_on:
+      coog:
+        condition: service_started
     environment:
       - LOG_LEVEL=INFO
     restart: on-failure

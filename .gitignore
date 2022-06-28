@@ -17,3 +17,6 @@ certs
 
 # Auto-generated for host integration
 docker-compose.host-integration.yaml
+
+# Auto-generated for logging configuration
+docker-compose.logging.yaml

@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE OR REPLACE FUNCTION anon_db() RETURNS void as $$
 DECLARE
 -- The following variables will not be taken into account if the company is subscribed to a contract
@@ -99,7 +100,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION anon_table(table_name text, cols text default '', nulcolls text DEFAULT '', where_meta text DEFAULT '') RETURNS integer as $$
 DECLARE
     cols_list text[];
-    cols_md5_statement text := '';
+    cols_hashed_statement text := '';
     null_cols_list text[];
     null_cols_statement text := '';
     i int;
@@ -154,7 +155,9 @@ BEGIN
         else
             col_test := col_exist(table_name, cols_list[i]);
             if col_test > 0 then
-                cols_md5_statement := cols_md5_statement || cols_list[i] || '=md5(' || cols_list[i] || '),';
+                -- md5 is faster, but less safe
+                -- cols_hashed_statement := cols_hashed_statement || cols_list[i] || '=md5(' || cols_list[i] || '),';
+                cols_hashed_statement := cols_hashed_statement || cols_list[i] || '=left(encode(digest(random()::varchar || ' || cols_list[i] || ', ''sha256''),''hex''), 16),';
             end if;
             i := i + 1;
         end if;
@@ -174,8 +177,8 @@ BEGIN
             j := j + 1;
         end if;
     end loop;
-    if char_length(null_cols_statement) > 0 or char_length(cols_md5_statement) > 0 then
-        set_cols_statement := ' set ' || cols_md5_statement || null_cols_statement;
+    if char_length(null_cols_statement) > 0 or char_length(cols_hashed_statement) > 0 then
+        set_cols_statement := ' set ' || cols_hashed_statement || null_cols_statement;
         set_cols_statement := trim(trailing ',' from set_cols_statement);
         EXECUTE 'update ' || table_name || set_cols_statement || where_statement || ';';
         if history_exist > 0 then

@@ -4,6 +4,11 @@ services:
       file: compose/back/common.yml
       service: back-common
     command: ["celery", "${COOG_CELERY_WORKERS:?}", "${COOG_CELERY_CUSTOM_QUEUES}"]
+    depends_on:
+      coog:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
     env_file:
       - env/back.env
       - env/celery.env
