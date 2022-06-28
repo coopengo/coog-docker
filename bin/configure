@@ -238,7 +238,7 @@ activate_logging() {
     cp "$logging_configuration_template" "$filename"
     echo "" >> "$filename"
     echo "services:" >> "$filename"
-    for service in $(docker-compose config | yq -r '.services | keys()'); do
+    for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
         echo "  $service:" >> "$filename"
         echo '    logging: *default-logging' >> "$filename"
     done
@@ -266,7 +266,7 @@ check_host_integration() {
         section "Enabling Host network integration"
 
         echo "services:" > "$filename"
-        for service in $(docker-compose config | yq -r '.services | keys()'); do
+        for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
             echo "  $service:" >> "$filename"
             echo "    extra_hosts:" >> "$filename"
             echo '      - "host.docker.internal:host-gateway"' >> "$filename"
