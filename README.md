@@ -65,6 +65,9 @@ still be some bugs lying around in this version
 
 The tests that were done were on versions 22.14+*
 
+**yq** (https://github.com/mikefarah/yq/#install) is required for some features
+(host integration / logging configuration), with version >= 4.18
+
 ### Permissions
 
 Various components will need access to the filesystem for reading / writing.
