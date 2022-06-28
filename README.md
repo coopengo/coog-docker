@@ -60,6 +60,9 @@ database size, and business lines.
 - Docker: 20.10+ (<https://docs.docker.com/>)
 - Docker compose: 1.29+ (<https://docs.docker.com/compose>)
 
+**yq** (https://github.com/mikefarah/yq/#install) is required for some features
+(host integration / logging configuration), with version >= 4.18
+
 ### Permissions
 
 Various components will need access to the filesystem for reading / writing.
