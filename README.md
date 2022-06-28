@@ -15,7 +15,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Minimum configuration](#minimum-configuration)
     - [Disabling services](#disabling-services)
     - [Specific services configuration](#specific-services-configuration)
-    - [Overriding services](#overriding-services)
+    - [Overriding existing services](#overriding-existing-services)
   - [Tracking configuration changes](#tracking-configuration-changes)
   - [Commands](#commands)
     - [Refresh configuration](#refresh-configuration)
@@ -35,6 +35,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Configuration error](#configuration-error)
     - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
     - [Celery error: PreconditionFailed](#celery-error-preconditionfailed)
+    - [B2C docker-compose files](#b2c-docker-compose-files)
 
 <!-- /TOC -->
 
@@ -448,3 +449,20 @@ Default timeout is increased to 48 hours (up from 30 minutes), and can be
 further increased by copying the `defaults/rabbitmq` folder somewhere,
 modifying the value in `timeout.conf`, and setting the path to the folder in
 the `CUSTOM_RABBITMQ_FOLDER` environment variable.
+
+### B2C docker-compose files
+
+B2C has multiples .yml files (`_common`, `_init` and `back/front.yml`) because frontend and backend are built on separated containers.
+
+- `_common.yml` has shared data between init and run container.
+- `_init.yml` build the app.
+- `back/front.yml` run the app after init container has ended successfully (on `service_completed_successfully` condition)
+
+Build data are saved on persistent volumes:
+
+```
+CUSTOM_B2C_BACKEND_BUILD_VOLUME=
+CUSTOM_B2C_FRONTEND_BUILD_VOLUME=
+```
+
+It only needs to be persistent when containers are running, as it will rebuild at each start.
