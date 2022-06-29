@@ -9,6 +9,9 @@ services:
         condition: service_started
     environment:
       - LOG_LEVEL=INFO
+    env_file:
+      - env/back.env
+      - env/celery.env
     restart: on-failure
     deploy:
       restart_policy:
