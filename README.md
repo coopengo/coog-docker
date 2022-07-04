@@ -494,11 +494,11 @@ Reference [here](https://stackoverflow.com/questions/42510002/docker-how-to-clea
 
 ### B2C docker-compose files
 
-B2C has multiples .yml files (`_common`, `_init` and `back/front.yml`) because frontend and backend are built on separated containers.
+B2C has multiples .yml files (`{back/front}_common.yml`, `{back/front}_init.yml` and `{back/front}.yml`) because frontend and backend are built on separated containers.
 
-- `_common.yml` has shared data between init and run container.
-- `_init.yml` build the app.
-- `back/front.yml` run the app after init container has ended successfully (on `service_completed_successfully` condition)
+- `{back/front}_common.yml` has shared data between init and run container.
+- `{back/front}_init.yml` build the app.
+- `{back/front}.yml` run the app after init container has ended successfully (on `service_completed_successfully` condition)
 
 Build data are saved on persistent volumes:
 
