@@ -93,7 +93,7 @@ sudo chown 1003:1003 /path/to/coog_data
 sudo chown 1003:1003 /path/to/coog_tmp
 ```
 
-### Generate certificates for localhost
+### Generate certificates for localhost to enable HTTPS
 
 - Install mkcert
 
