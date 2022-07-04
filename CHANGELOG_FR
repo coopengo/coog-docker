@@ -1,3 +1,4 @@
+* FEA#22194 Suppression de flower des déploiements
 * FEA#15743 Activation de l'autoscaling sur Celery
 BREAKING :
 * FEA#22379 Possibilité de configurer globalement les paramètres de logs. Le comportement par défaut est de mettre en place une rotation des logs afin d'éviter la surcharge sur les serveurs rarement redémarrés
