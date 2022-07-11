@@ -38,6 +38,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
     - [Celery error: PreconditionFailed](#celery-error-preconditionfailed)
     - [Purge logs](#purge-logs)
+    - [B2C docker-compose files](#b2c-docker-compose-files)
 
 <!-- /TOC -->
 
@@ -498,3 +499,20 @@ was written), you may end up in a state where the log file is unusable. In that
 case, you can try truncating again*
 
 Reference [here](https://stackoverflow.com/questions/42510002/docker-how-to-clear-the-logs-properly-for-a-docker-container)
+
+### B2C docker-compose files
+
+B2C has multiples .yml files (`{back/front}_common.yml`, `{back/front}_init.yml` and `{back/front}.yml`) because frontend and backend are built on separated containers.
+
+- `{back/front}_common.yml` has shared data between init and run container.
+- `{back/front}_init.yml` build the app.
+- `{back/front}.yml` run the app after init container has ended successfully (on `service_completed_successfully` condition)
+
+Build data are saved on persistent volumes:
+
+```
+CUSTOM_B2C_BACKEND_BUILD_VOLUME=
+CUSTOM_B2C_FRONTEND_BUILD_VOLUME=
+```
+
+It only needs to be persistent when containers are running, as it will rebuild at each start.
