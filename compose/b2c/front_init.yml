@@ -1,0 +1,19 @@
+services:
+  b2c-front-init:
+    extends:
+      file: compose/b2c/front_common.yml
+      service: b2c-front-common
+    # Limit resources to simulate saas deployment
+    # mem_limit: 1500m
+    # cpu_count: 1
+    # cpus: 0.2
+    entrypoint: ["yarn", "build", "--prefix-paths"]
+    depends_on:
+      b2c-back:
+        condition: service_started
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend

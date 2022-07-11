@@ -79,6 +79,9 @@ load() {
             -d "$db_name" /tmp/dump
     fi
     docker-compose exec -- postgres rm "/tmp/dump"
+
+    echo " "
+    section "Loading database done."
 }
 
 dump() {

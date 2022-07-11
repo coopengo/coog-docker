@@ -1,0 +1,23 @@
+services:
+  b2c-back-common:
+    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_B2C_BACK:?}:${IMAGE_VERSION_B2C_BACK:?}
+    user: 1000:1000
+    env_file:
+      # For some reason, we need to specify a relative path here
+      # Might bug, I need to set the full path... (ex: /home/xxx/coog/coog-docker/env/b2c-back.env)
+      - ../../env/b2c-back.env
+    environment:
+      - HOST=${BACKEND_HOST:-0.0.0.0}
+      - PORT=1337
+      - DATABASE_CLIENT=postgres
+      - DATABASE_NAME=${POSTGRES_B2C_DB:?}
+      - DATABASE_HOST=${POSTGRES_B2C_HOST:?}
+      - DATABASE_PORT=${POSTGRES_B2C_PORT:?}
+      - DATABASE_USERNAME=${POSTGRES_B2C_USER:?}
+      - DATABASE_PASSWORD=${POSTGRES_B2C_PASSWORD:?}
+      - URL=${B2C_BACKEND_URL:?}
+      - STRAPI_PLUGIN_I18N_INIT_LOCALE_CODE=fr
+    volumes:
+      - ${B2C_BACKEND_BUILD_VOLUME:?}:/workdir/build
+    extra_hosts:
+      - host.docker.internal:host-gateway

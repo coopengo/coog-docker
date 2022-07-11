@@ -1,15 +1,11 @@
 services:
   b2c-front:
-    image: ${IMAGE_REGISTRY:?}/${IMAGE_NAME_B2C_FRONT:?}:${IMAGE_VERSION_B2C_FRONT:?}
-    env_file:
-      - env/b2c-front.env
+    extends:
+      file: compose/b2c/front_common.yml
+      service: b2c-front-common
     depends_on:
-      - b2c-back
-    environment:
-      - B2C_FRONT_PATH_PREFIX=${B2C_FRONT_PATH_PREFIX:?}
-      - API_URL=${B2C_FRONTEND_BUILD_INTERNAL_API_URL:?}
-      - GATSBY_API_URL=${B2C_BACKEND_EXTERNAL_URL:?}
-      - ENABLE_GATSBY_REFRESH_ENDPOINT=true
+      b2c-front-init:
+        condition: service_completed_successfully
     labels:
       - traefik.enable=true
       - traefik.http.routers.b2cfront.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`${B2C_FRONT_PATH_PREFIX:?}`)
