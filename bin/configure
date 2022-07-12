@@ -102,7 +102,7 @@ set_services () {
         key=${path#*compose/}
         service=${key%.yml}
 
-        if [[ "$service" = "back/common" ]]; then
+        if [[ "$service" =~ "common" ]]; then
             continue
         fi
         if [[ -f "$BASE_PATH/disabled_services" ]] && \
