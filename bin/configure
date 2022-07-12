@@ -214,6 +214,7 @@ init_service_env_files () {
 }
 
 activate_logging() {
+    set -x
     filename="$BASE_PATH/docker-compose.logging.yaml"
 
     . "$BASE_PATH/.env"
