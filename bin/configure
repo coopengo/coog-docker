@@ -14,7 +14,7 @@
 ###############################################################################
 set -euo pipefail
 
-export BASE_PATH=`realpath "$(dirname $0)/.."`
+export BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
 if [[ -f "$BASE_PATH/env.custom" ]]; then
