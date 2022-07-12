@@ -239,6 +239,7 @@ activate_logging() {
     cp "$logging_configuration_template" "$filename"
     echo "" >> "$filename"
     echo "services:" >> "$filename"
+    pwd
     for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
         echo "  $service:" >> "$filename"
         echo '    logging: *default-logging' >> "$filename"
