@@ -17,6 +17,8 @@ set -euo pipefail
 export BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
+export YQ_VERSION="$(yq --version | grep -Eo '(([[:digit:]]{1,2}).([[:digit:]]{1,2}).([[:digit:]]{1,2}))')"
+
 if [[ -f "$BASE_PATH/env.custom" ]]; then
     echo Will load "$BASE_PATH"/env.custom
 fi
@@ -234,8 +236,6 @@ activate_logging() {
         exit
     fi
 
-    YQ_VERSION="$(yq --version | grep -Eo '(([[:digit:]]{1,2}).([[:digit:]]{1,2}).([[:digit:]]{1,2}))')"
-
     section "Logging configuration"
     cp "$logging_configuration_template" "$filename"
     echo "" >> "$filename"
@@ -275,11 +275,19 @@ check_host_integration() {
         section "Enabling Host network integration"
 
         echo "services:" > "$filename"
-        for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
-            echo "  $service:" >> "$filename"
-            echo "    extra_hosts:" >> "$filename"
-            echo '      - "host.docker.internal:host-gateway"' >> "$filename"
-        done
+        if [[ "$(dpkg --compare-versions "${YQ_VERSION}" "lt" "4.18" && echo "found")" == "found" ]]; then
+            for service in $(docker-compose config | yq -r '.services | keys()'); do
+                echo "  $service:" >> "$filename"
+                echo "    extra_hosts:" >> "$filename"
+                echo '      - "host.docker.internal:host-gateway"' >> "$filename"
+            done
+        else
+            for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+                echo "  $service:" >> "$filename"
+                echo "    extra_hosts:" >> "$filename"
+                echo '      - "host.docker.internal:host-gateway"' >> "$filename"
+            done
+        fi
 
         sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.host-integration.yaml/" "$BASE_PATH/.env"
     else
