@@ -230,18 +230,27 @@ activate_logging() {
     fi
 
     if [[ ! "$(command -v yq)" ]]; then
-        warning "Logging configuration requires yq >= 4.18"
+        warning "Logging configuration requires yq (if possible >= 4.18)"
         exit
     fi
+
+    YQ_VERSION="$(yq --version | grep -Eo '(([[:digit:]]{1,2}).([[:digit:]]{1,2}).([[:digit:]]{1,2}))')"
 
     section "Logging configuration"
     cp "$logging_configuration_template" "$filename"
     echo "" >> "$filename"
     echo "services:" >> "$filename"
-    for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
-        echo "  $service:" >> "$filename"
-        echo '    logging: *default-logging' >> "$filename"
-    done
+    if [[ "$(dpkg --compare-versions "${YQ_VERSION}" "lt" "4.18" && echo "found")" == "found" ]]; then
+        for service in $(docker-compose config | yq -r '.services | keys()'); do
+            echo "  $service:" >> "$filename"
+            echo '    logging: *default-logging' >> "$filename"
+        done
+    else
+        for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+            echo "  $service:" >> "$filename"
+            echo '    logging: *default-logging' >> "$filename"
+        done
+    fi
 
     sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.logging.yaml/" "$BASE_PATH/.env"
 }
