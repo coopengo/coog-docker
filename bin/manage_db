@@ -50,11 +50,9 @@ load() {
         exit 1
     fi
     _start_services postgres
-    # Workaround due to some performance issues on Macos (and Windows). These are related to volume performance, the way volumes are mounted, and the underlying osx/windows filesystem.
-    sleep 5
+    _db_wait
     _reset_database
-    # Workaround due to some performance issues on Macos (and Windows). These are related to volume performance, the way volumes are mounted, and the underlying osx/windows filesystem.
-    sleep 1
+    _db_wait
 
     echo " "
     section "Loading database from dump file"
@@ -231,6 +229,15 @@ _reset_database() {
 _restart() {
     echo " "
     (cd "$BASE_PATH" && docker-compose up -d)
+}
+
+_db_wait() {
+    DB_RETRIES=20
+
+    until docker-compose exec -- pg_isready -U "$db_user" || [[ ${DB_RETRIES} -eq 0 ]]; do
+        echo "Waiting for postgres server, $((DB_RETRIES--)) remaining attempts..."
+        sleep 2;
+    done
 }
 
 command=$1
