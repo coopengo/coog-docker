@@ -43,7 +43,6 @@ reset() {
 }
 
 load() {
-    container_name="$project_name"_postgres_1
     dump_file=$1
 
     if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
@@ -63,7 +62,7 @@ load() {
         dump_file=/tmp/tmp_extracted_dump
     fi
 
-    docker cp "$dump_file" "$container_name":/tmp/dump
+    docker-compose cp "$dump_file" postgres:/tmp/dump
 
     if [[ "$format" = "sql" ]]; then
         docker-compose exec -- postgres \
@@ -86,7 +85,6 @@ dump() {
 
     _start_services postgres
 
-    container_name="$project_name"_postgres_1
     format="${format:-sql}"
     dump_file=${1:-/tmp/$db_name-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
 
@@ -97,7 +95,7 @@ dump() {
     else
         docker-compose exec -- postgres pg_dump -U "$db_user" -d "$db_name" -Fc -Z5 -f /tmp/dump > /dev/null
     fi
-    docker cp "$container_name":/tmp/dump "$dump_file"
+    docker-compose cp postgres:/tmp/dump "$dump_file"
     docker-compose exec -- postgres rm "/tmp/dump"
 
     if [[ "$format" = "zip" ]]; then
@@ -115,8 +113,7 @@ update() {
 
     # We need to kill the "init" container because it may lead to deadlocks.
     # And we are updating the db anyaway
-    sleep 1
-    docker rm -f "$project_name"_init_1 > /dev/null
+    docker-compose rm -s -f init > /dev/null
 
     if [[ "$#" = "0" ]]; then
         args=ir
@@ -135,7 +132,7 @@ change_admin_password() {
     # We need to kill the "init" container because it is started automatically,
     # and we do not need since the DB is supposed to already be up to date
     sleep 1
-    docker rm -f "$project_name"_init_1 > /dev/null
+    docker-compose rm -s -f init > /dev/null
 
     docker-compose exec -- coog ep admin -d "$db_name" -p
 }
@@ -149,9 +146,8 @@ anonymize() {
     fi
     _start_services postgres
 
-    container_name="$project_name"_postgres_1
 
-    docker cp "$BASE_PATH/bin/resources/anonymize_coog_db.sql" "$container_name":/tmp/anonymize.sql
+    docker-compose cp "$BASE_PATH/bin/resources/anonymize_coog_db.sql" postgres:/tmp/anonymize.sql
 
     docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
         --file /tmp/anonymize.sql
