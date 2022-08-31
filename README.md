@@ -31,6 +31,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
   - [Creating custom services](#creating-custom-services)
   - [Debug tools](#debug-tools)
   - [FAQ](#faq)
+    - [Timezones](#timezones)
     - [Using services deployed on localhost](#using-services-deployed-on-localhost)
     - [Network error on configuration](#network-error-on-configuration)
     - [Configuration error](#configuration-error)
@@ -398,6 +399,13 @@ process seems "stuck", or for detecting slow downs using a sampling approach
 Those two options have no sensible overhead, but are still disabled by default.
 
 ## FAQ
+
+### Timezones
+
+Some services require a Timezone configuration. The `CUSTOM_COOG_TIMEZONE`
+variable allows to change the default timezone from `Europe/Paris`.
+
+Values come from the [tz database](https://www.wikiwand.com/en/Tz_database)
 
 ### Using services deployed on localhost
 

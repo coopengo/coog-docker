@@ -1,3 +1,4 @@
+* FEA#24006 Configure application Timezone
 * FEA#22194 Remove flower from deployments
 * FEA#15743 Enable celery autoscaling
 BREAKING:
