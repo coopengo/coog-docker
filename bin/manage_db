@@ -51,6 +51,7 @@ load() {
     fi
     _start_services postgres
     _db_wait
+    sleep 20
     _reset_database
     _db_wait
 
@@ -232,8 +233,6 @@ _db_wait() {
         echo "Waiting for postgres server, $((DB_RETRIES--)) remaining attempts..."
         sleep 2
     done
-
-    sleep 20
 }
 
 command=$1
