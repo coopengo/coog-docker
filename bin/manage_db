@@ -232,6 +232,8 @@ _db_wait() {
         echo "Waiting for postgres server, $((DB_RETRIES--)) remaining attempts..."
         sleep 2
     done
+
+    sleep 20
 }
 
 command=$1
