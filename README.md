@@ -38,6 +38,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
     - [Celery error: PreconditionFailed](#celery-error-preconditionfailed)
     - [Purge logs](#purge-logs)
+    - [Deploying on multiple IPs at once](#deploying-on-multiple-ips-at-once)
     - [B2C docker-compose files](#b2c-docker-compose-files)
 
 <!-- /TOC -->
@@ -499,6 +500,22 @@ was written), you may end up in a state where the log file is unusable. In that
 case, you can try truncating again*
 
 Reference [here](https://stackoverflow.com/questions/42510002/docker-how-to-clear-the-logs-properly-for-a-docker-container)
+
+### Deploying on multiple IPs at once
+
+This can be achieved by fine tuning the labels of the services. The easiest way
+to do that is by using the `override.yml` file (creating it if necessary).
+Then, to additionaly expose on ip `1.2.3.4`:
+
+```yml
+services:
+  coog:
+    labels:
+      - traefik.http.routers.coog.rule=Host(`${PROJECT_HOSTNAME:?}`) || Host(`1.2.3.4`)
+  static:
+    labels:
+      - traefik.http.routers.static.rule=(Host(`${PROJECT_HOSTNAME:?}`) || Host(`1.2.3.4`)) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
+```
 
 ### B2C docker-compose files
 
