@@ -6,14 +6,14 @@
 ###############################################################################
 set -euo pipefail
 
-if docker-compose --version > /dev/null 2>&1; then
+if docker-compose --version >/dev/null 2>&1; then
   echo 'Info: docker-compose found'
   export DOCKER_COMMAND="docker-compose"
-elif docker compose version > /dev/null 2>&1; then
-  echo 'Info: docker compose plugin found' 
+elif docker compose version >/dev/null 2>&1; then
+  echo 'Info: docker compose plugin found'
   export DOCKER_COMMAND="docker compose"
 else
-  echo 'Error: Neither docker compose nor docker-compse was found, please install docker compose'
+  echo 'Error: Neither docker compose nor docker-compose was found, please install docker compose'
   echo 'https://docs.docker.com/compose/install/linux/#install-using-the-repository'
   exit 1
 fi
@@ -23,300 +23,300 @@ BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
 help() {
-    echo "manage_db - Manage database"
-    echo " "
-    echo "manage_db action [options] [arguments]"
-    echo " "
-    echo "actions:"
-    echo "  help                      Show this help"
-    echo "  reset                     Clear (or init) the database"
-    echo "  load <file_name>          Load database from file"
-    echo "  dump <file_name>          Dump the current database for safekeeping"
-    echo "  update [modules]          Force an update of the database"
-    echo "  change_admin_password     Change the admin password of the database"
-    echo "  anonymize [level]         Anonymize the database"
-    echo " "
-    echo "options:"
-    echo "--database <db_name>        The database to operate on"
-    echo "--format <(sql,bin,zip)>    The format to load from / dump database dumps"
+  echo "manage_db - Manage database"
+  echo " "
+  echo "manage_db action [options] [arguments]"
+  echo " "
+  echo "actions:"
+  echo "  help                      Show this help"
+  echo "  reset                     Clear (or init) the database"
+  echo "  load <file_name>          Load database from file"
+  echo "  dump <file_name>          Dump the current database for safekeeping"
+  echo "  update [modules]          Force an update of the database"
+  echo "  change_admin_password     Change the admin password of the database"
+  echo "  anonymize [level]         Anonymize the database"
+  echo " "
+  echo "options:"
+  echo "--database <db_name>        The database to operate on"
+  echo "--format <(sql,bin,zip)>    The format to load from / dump database dumps"
 }
 
 if [[ "$#" -lt 1 ]]; then
-    echo "Missing action" >&2
-    help
-    exit 1
+  echo "Missing action" >&2
+  help
+  exit 1
 fi
 
 reset() {
-    if [[ "$USE_LOCAL_POSTGRES" = "1" ]]; then
-        _start_services postgres
-    fi
-    _reset_database
-    update
+  if [[ "$USE_LOCAL_POSTGRES" = "1" ]]; then
+    _start_services postgres
+  fi
+  _reset_database
+  update
 }
 
 load() {
-    dump_file=$1
+  dump_file=$1
 
-    if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
-        echo Cannot use load command for non dockerized database 1>&2
-        exit 1
-    fi
-    _start_services postgres
-    _db_wait
-    sleep 20
-    _reset_database
-    _db_wait
+  if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
+    echo Cannot use load command for non dockerized database 1>&2
+    exit 1
+  fi
+  _start_services postgres
+  _db_wait
+  sleep 20
+  _reset_database
+  _db_wait
 
-    echo " "
-    section "Loading database from dump file"
+  echo " "
+  section "Loading database from dump file"
 
-    format="${format:-sql}"
-    if [[ "$format" = "zip" ]]; then
-        unzip -p "$dump_file" >/tmp/tmp_extracted_dump
-        format=sql
-        dump_file=/tmp/tmp_extracted_dump
-    fi
+  format="${format:-sql}"
+  if [[ "$format" = "zip" ]]; then
+    unzip -p "$dump_file" >/tmp/tmp_extracted_dump
+    format=sql
+    dump_file=/tmp/tmp_extracted_dump
+  fi
 
-    $(${DOCKER_COMMAND} cp "$dump_file" postgres:/tmp/dump)
+  $(${DOCKER_COMMAND} cp "$dump_file" postgres:/tmp/dump)
 
-    if [[ "$format" = "sql" ]]; then
-        ${DOCKER_COMMAND} exec -- postgres \
-            bash -c "cat /tmp/dump | psql -U $db_user -d $db_name" \
-            >/dev/null
-    else
-        ${DOCKER_COMMAND} exec -- postgres \
-            pg_restore -U "$db_user" --no-owner --role "$db_user" -j 4 \
-            -d "$db_name" /tmp/dump
-    fi
-    ${DOCKER_COMMAND} exec -- postgres rm "/tmp/dump"
+  if [[ "$format" = "sql" ]]; then
+    ${DOCKER_COMMAND} exec -- postgres \
+      bash -c "cat /tmp/dump | psql -U $db_user -d $db_name" \
+      >/dev/null
+  else
+    ${DOCKER_COMMAND} exec -- postgres \
+      pg_restore -U "$db_user" --no-owner --role "$db_user" -j 4 \
+      -d "$db_name" /tmp/dump
+  fi
+  ${DOCKER_COMMAND} exec -- postgres rm "/tmp/dump"
 
-    echo " "
-    section "Loading database done."
+  echo " "
+  section "Loading database done."
 }
 
 dump() {
-    echo " "
-    if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
-        echo Cannot use dump command for non dockerized database 1>&2
-        exit 1
-    fi
+  echo " "
+  if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
+    echo Cannot use dump command for non dockerized database 1>&2
+    exit 1
+  fi
 
-    _start_services postgres
+  _start_services postgres
 
-    format="${format:-sql}"
-    dump_file=${1:-/tmp/$db_name-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
+  format="${format:-sql}"
+  dump_file=${1:-/tmp/$db_name-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
 
-    section "Dumping database $db_name to $dump_file (format $format)"
+  section "Dumping database $db_name to $dump_file (format $format)"
 
-    if [[ "$format" = "sql" ]] || [[ "$format" = "zip" ]]; then
-        ${DOCKER_COMMAND} exec -- postgres bash -c "pg_dump -U $db_user $db_name > /tmp/dump" >/dev/null
-    else
-        ${DOCKER_COMMAND} exec -- postgres pg_dump -U "$db_user" -d "$db_name" -Fc -Z5 -f /tmp/dump >/dev/null
-    fi
-    ${DOCKER_COMMAND} cp postgres:/tmp/dump "$dump_file"
-    ${DOCKER_COMMAND} exec -- postgres rm "/tmp/dump"
+  if [[ "$format" = "sql" ]] || [[ "$format" = "zip" ]]; then
+    ${DOCKER_COMMAND} exec -- postgres bash -c "pg_dump -U $db_user $db_name > /tmp/dump" >/dev/null
+  else
+    ${DOCKER_COMMAND} exec -- postgres pg_dump -U "$db_user" -d "$db_name" -Fc -Z5 -f /tmp/dump >/dev/null
+  fi
+  ${DOCKER_COMMAND} cp postgres:/tmp/dump "$dump_file"
+  ${DOCKER_COMMAND} exec -- postgres rm "/tmp/dump"
 
-    if [[ "$format" = "zip" ]]; then
-        mv "$dump_file" /tmp/tmp_extracted_dump
-        zip "$dump_file" /tmp/tmp_extracted_dump
-        rm /tmp/tmp_extracted_dump
-    fi
+  if [[ "$format" = "zip" ]]; then
+    mv "$dump_file" /tmp/tmp_extracted_dump
+    zip "$dump_file" /tmp/tmp_extracted_dump
+    rm /tmp/tmp_extracted_dump
+  fi
 }
 
 update() {
-    if [[ "$USE_LOCAL_POSTGRES" = "1" ]]; then
-        _start_services postgres
-    fi
-    _start_services coog
+  if [[ "$USE_LOCAL_POSTGRES" = "1" ]]; then
+    _start_services postgres
+  fi
+  _start_services coog
 
-    # Workaround due to some performance issues on Macos (and Windows). These are related to volume performance, the way volumes are mounted, and the underlying osx/windows filesystem.
-    sleep 1
-    # We need to kill the "init" container because it may lead to deadlocks.
-    # And we are updating the db anyaway
-    ${DOCKER_COMMAND} rm -s -f init >/dev/null
+  # Workaround due to some performance issues on Macos (and Windows). These are related to volume performance, the way volumes are mounted, and the underlying osx/windows filesystem.
+  sleep 1
+  # We need to kill the "init" container because it may lead to deadlocks.
+  # And we are updating the db anyaway
+  ${DOCKER_COMMAND} rm -s -f init >/dev/null
 
-    if [[ "$#" = "0" ]]; then
-        args=ir
-    else
-        args=$*
-    fi
-    ${DOCKER_COMMAND} exec -- coog ep admin -d "$db_name" --activate-dependencies -u $args
+  if [[ "$#" = "0" ]]; then
+    args=ir
+  else
+    args=$*
+  fi
+  ${DOCKER_COMMAND} exec -- coog ep admin -d "$db_name" --activate-dependencies -u $args
 }
 
 change_admin_password() {
-    if [[ "$USE_LOCAL_POSTGRES" = "1" ]]; then
-        _start_services postgres
-    fi
-    _start_services coog
+  if [[ "$USE_LOCAL_POSTGRES" = "1" ]]; then
+    _start_services postgres
+  fi
+  _start_services coog
 
-    # We need to kill the "init" container because it is started automatically,
-    # and we do not need since the DB is supposed to already be up to date
-    sleep 1
-    ${DOCKER_COMMAND} rm -s -f init >/dev/null
+  # We need to kill the "init" container because it is started automatically,
+  # and we do not need since the DB is supposed to already be up to date
+  sleep 1
+  ${DOCKER_COMMAND} rm -s -f init >/dev/null
 
-    ${DOCKER_COMMAND} exec -- coog ep admin -d "$db_name" -p
+  ${DOCKER_COMMAND} exec -- coog ep admin -d "$db_name" -p
 }
 
 anonymize() {
-    echo " "
+  echo " "
 
-    if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
-        echo Cannot use anonymize command for non dockerized database 1>&2
-        exit 1
-    fi
-    _start_services postgres
+  if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
+    echo Cannot use anonymize command for non dockerized database 1>&2
+    exit 1
+  fi
+  _start_services postgres
 
-    ${DOCKER_COMMAND} cp "$BASE_PATH/bin/resources/anonymize_coog_db.sql" postgres:/tmp/anonymize.sql
+  ${DOCKER_COMMAND} cp "$BASE_PATH/bin/resources/anonymize_coog_db.sql" postgres:/tmp/anonymize.sql
 
-    ${DOCKER_COMMAND} exec -- postgres psql -U "$db_user" -d "$db_name" \
-        --file /tmp/anonymize.sql
+  ${DOCKER_COMMAND} exec -- postgres psql -U "$db_user" -d "$db_name" \
+    --file /tmp/anonymize.sql
 }
 
 _load_configuration() {
-    ${BASE_PATH}/bin/configure
+  ${BASE_PATH}/bin/configure
 
-    section "Loading required informations"
+  section "Loading required informations"
 
-    project_name=$(source $BASE_PATH/.env && echo $COMPOSE_PROJECT_NAME)
-    if [[ ! "$project_name" ]]; then
-        echo "Could not extract compose project name from .env file"
-        exit 1
+  project_name=$(source $BASE_PATH/.env && echo $COMPOSE_PROJECT_NAME)
+  if [[ ! "$project_name" ]]; then
+    echo "Could not extract compose project name from .env file"
+    exit 1
+  else
+    echo "Project name: $project_name"
+  fi
+
+  if [[ "${db_name:-not_set}" = "not_set" ]]; then
+    db_name=$(source $BASE_PATH/.env && echo $COOG_MAIN_DATABASE)
+    if [[ ! "$db_name" ]]; then
+      echo "Could not extract database name from .env file"
+      exit 1
     else
-        echo "Project name: $project_name"
+      echo "Target database: $db_name"
     fi
+  else
+    echo "Target database: $db_name"
+  fi
 
-    if [[ "${db_name:-not_set}" = "not_set" ]]; then
-        db_name=$(source $BASE_PATH/.env && echo $COOG_MAIN_DATABASE)
-        if [[ ! "$db_name" ]]; then
-            echo "Could not extract database name from .env file"
-            exit 1
-        else
-            echo "Target database: $db_name"
-        fi
-    else
-        echo "Target database: $db_name"
-    fi
+  db_user=$(source $BASE_PATH/.env && echo $POSTGRES_USER)
+  if [[ ! "$db_user" ]]; then
+    echo "Could not extract user name from .env file"
+    exit 1
+  else
+    echo "Database user: $db_user"
+  fi
 
-    db_user=$(source $BASE_PATH/.env && echo $POSTGRES_USER)
-    if [[ ! "$db_user" ]]; then
-        echo "Could not extract user name from .env file"
-        exit 1
-    else
-        echo "Database user: $db_user"
-    fi
+  POSTGRES_HOST=$(. $BASE_PATH/.env && echo $POSTGRES_HOST)
+  [[ "$POSTGRES_HOST" = "postgres" ]] && USE_LOCAL_POSTGRES=1 ||
+    USE_LOCAL_POSTGRES=0
 
-    POSTGRES_HOST=$(. $BASE_PATH/.env && echo $POSTGRES_HOST)
-    [[ "$POSTGRES_HOST" = "postgres" ]] && USE_LOCAL_POSTGRES=1 ||
-        USE_LOCAL_POSTGRES=0
-
-    echo " "
+  echo " "
 }
 
 _stop_everything() {
-    section "Stopping everything"
-    (cd $BASE_PATH && ${DOCKER_COMMAND} down)
+  section "Stopping everything"
+  (cd $BASE_PATH && ${DOCKER_COMMAND} down)
 }
 
 _start_services() {
-    echo " "
-    section "Starting services $*"
-    (cd $BASE_PATH && ${DOCKER_COMMAND} up -d $*)
+  echo " "
+  section "Starting services $*"
+  (cd $BASE_PATH && ${DOCKER_COMMAND} up -d $*)
 }
 
 _reset_database() {
-    if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
-        echo Cannot reset database for non dockerized database 1>&2
-        exit 1
-    fi
+  if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
+    echo Cannot reset database for non dockerized database 1>&2
+    exit 1
+  fi
 
-    echo " "
-    section "Dropping existing database"
-    ${DOCKER_COMMAND} exec -- postgres dropdb -U "$db_user" --if-exists "$db_name"
+  echo " "
+  section "Dropping existing database"
+  ${DOCKER_COMMAND} exec -- postgres dropdb -U "$db_user" --if-exists "$db_name"
 
-    echo " "
-    section "Recreating database"
-    ${DOCKER_COMMAND} exec -- postgres createdb -U "$db_user" "$db_name"
+  echo " "
+  section "Recreating database"
+  ${DOCKER_COMMAND} exec -- postgres createdb -U "$db_user" "$db_name"
 }
 
 _restart() {
-    echo " "
-    (cd "$BASE_PATH" && ${DOCKER_COMMAND} up -d)
+  echo " "
+  (cd "$BASE_PATH" && ${DOCKER_COMMAND} up -d)
 }
 
 _db_wait() {
-    DB_RETRIES=20
+  DB_RETRIES=20
 
-    until ${DOCKER_COMMAND} exec -- postgres pg_isready -U "$db_user" || [[ ${DB_RETRIES} -eq 0 ]]; do
-        echo "Waiting for postgres server, $((DB_RETRIES--)) remaining attempts..."
-        sleep 2
-    done
+  until ${DOCKER_COMMAND} exec -- postgres pg_isready -U "$db_user" || [[ ${DB_RETRIES} -eq 0 ]]; do
+    echo "Waiting for postgres server, $((DB_RETRIES--)) remaining attempts..."
+    sleep 2
+  done
 }
 
 command=$1
 shift
 
 while test $# -gt 0; do
-    case "$1" in
-    --database)
-        shift
-        db_name=$1
-        shift
-        ;;
-    --format)
-        shift
-        format=$1
-        if [[ "$format" != "sql" ]] && [[ "$format" != "bin" ]] && [[ "$format" != "zip" ]]; then
-            echo "Invalid file format $format" >&2
-            help
-            exit 1
-        fi
-        shift
-        ;;
-    *)
-        break
-        ;;
-    esac
+  case "$1" in
+  --database)
+    shift
+    db_name=$1
+    shift
+    ;;
+  --format)
+    shift
+    format=$1
+    if [[ "$format" != "sql" ]] && [[ "$format" != "bin" ]] && [[ "$format" != "zip" ]]; then
+      echo "Invalid file format $format" >&2
+      help
+      exit 1
+    fi
+    shift
+    ;;
+  *)
+    break
+    ;;
+  esac
 done
 
 case "$command" in
 help)
-    help
-    exit 0
-    ;;
+  help
+  exit 0
+  ;;
 reset)
-    _load_configuration
-    _stop_everything
-    reset $*
-    _restart
-    ;;
+  _load_configuration
+  _stop_everything
+  reset $*
+  _restart
+  ;;
 load)
-    _load_configuration
-    _stop_everything
-    load $*
-    _restart
-    ;;
+  _load_configuration
+  _stop_everything
+  load $*
+  _restart
+  ;;
 dump)
-    _load_configuration
-    dump $*
-    ;;
+  _load_configuration
+  dump $*
+  ;;
 update)
-    _load_configuration
-    _stop_everything
-    update $*
-    _restart
-    ;;
+  _load_configuration
+  _stop_everything
+  update $*
+  _restart
+  ;;
 change_admin_password)
-    _load_configuration
-    change_admin_password $*
-    ;;
+  _load_configuration
+  change_admin_password $*
+  ;;
 anonymize)
-    _load_configuration
-    anonymize $*
-    ;;
+  _load_configuration
+  anonymize $*
+  ;;
 *)
-    echo "Invalid action" >&2
-    help
-    exit 1
-    ;;
+  echo "Invalid action" >&2
+  help
+  exit 1
+  ;;
 esac
