@@ -5,6 +5,11 @@
 set -euo pipefail
 
 if docker-compose --version >/dev/null 2>&1; then
+  if [[ $(docker-compose --version | grep -Eo '(v)?[[:digit:]]+.[[:digit:]]+.[[:digit:]]+' | cut -d '.' -f 1) == '1' ]]; then
+    echo "Error: docker-compose 1.xx.xx is not supported, please update your docker-compose"
+    echo "old docker-compose's process: https://docs.docker.com/compose/install/other/#install-compose-standalone"
+    echo "new docker compose plugin (replace docker-compose): https://docs.docker.com/compose/install/linux/#install-using-the-repository"
+  fi
   echo 'Info: docker-compose found'
   export DOCKER_COMMAND="docker-compose"
 elif docker compose version >/dev/null 2>&1; then

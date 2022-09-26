@@ -7,9 +7,17 @@
 set -euo pipefail
 
 if docker-compose --version >/dev/null 2>&1; then
+  if [[ $(docker-compose --version | grep -Eo '(v)?[[:digit:]]+.[[:digit:]]+.[[:digit:]]+' | cut -d '.' -f 1) =~ 1 ]]; then
+    echo "Error: docker-compose 1.xx.xx is not supported, please update your docker-compose"
+    echo "https://docs.docker.com/compose/install/other/#install-compose-standalone"
+  fi
   echo 'Info: docker-compose found'
   export DOCKER_COMMAND="docker-compose"
 elif docker compose version >/dev/null 2>&1; then
+  if [[ $(docker compose version | grep -Eo '(v)?[[:digit:]]+.[[:digit:]]+.[[:digit:]]+' | cut -d '.' -f 1) =~ 1 ]]; then
+    echo "Error: docker compose 1.xx.xx is not supported, please update your 'docker compose' plugin"
+    echo "https://docs.docker.com/compose/install/linux/#install-using-the-repository"
+  fi
   echo 'Info: docker compose plugin found'
   export DOCKER_COMMAND="docker compose"
 else
