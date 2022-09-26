@@ -15,23 +15,25 @@
 set -euo pipefail
 
 if docker-compose --version >/dev/null 2>&1; then
-  if [[ $(docker-compose --version | grep -Eo '(v)?[[:digit:]]+.[[:digit:]]+.[[:digit:]]+' | cut -d '.' -f 1) =~ 1 ]]; then
-    echo "Error: docker-compose 1.xx.xx is not supported, please update your docker-compose"
-    echo "https://docs.docker.com/compose/install/other/#install-compose-standalone"
-  fi
-  echo 'Info: docker-compose found'
-  export DOCKER_COMMAND="docker-compose"
+    if [[ $(docker-compose --version | grep -Eo '(v)?[[:digit:]]+.[[:digit:]]+.[[:digit:]]+' | cut -d '.' -f 1) =~ 1 ]]; then
+        echo "Error: docker-compose 1.xx.xx is not supported, please update your docker-compose"
+        echo "https://docs.docker.com/compose/install/other/#install-compose-standalone"
+        exit 1
+    fi
+    echo 'Info: docker-compose found'
+    export DOCKER_COMMAND="docker-compose"
 elif docker compose version >/dev/null 2>&1; then
-  if [[ $(docker compose version | grep -Eo '(v)?[[:digit:]]+.[[:digit:]]+.[[:digit:]]+' | cut -d '.' -f 1) =~ 1 ]]; then
-    echo "Error: docker compose 1.xx.xx is not supported, please update your 'docker compose' plugin"
-    echo "https://docs.docker.com/compose/install/linux/#install-using-the-repository"
-  fi
-  echo 'Info: docker compose plugin found'
-  export DOCKER_COMMAND="docker compose"
+    if [[ $(docker compose version | grep -Eo '(v)?[[:digit:]]+.[[:digit:]]+.[[:digit:]]+' | cut -d '.' -f 1) =~ 1 ]]; then
+        echo "Error: docker compose 1.xx.xx is not supported, please update your 'docker compose' plugin"
+        echo "https://docs.docker.com/compose/install/linux/#install-using-the-repository"
+        exit 1
+    fi
+    echo 'Info: docker compose plugin found'
+    export DOCKER_COMMAND="docker compose"
 else
-  echo 'Error: Neither docker compose nor docker-compose was found, please install docker compose'
-  echo 'https://docs.docker.com/compose/install/linux/#install-using-the-repository'
-  exit 1
+    echo 'Error: Neither docker compose nor docker-compose was found, please install docker compose'
+    echo 'https://docs.docker.com/compose/install/linux/#install-using-the-repository'
+    exit 1
 fi
 echo "DOCKER_COMMAND=$DOCKER_COMMAND"
 
@@ -39,308 +41,308 @@ export BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
 if [[ -f "$BASE_PATH/env.custom" ]]; then
-  echo Will load "$BASE_PATH"/env.custom
+    echo Will load "$BASE_PATH"/env.custom
 fi
 if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
-  echo Will load "$BASE_PATH"/custom/env.custom
+    echo Will load "$BASE_PATH"/custom/env.custom
 elif [[ ! -f "$BASE_PATH/env.custom" ]]; then
-  echo >&2 "env.custom should be configured either at the root of the project"
-  echo >&2 "or in the custom repository"
-  exit 1
+    echo >&2 "env.custom should be configured either at the root of the project"
+    echo >&2 "or in the custom repository"
+    exit 1
 fi
 
 if [[ -f "$BASE_PATH/disabled_services" ]]; then
-  echo Will load "$BASE_PATH"/disabled_services
+    echo Will load "$BASE_PATH"/disabled_services
 fi
 
 if [[ -f "$BASE_PATH/custom/disabled_services" ]]; then
-  echo Will load "$BASE_PATH"/custom/disabled_services
+    echo Will load "$BASE_PATH"/custom/disabled_services
 fi
 
 if [[ -f "$BASE_PATH"/custom/override.yml ]]; then
-  echo Will load "$BASE_PATH"/custom/override.yml
+    echo Will load "$BASE_PATH"/custom/override.yml
 fi
 
 if [[ -f "$BASE_PATH"/override.yml ]]; then
-  echo Will load "$BASE_PATH"/override.yml
+    echo Will load "$BASE_PATH"/override.yml
 fi
 echo ""
 
 generate() {
-  # We want that variables defined in sub-files to be available in this
-  # process
-  set -o allexport
+    # We want that variables defined in sub-files to be available in this
+    # process
+    set -o allexport
 
-  # Load configuration value from custom folder first, in case the local
-  # env.custom wants to override it
-  if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
-    . "$BASE_PATH/custom/env.custom"
-  fi
+    # Load configuration value from custom folder first, in case the local
+    # env.custom wants to override it
+    if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
+        . "$BASE_PATH/custom/env.custom"
+    fi
 
-  # Load custom values
-  if [[ -f "$BASE_PATH/env.custom" ]]; then
-    . "$BASE_PATH/env.custom"
-  fi
+    # Load custom values
+    if [[ -f "$BASE_PATH/env.custom" ]]; then
+        . "$BASE_PATH/env.custom"
+    fi
 
-  # Load base values, applying modifications based on previously loaded
-  # (env.custom) values
-  . "$BASE_PATH/env.base"
+    # Load base values, applying modifications based on previously loaded
+    # (env.custom) values
+    . "$BASE_PATH/env.base"
 
-  # A little intimdating, but what is actually done here is looking for all
-  # the variables defined in env.base or env.custom, and printing them to
-  # stdout with their value. This is what will actually be stored in the .env
-  # file
-  for i in $(
-    (
-      cat "$BASE_PATH/env.base" &&
-        ( 
-          ([[ -f "$BASE_PATH/env.custom" ]] &&
-            cat "$BASE_PATH/env.custom") ||
-            echo ""
-        ) &&
-        ( 
-          ([[ -f "$BASE_PATH/custom/env.custom" ]] &&
-            cat "$BASE_PATH/custom/env.custom") ||
-            echo ""
-        )
-    ) |
-      grep -v "^ *#" | grep -v "^$" | sed -e "s/^\([A-Z0-9_]*\)=.*/\1/" |
-      sort -u
-  ); do
-    echo "$i="$(env | grep "^$i=" | sed -e "s/^[A-Z0-9_]*=\(.*\)/\1/")
-  done
+    # A little intimdating, but what is actually done here is looking for all
+    # the variables defined in env.base or env.custom, and printing them to
+    # stdout with their value. This is what will actually be stored in the .env
+    # file
+    for i in $(
+        (
+            cat "$BASE_PATH/env.base" &&
+                ( 
+                    ([[ -f "$BASE_PATH/env.custom" ]] &&
+                        cat "$BASE_PATH/env.custom") ||
+                        echo ""
+                ) &&
+                ( 
+                    ([[ -f "$BASE_PATH/custom/env.custom" ]] &&
+                        cat "$BASE_PATH/custom/env.custom") ||
+                        echo ""
+                )
+        ) |
+            grep -v "^ *#" | grep -v "^$" | sed -e "s/^\([A-Z0-9_]*\)=.*/\1/" |
+            sort -u
+    ); do
+        echo "$i="$(env | grep "^$i=" | sed -e "s/^[A-Z0-9_]*=\(.*\)/\1/")
+    done
 }
 
 set_services() {
-  # Create the list of services to include in the docker-compose project.
-  #
-  # By default, all services from the "compose" folder are loaded, with the
-  # exception of back/common which is a template for building back-office
-  # services and does not exist as such.
-  #
-  # Services in "disabled_services" will also be removed
-  SERVICES="docker-compose.yml"
+    # Create the list of services to include in the docker-compose project.
+    #
+    # By default, all services from the "compose" folder are loaded, with the
+    # exception of back/common which is a template for building back-office
+    # services and does not exist as such.
+    #
+    # Services in "disabled_services" will also be removed
+    SERVICES="docker-compose.yml"
 
-  shopt -s nullglob
-  for path in $(cd $BASE_PATH && ls compose/**/*.yml custom/compose/**/*.yml); do
-    # Remove the "custom/", "compose/" and the ".yml"
-    key=${path#*compose/}
-    service=${key%.yml}
+    shopt -s nullglob
+    for path in $(cd $BASE_PATH && ls compose/**/*.yml custom/compose/**/*.yml); do
+        # Remove the "custom/", "compose/" and the ".yml"
+        key=${path#*compose/}
+        service=${key%.yml}
 
-    if [[ "$service" =~ "common" ]]; then
-      continue
+        if [[ "$service" =~ "common" ]]; then
+            continue
+        fi
+        if [[ -f "$BASE_PATH/disabled_services" ]] &&
+            cat $BASE_PATH/disabled_services | grep -v "^#" |
+            grep -E "^$service$" >/dev/null; then
+            fail "Ignoring $service"
+        elif [[ -f "$BASE_PATH/custom/disabled_services" ]] &&
+            cat $BASE_PATH/custom/disabled_services | grep -v "^#" |
+            grep -E "^$service$" >/dev/null; then
+            if [[ "$service" == "back/cron" ]]; then
+                warning "Ignoring back/cron, this will disable batch chains / daily executions"
+            else
+                fail "Ignoring $service"
+            fi
+        else
+            check "Adding $service"
+            SERVICES="$SERVICES:$path"
+        fi
+    done
+    shopt -u nullglob
+
+    if [[ -f "$BASE_PATH"/custom/override.yml ]]; then
+        SERVICES="$SERVICES:custom/override.yml"
     fi
-    if [[ -f "$BASE_PATH/disabled_services" ]] &&
-      cat $BASE_PATH/disabled_services | grep -v "^#" |
-      grep -E "^$service$" >/dev/null; then
-      fail "Ignoring $service"
-    elif [[ -f "$BASE_PATH/custom/disabled_services" ]] &&
-      cat $BASE_PATH/custom/disabled_services | grep -v "^#" |
-      grep -E "^$service$" >/dev/null; then
-      if [[ "$service" == "back/cron" ]]; then
-        warning "Ignoring back/cron, this will disable batch chains / daily executions"
-      else
-        fail "Ignoring $service"
-      fi
-    else
-      check "Adding $service"
-      SERVICES="$SERVICES:$path"
+
+    if [[ -f "$BASE_PATH"/override.yml ]]; then
+        SERVICES="$SERVICES:override.yml"
     fi
-  done
-  shopt -u nullglob
 
-  if [[ -f "$BASE_PATH"/custom/override.yml ]]; then
-    SERVICES="$SERVICES:custom/override.yml"
-  fi
-
-  if [[ -f "$BASE_PATH"/override.yml ]]; then
-    SERVICES="$SERVICES:override.yml"
-  fi
-
-  echo "COMPOSE_FILE=$SERVICES" >>"$BASE_PATH/.env"
-  echo ""
+    echo "COMPOSE_FILE=$SERVICES" >>"$BASE_PATH/.env"
+    echo ""
 }
 
 _migrate_env_folder() {
-  if [[ -d "$BASE_PATH/custom/env" ]]; then
-    echo There appear to already be an "env" folder in the custom repository,
-    echo should we overwrite, discard the root env folder, or abort?
+    if [[ -d "$BASE_PATH/custom/env" ]]; then
+        echo There appear to already be an "env" folder in the custom repository,
+        echo should we overwrite, discard the root env folder, or abort?
 
-    while true; do
-      read -p "[(O)verwrite / (D)iscard / (A)bort]: " action
-      case $action in
-      [Oo]*)
-        rm -r "$BASE_PATH/custom/env"
+        while true; do
+            read -p "[(O)verwrite / (D)iscard / (A)bort]: " action
+            case $action in
+            [Oo]*)
+                rm -r "$BASE_PATH/custom/env"
+                mv "$BASE_PATH/env" "$BASE_PATH/custom/env"
+                return 0
+                ;;
+            [Dd]*)
+                rm -r "$BASE_PATH/env"
+                return 0
+                ;;
+            [Aa]*)
+                echo "As you wish"
+                exit 1
+                ;;
+            esac
+        done
+    else
         mv "$BASE_PATH/env" "$BASE_PATH/custom/env"
-        return 0
-        ;;
-      [Dd]*)
-        rm -r "$BASE_PATH/env"
-        return 0
-        ;;
-      [Aa]*)
-        echo "As you wish"
-        exit 1
-        ;;
-      esac
-    done
-  else
-    mv "$BASE_PATH/env" "$BASE_PATH/custom/env"
-  fi
+    fi
 }
 
 init_service_env_files() {
-  if [[ -d "$BASE_PATH/custom" ]]; then
-    env_path="$BASE_PATH/custom/env"
-    if [[ ! -L "$BASE_PATH/env" ]] && [[ -d "$BASE_PATH/env" ]]; then
-      echo Custom configuration folder found, and root env folder as well
-      echo ""
-      echo Environment files will be migrated from root env folder into
-      echo "the custom folder (this is strongly recommended)"
-      echo ""
+    if [[ -d "$BASE_PATH/custom" ]]; then
+        env_path="$BASE_PATH/custom/env"
+        if [[ ! -L "$BASE_PATH/env" ]] && [[ -d "$BASE_PATH/env" ]]; then
+            echo Custom configuration folder found, and root env folder as well
+            echo ""
+            echo Environment files will be migrated from root env folder into
+            echo "the custom folder (this is strongly recommended)"
+            echo ""
 
-      while true; do
-        read -p "Migrate env folder [Y/n]: " yn
-        case "$yn" in
-        "")
-          _migrate_env_folder
-          break
-          ;;
-        [Yy]*)
-          _migrate_env_folder
-          break
-          ;;
-        [Nn]*)
-          echo "As you wish, still using root folder for now"
-          env_path="$BASE_PATH/env"
-          break
-          ;;
-        esac
-      done
+            while true; do
+                read -p "Migrate env folder [Y/n]: " yn
+                case "$yn" in
+                "")
+                    _migrate_env_folder
+                    break
+                    ;;
+                [Yy]*)
+                    _migrate_env_folder
+                    break
+                    ;;
+                [Nn]*)
+                    echo "As you wish, still using root folder for now"
+                    env_path="$BASE_PATH/env"
+                    break
+                    ;;
+                esac
+            done
+        fi
+    else
+        env_path="$BASE_PATH/env"
     fi
-  else
-    env_path="$BASE_PATH/env"
-  fi
 
-  # Create env files for missing services
-  mkdir -p "$env_path"
-  for f in $(ls "$BASE_PATH"/defaults/env); do
-    if [[ ! -e "$env_path/$f" ]]; then
-      cp "$BASE_PATH/defaults/env/$f" "$env_path/$f"
+    # Create env files for missing services
+    mkdir -p "$env_path"
+    for f in $(ls "$BASE_PATH"/defaults/env); do
+        if [[ ! -e "$env_path/$f" ]]; then
+            cp "$BASE_PATH/defaults/env/$f" "$env_path/$f"
+        fi
+    done
+
+    if [[ "$env_path" = "$BASE_PATH/custom/env" ]]; then
+        # Make "BASE_PATH/env" a symlink pointing on custom/env
+        rm -rf "$BASE_PATH/env" # clean up
+        ln -s "$BASE_PATH/custom/env" "$BASE_PATH/env"
     fi
-  done
-
-  if [[ "$env_path" = "$BASE_PATH/custom/env" ]]; then
-    # Make "BASE_PATH/env" a symlink pointing on custom/env
-    rm -rf "$BASE_PATH/env" # clean up
-    ln -s "$BASE_PATH/custom/env" "$BASE_PATH/env"
-  fi
-  echo ""
+    echo ""
 }
 
 activate_logging() {
-  filename="$BASE_PATH/docker-compose.logging.yaml"
+    filename="$BASE_PATH/docker-compose.logging.yaml"
 
-  . "$BASE_PATH/.env"
+    . "$BASE_PATH/.env"
 
-  logging_configuration_template="${LOGGING_CONFIGURATION_TEMPLATE-none}"
-  if [[ "$logging_configuration_template" = "none" ]]; then
-    rm -f "$filename"
-    exit 0
-  elif [[ "$logging_configuration_template" = "default" ]]; then
-    logging_configuration_template="$BASE_PATH/default_logging_configuration.yml"
-  elif [[ ! -e "$logging_configuration_template" ]]; then
-    echo >&2 "$logging_configuration_template does not exist"
-    exit 1
-  fi
+    logging_configuration_template="${LOGGING_CONFIGURATION_TEMPLATE-none}"
+    if [[ "$logging_configuration_template" = "none" ]]; then
+        rm -f "$filename"
+        exit 0
+    elif [[ "$logging_configuration_template" = "default" ]]; then
+        logging_configuration_template="$BASE_PATH/default_logging_configuration.yml"
+    elif [[ ! -e "$logging_configuration_template" ]]; then
+        echo >&2 "$logging_configuration_template does not exist"
+        exit 1
+    fi
 
-  if [[ ! "$(command -v yq)" ]]; then
-    warning "Logging configuration requires yq >= 4.18"
-    exit
-  fi
+    if [[ ! "$(command -v yq)" ]]; then
+        warning "Logging configuration requires yq >= 4.18"
+        exit
+    fi
 
-  section "Logging configuration"
-  cp "$logging_configuration_template" "$filename"
-  echo "" >>"$filename"
-  echo "services:" >>"$filename"
-  pwd
-  for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
-    echo "  $service:" >>"$filename"
-    echo '    logging: *default-logging' >>"$filename"
-  done
+    section "Logging configuration"
+    cp "$logging_configuration_template" "$filename"
+    echo "" >>"$filename"
+    echo "services:" >>"$filename"
+    pwd
+    for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+        echo "  $service:" >>"$filename"
+        echo '    logging: *default-logging' >>"$filename"
+    done
 
-  sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.logging.yaml/" "$BASE_PATH/.env"
+    sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.logging.yaml/" "$BASE_PATH/.env"
 }
 
 check_host_integration() {
-  filename="$BASE_PATH/docker-compose.host-integration.yaml"
+    filename="$BASE_PATH/docker-compose.host-integration.yaml"
 
-  if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
-    . "$BASE_PATH/custom/env.custom"
-  fi
-
-  # Load custom values
-  if [[ -f "$BASE_PATH/env.custom" ]]; then
-    . "$BASE_PATH/env.custom"
-  fi
-
-  if [[ "${ENABLE_HOST_NETWORK_INTEGRATION:-}" = "1" ]]; then
-    if [[ ! "$(command -v yq)" ]]; then
-      echo >&2 "Host integration requires yq >= 4.18 to work properly"
-      exit 1
+    if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
+        . "$BASE_PATH/custom/env.custom"
     fi
-    section "Enabling Host network integration"
 
-    echo "services:" >"$filename"
-    for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
-      echo "  $service:" >>"$filename"
-      echo "    extra_hosts:" >>"$filename"
-      echo '      - "host.docker.internal:host-gateway"' >>"$filename"
-    done
+    # Load custom values
+    if [[ -f "$BASE_PATH/env.custom" ]]; then
+        . "$BASE_PATH/env.custom"
+    fi
 
-    sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.host-integration.yaml/" "$BASE_PATH/.env"
-  else
-    rm -f "$filename"
-  fi
+    if [[ "${ENABLE_HOST_NETWORK_INTEGRATION:-}" = "1" ]]; then
+        if [[ ! "$(command -v yq)" ]]; then
+            echo >&2 "Host integration requires yq >= 4.18 to work properly"
+            exit 1
+        fi
+        section "Enabling Host network integration"
+
+        echo "services:" >"$filename"
+        for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+            echo "  $service:" >>"$filename"
+            echo "    extra_hosts:" >>"$filename"
+            echo '      - "host.docker.internal:host-gateway"' >>"$filename"
+        done
+
+        sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.host-integration.yaml/" "$BASE_PATH/.env"
+    else
+        rm -f "$filename"
+    fi
 }
 
 check_configuration_requirements() {
-  . "$BASE_PATH/.env"
+    . "$BASE_PATH/.env"
 
-  # Check for variables that are not required for compatibility, but are
-  # strongly recommended :)
-  if [[ "$COOG_PASSPHRASE" = "" ]]; then
-    warning "COOG_PASSPHRASE should not be empty in a production environment"
-  fi
+    # Check for variables that are not required for compatibility, but are
+    # strongly recommended :)
+    if [[ "$COOG_PASSPHRASE" = "" ]]; then
+        warning "COOG_PASSPHRASE should not be empty in a production environment"
+    fi
 }
 
 _find_duplicates() {
-  ( 
-    (env && (cat "$BASE_PATH"/.env | grep -v '^ *#'))
-  ) | grep "=" | sed -e "s/^\([A-Z0-9_]*\)=.*/\1/" | sort | uniq -c | grep -v -F 1 | awk -F " " '{print $2}'
+    ( 
+        (env && (cat "$BASE_PATH"/.env | grep -v '^ *#'))
+    ) | grep "=" | sed -e "s/^\([A-Z0-9_]*\)=.*/\1/" | sort | uniq -c | grep -v -F 1 | awk -F " " '{print $2}'
 }
 
 check_configuration_shadowing() {
-  for key in $(_find_duplicates); do
-    warning "Variable $key will use value ${!key} as defined from global environment values"
-  done
+    for key in $(_find_duplicates); do
+        warning "Variable $key will use value ${!key} as defined from global environment values"
+    done
 }
 
 check_traefik_configuration() {
-  TRAEFIK_CONFIGURATION_FOLDER="$BASE_PATH/defaults/traefik"
-  if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
-    . "$BASE_PATH/custom/env.custom"
-  fi
-  if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
-    . "$BASE_PATH/custom/env.custom"
-  fi
-
-  if [[ "$TRAEFIK_CONFIGURATION_FOLDER" = "$BASE_PATH"/defaults/traefik ]]; then
-    warning "TRAEFIK_CONFIGURATION_FOLDER should be set to a non default value in a production environment"
-    if [[ -d "$BASE_PATH/custom" ]]; then
-      echo "A custom folder exists, you should probably use it to store your traefik configuration"
+    TRAEFIK_CONFIGURATION_FOLDER="$BASE_PATH/defaults/traefik"
+    if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
+        . "$BASE_PATH/custom/env.custom"
     fi
-  fi
+    if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
+        . "$BASE_PATH/custom/env.custom"
+    fi
+
+    if [[ "$TRAEFIK_CONFIGURATION_FOLDER" = "$BASE_PATH"/defaults/traefik ]]; then
+        warning "TRAEFIK_CONFIGURATION_FOLDER should be set to a non default value in a production environment"
+        if [[ -d "$BASE_PATH/custom" ]]; then
+            echo "A custom folder exists, you should probably use it to store your traefik configuration"
+        fi
+    fi
 }
 
 section "Updating .env contents"
