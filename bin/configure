@@ -14,6 +14,19 @@
 ###############################################################################
 set -euo pipefail
 
+if docker-compose --version > /dev/null 2>&1; then
+  echo 'Info: docker-compose found'
+  export DOCKER_COMMAND="docker-compose"
+elif docker compose version > /dev/null 2>&1; then
+  echo 'Info: docker compose plugin found' 
+  export DOCKER_COMMAND="docker compose"
+else
+  echo 'Error: Neither docker compose nor docker-compse was found, please install docker compose'
+  echo 'https://docs.docker.com/compose/install/linux/#install-using-the-repository'
+  exit 1
+fi
+echo "DOCKER_COMMAND=$DOCKER_COMMAND"
+
 export BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
@@ -239,7 +252,7 @@ activate_logging() {
     echo "" >> "$filename"
     echo "services:" >> "$filename"
     pwd
-    for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+    for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
         echo "  $service:" >> "$filename"
         echo '    logging: *default-logging' >> "$filename"
     done
@@ -267,7 +280,7 @@ check_host_integration() {
         section "Enabling Host network integration"
 
         echo "services:" > "$filename"
-        for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+        for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
             echo "  $service:" >> "$filename"
             echo "    extra_hosts:" >> "$filename"
             echo '      - "host.docker.internal:host-gateway"' >> "$filename"

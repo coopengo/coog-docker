@@ -4,10 +4,23 @@
 ###############################################################################
 set -euo pipefail
 
+if docker-compose --version > /dev/null 2>&1; then
+  echo 'Info: docker-compose found'
+  export DOCKER_COMMAND="docker-compose"
+elif docker compose version > /dev/null 2>&1; then
+  echo 'Info: docker compose plugin found' 
+  export DOCKER_COMMAND="docker compose"
+else
+  echo 'Error: Neither docker compose nor docker-compse was found, please install docker compose'
+  echo 'https://docs.docker.com/compose/install/linux/#install-using-the-repository'
+  exit 1
+fi
+echo "DOCKER_COMMAND=$DOCKER_COMMAND"
+
 BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
 
 ${BASE_PATH}/bin/configure
 
 section "Starting up"
-docker-compose --env-file $BASE_PATH/.env up $@
+${DOCKER_COMMAND} --env-file $BASE_PATH/.env up $@
