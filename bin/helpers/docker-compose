@@ -1,14 +1,31 @@
 #!/bin/bash
+
+DOCKER_COMPOSER_MIN="1.29.2"
+
+compare_versions() {
+  # implementing string manipulation
+  local a=${1%%.*} b=${2%%.*}
+  [[ "10#${a:-0}" -gt "10#${b:-0}" ]] && return 1
+  [[ "10#${a:-0}" -lt "10#${b:-0}" ]] && return 2
+  # re-assigning a and b with greatest of 1 and 2 after manipulation
+  a=${1:${#a}+1}
+  b=${2:${#b}+1}
+  # terminal condition for recursion
+  [[ -z $a && -z $b ]] || compare_versions "$a" "$b"
+}
+
 if docker-compose --version >/dev/null 2>&1; then
-  if [[ $(docker-compose --version | grep -Eo '(v)?[[:digit:]]+.[[:digit:]]+.[[:digit:]]+' | cut -d '.' -f 1) =~ 1 ]]; then
-    echo "Error: docker-compose 1.xx.xx is not supported, please update your docker-compose"
+  compare_versions "$(docker-compose --version | grep -Eo '[[:digit:]]+.[[:digit:]]+.[[:digit:]]+')" "${DOCKER_COMPOSER_MIN}" || VERSION_CHECK=$?
+  if [[ ${VERSION_CHECK} -ne 1 ]]; then
+    echo "Error: docker-compose version < ${DOCKER_COMPOSER_MIN} is not supported, please update your docker-compose"
     echo "https://docs.docker.com/compose/install/other/#install-compose-standalone"
     exit 1
   fi
   export DOCKER_COMMAND="docker-compose"
 elif docker compose version >/dev/null 2>&1; then
-  if [[ $(docker compose version | grep -Eo '(v)?[[:digit:]]+.[[:digit:]]+.[[:digit:]]+' | cut -d '.' -f 1) =~ 1 ]]; then
-    echo "Error: docker compose 1.xx.xx is not supported, please update your 'docker compose' plugin"
+  compare_versions "$(docker compose version | grep -Eo '[[:digit:]]+.[[:digit:]]+.[[:digit:]]+')" "${DOCKER_COMPOSER_MIN}" || VERSION_CHECK=$?
+  if [[ ${VERSION_CHECK} -ne 1 ]]; then
+    echo "Error: docker compose version < ${DOCKER_COMPOSER_MIN} is not supported, please update your 'docker compose' plugin"
     echo "https://docs.docker.com/compose/install/linux/#install-using-the-repository"
     exit 1
   fi
