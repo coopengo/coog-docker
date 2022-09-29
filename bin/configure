@@ -14,11 +14,9 @@
 ###############################################################################
 set -euo pipefail
 
-source "$(realpath $(dirname $0))/include/docker-compose"
-check_docker_command
-
 export BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/docker-compose"
 
 if [[ -f "$BASE_PATH/env.custom" ]]; then
     echo Will load "$BASE_PATH"/env.custom

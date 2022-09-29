@@ -6,11 +6,9 @@
 ###############################################################################
 set -euo pipefail
 
-source "$(realpath $(dirname $0))/include/docker-compose"
-check_docker_command
-
 BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/docker-compose"
 
 help() {
   echo "manage_db - Manage database"

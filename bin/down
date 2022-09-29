@@ -2,12 +2,9 @@
 ###############################################################################
 # Shortcut to docker-compose down
 ###############################################################################
-
-source "$(realpath $(dirname $0))/include/docker-compose"
-check_docker_command
-
 BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/docker-compose"
 
 section "Stopping"
 ${DOCKER_COMMAND} --env-file $BASE_PATH/.env down --remove-orphans $@
