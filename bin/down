@@ -3,7 +3,7 @@
 # Shortcut to docker-compose down
 ###############################################################################
 
-source include/docker-compose
+source "$(realpath $(dirname $0))/include/docker-compose"
 check_docker_command
 
 BASE_PATH=$(realpath "$(dirname $0)/..")
