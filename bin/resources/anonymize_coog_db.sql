@@ -22,7 +22,7 @@ BEGIN
     if not anonymize_companies then
         anon_parties_where_clause := anon_only_persons_where_clause;
     end if;
-    PERFORM anon_table('party_party', 'code, first_name, commercial_name, birth_name, sepa_creditor_identifier', 'siren', anon_parties_where_clause);
+    PERFORM anon_table('party_party', 'first_name, commercial_name, birth_name, sepa_creditor_identifier', 'siren', anon_parties_where_clause);
     if keep_company_name then
         anon_party_names_where_clause := anon_party_names_where_clause || ';' || anon_only_persons_where_clause;
     end if;
@@ -37,8 +37,6 @@ BEGIN
 
     PERFORM anon_table('party_contact_mechanism', 'value, value_compact');
     PERFORM anon_table('party_address', 'street, name, party_name', 'siret_nic');
-    PERFORM anon_table('party_identifier', 'code');
-    PERFORM anon_table('contract', 'contract_number, quote_number');
     PERFORM anon_table('contract_option_beneficiary', 'reference');
     PERFORM anon_table('contract_clause', 'text');
     PERFORM anon_table('contract_option', 'customized_beneficiary_clause');
