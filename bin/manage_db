@@ -8,6 +8,7 @@ set -euo pipefail
 
 BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/docker-compose"
 
 help() {
     echo "manage_db - Manage database"
@@ -65,18 +66,18 @@ load() {
         dump_file=/tmp/tmp_extracted_dump
     fi
 
-    docker-compose cp "$dump_file" postgres:/tmp/dump
+    ${DOCKER_COMMAND} cp "$dump_file" postgres:/tmp/dump
 
     if [[ "$format" = "sql" ]]; then
-        docker-compose exec -- postgres \
+        ${DOCKER_COMMAND} exec -- postgres \
             bash -c "cat /tmp/dump | psql -U $db_user -d $db_name" \
             >/dev/null
     else
-        docker-compose exec -- postgres \
+        ${DOCKER_COMMAND} exec -- postgres \
             pg_restore -U "$db_user" --no-owner --role "$db_user" -j 4 \
             -d "$db_name" /tmp/dump
     fi
-    docker-compose exec -- postgres rm "/tmp/dump"
+    ${DOCKER_COMMAND} exec -- postgres rm "/tmp/dump"
 
     echo " "
     section "Loading database done."
@@ -97,12 +98,12 @@ dump() {
     section "Dumping database $db_name to $dump_file (format $format)"
 
     if [[ "$format" = "sql" ]] || [[ "$format" = "zip" ]]; then
-        docker-compose exec -- postgres bash -c "pg_dump -U $db_user $db_name > /tmp/dump" >/dev/null
+        ${DOCKER_COMMAND} exec -- postgres bash -c "pg_dump -U $db_user $db_name > /tmp/dump" >/dev/null
     else
-        docker-compose exec -- postgres pg_dump -U "$db_user" -d "$db_name" -Fc -Z5 -f /tmp/dump >/dev/null
+        ${DOCKER_COMMAND} exec -- postgres pg_dump -U "$db_user" -d "$db_name" -Fc -Z5 -f /tmp/dump >/dev/null
     fi
-    docker-compose cp postgres:/tmp/dump "$dump_file"
-    docker-compose exec -- postgres rm "/tmp/dump"
+    ${DOCKER_COMMAND} cp postgres:/tmp/dump "$dump_file"
+    ${DOCKER_COMMAND} exec -- postgres rm "/tmp/dump"
 
     if [[ "$format" = "zip" ]]; then
         mv "$dump_file" /tmp/tmp_extracted_dump
@@ -121,14 +122,14 @@ update() {
     sleep 1
     # We need to kill the "init" container because it may lead to deadlocks.
     # And we are updating the db anyaway
-    docker-compose rm -s -f init >/dev/null
+    ${DOCKER_COMMAND} rm -s -f init >/dev/null
 
     if [[ "$#" = "0" ]]; then
         args=ir
     else
         args=$*
     fi
-    docker-compose exec -- coog ep admin -d "$db_name" --activate-dependencies -u $args
+    ${DOCKER_COMMAND} exec -- coog ep admin -d "$db_name" --activate-dependencies -u $args
 }
 
 change_admin_password() {
@@ -140,9 +141,9 @@ change_admin_password() {
     # We need to kill the "init" container because it is started automatically,
     # and we do not need since the DB is supposed to already be up to date
     sleep 1
-    docker-compose rm -s -f init >/dev/null
+    ${DOCKER_COMMAND} rm -s -f init >/dev/null
 
-    docker-compose exec -- coog ep admin -d "$db_name" -p
+    ${DOCKER_COMMAND} exec -- coog ep admin -d "$db_name" -p
 }
 
 anonymize() {
@@ -154,9 +155,9 @@ anonymize() {
     fi
     _start_services postgres
 
-    docker-compose cp "$BASE_PATH/bin/resources/anonymize_coog_db.sql" postgres:/tmp/anonymize.sql
+    ${DOCKER_COMMAND} cp "$BASE_PATH/bin/resources/anonymize_coog_db.sql" postgres:/tmp/anonymize.sql
 
-    docker-compose exec -- postgres psql -U "$db_user" -d "$db_name" \
+    ${DOCKER_COMMAND} exec -- postgres psql -U "$db_user" -d "$db_name" \
         --file /tmp/anonymize.sql
 }
 
@@ -202,13 +203,13 @@ _load_configuration() {
 
 _stop_everything() {
     section "Stopping everything"
-    (cd $BASE_PATH && docker-compose down)
+    (cd $BASE_PATH && ${DOCKER_COMMAND} down)
 }
 
 _start_services() {
     echo " "
     section "Starting services $*"
-    (cd $BASE_PATH && docker-compose up -d $*)
+    (cd $BASE_PATH && ${DOCKER_COMMAND} up -d $*)
 }
 
 _reset_database() {
@@ -219,22 +220,22 @@ _reset_database() {
 
     echo " "
     section "Dropping existing database"
-    docker-compose exec -- postgres dropdb -U "$db_user" --if-exists "$db_name"
+    ${DOCKER_COMMAND} exec -- postgres dropdb -U "$db_user" --if-exists "$db_name"
 
     echo " "
     section "Recreating database"
-    docker-compose exec -- postgres createdb -U "$db_user" "$db_name"
+    ${DOCKER_COMMAND} exec -- postgres createdb -U "$db_user" "$db_name"
 }
 
 _restart() {
     echo " "
-    (cd "$BASE_PATH" && docker-compose up -d)
+    (cd "$BASE_PATH" && ${DOCKER_COMMAND} up -d)
 }
 
 _db_wait() {
     DB_RETRIES=20
 
-    until docker-compose exec -- postgres pg_isready -U "$db_user" || [[ ${DB_RETRIES} -eq 0 ]]; do
+    until ${DOCKER_COMMAND} exec -- postgres pg_isready -U "$db_user" || [[ ${DB_RETRIES} -eq 0 ]]; do
         echo "Waiting for postgres server, $((DB_RETRIES--)) remaining attempts..."
         sleep 2
     done

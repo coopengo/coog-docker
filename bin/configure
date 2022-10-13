@@ -16,6 +16,7 @@ set -euo pipefail
 
 export BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/docker-compose"
 
 if [[ -f "$BASE_PATH/env.custom" ]]; then
     echo Will load "$BASE_PATH"/env.custom
@@ -239,7 +240,7 @@ activate_logging() {
     echo "" >> "$filename"
     echo "services:" >> "$filename"
     pwd
-    for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+    for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
         echo "  $service:" >> "$filename"
         echo '    logging: *default-logging' >> "$filename"
     done
@@ -267,7 +268,7 @@ check_host_integration() {
         section "Enabling Host network integration"
 
         echo "services:" > "$filename"
-        for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+        for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
             echo "  $service:" >> "$filename"
             echo "    extra_hosts:" >> "$filename"
             echo '      - "host.docker.internal:host-gateway"' >> "$filename"
