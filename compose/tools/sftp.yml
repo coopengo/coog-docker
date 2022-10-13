@@ -6,7 +6,7 @@ services:
       - /etc/ssh/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key
       - /etc/ssh/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
       - ${COOG_DATA_VOLUME:?}:/home/${SFTP_USER}/coog_data
-      - /home/coog/input:/home/${SFTP_USER}/input
+      - ${SFTP_VOLUME:?}:/home/${SFTP_USER}/input
     ports:
-      - "${SFTP_PORT}:22"
+      - "${SFTP_PORT:?}:22"
     restart: always
