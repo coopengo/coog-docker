@@ -4,6 +4,7 @@
 ###############################################################################
 set -euo pipefail
 BASE_PATH=`realpath "$(dirname $0)/../.."`
+. "${BASE_PATH}/bin/helpers/docker-compose"
 
 stats_enabled=$(. $BASE_PATH/.env && echo $COOG_UWSGI_STATS)
 
@@ -12,10 +13,10 @@ if [[ "$stats_enabled" != "1" ]]; then
     exit 2
 fi
 
-coog_running=$(docker-compose ps --services | grep "^coog$" || true)
+coog_running=$(${DOCKER_COMMAND} ps --services | grep "^coog$" || true)
 if [[ ! "$coog_running" ]]; then
     echo Coog service is not running >&2
     exit 2
 fi
 
-docker-compose exec coog uwsgi --connect-and-read /tmp/uwsgi_stats
+${DOCKER_COMMAND} exec coog uwsgi --connect-and-read /tmp/uwsgi_stats
