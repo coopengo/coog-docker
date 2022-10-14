@@ -234,11 +234,11 @@ _restart() {
 }
 
 _db_wait() {
-    DB_RETRIES=20
+    DB_RETRIES=30
 
     until ${DOCKER_COMMAND} exec -- postgres pg_isready -U "$db_user" || [[ ${DB_RETRIES} -eq 0 ]]; do
         echo "Waiting for postgres server, $((DB_RETRIES--)) remaining attempts..."
-        sleep 2
+        sleep 5
     done
 }
 
