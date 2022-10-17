@@ -1,0 +1,33 @@
+#!/bin/bash
+
+YQ_MIN="4.18.0"
+
+compare_versions() {
+  # implementing string manipulation
+  local a=${1%%.*} b=${2%%.*}
+  [[ "10#${a:-0}" -gt "10#${b:-0}" ]] && return 1
+  [[ "10#${a:-0}" -lt "10#${b:-0}" ]] && return 2
+  # re-assigning a and b with greatest of 1 and 2 after manipulation
+  a=${1:${#a}+1}
+  b=${2:${#b}+1}
+  # terminal condition for recursion
+  [[ -z $a && -z $b ]] || compare_versions "$a" "$b"
+}
+
+if [[ ! "$(command -v yq)" ]]; then
+  echo "YQ package is not installed, please install it."
+  echo "https://mikefarah.gitbook.io/yq/"
+  exit 1
+fi 
+
+compare_versions "$(yq --version | grep -Eo '(([[:digit:]]{1,2}).([[:digit:]]{1,2}).([[:digit:]]{1,2}))')" "${YQ_MIN}" || VERSION_CHECK=$?
+
+if [[ ${VERSION_CHECK} -ne 1 ]]; then
+  echo "Error: yq version < ${YQ_MIN} is not supported, please update your yq package"
+  echo "https://mikefarah.gitbook.io/yq/"
+  echo "YQ version ${YQ_MIN} will be no longer supported from the beginning of 2023"
+  export YQ_VERSION="old"
+  # exit 1
+elif [[ ${VERSION_CHECK} -eq 1 ]]; then
+  export YQ_VERSION="new"
+fi
