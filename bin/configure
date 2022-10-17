@@ -17,6 +17,7 @@ set -euo pipefail
 export BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
 . "${BASE_PATH}/bin/helpers/docker-compose"
+. "${BASE_PATH}/bin/helpers/yq-version"
 
 export YQ_VERSION="$(yq --version | grep -Eo '(([[:digit:]]{1,2}).([[:digit:]]{1,2}).([[:digit:]]{1,2}))')"
 
@@ -245,24 +246,17 @@ activate_logging() {
     cp "$logging_configuration_template" "$filename"
     echo "" >>"$filename"
     echo "services:" >>"$filename"
-    if (apt list --installed | grep "^dpkg/") 2>/dev/null; then
-        if [[ "$(dpkg --compare-versions "${YQ_VERSION}" "lt" "4.18" && echo "found")" == "found" ]]; then
-            for service in $(${DOCKER_COMMAND} config | yq -r '.services | keys()'); do
-                echo "  $service:" >>"$filename"
-                echo '    logging: *default-logging' >>"$filename"
-            done
-        else
-            for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
-                echo "  $service:" >>"$filename"
-                echo '    logging: *default-logging' >>"$filename"
-            done
-        fi
-    else
-        for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
-            echo "  $service:" >>"$filename"
-            echo '    logging: *default-logging' >>"$filename"
-        done
+
+    if [[ ${YQ_VERSION} == "old" ]]; then
+        YQ_COMMAND="yq -r '.services | keys()'"
+    elif [[ ${YQ_VERSION} == "new" ]]; then
+        YQ_COMMAND="yq -M '.services | keys' | sed -e 's/^- *//'"
     fi
+
+    for service in $(${DOCKER_COMMAND} config | ${YQ_COMMAND}); do
+        echo "  $service:" >>"$filename"
+        echo '    logging: *default-logging' >>"$filename"
+    done
 
     sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.logging.yaml/" "$BASE_PATH/.env"
 }
@@ -287,24 +281,17 @@ check_host_integration() {
         section "Enabling Host network integration"
 
         echo "services:" >"$filename"
-        if (apt list --installed | grep "^dpkg/") 2>/dev/null; then
-            if [[ "$(dpkg --compare-versions "${YQ_VERSION}" "lt" "4.18" && echo "found")" == "found" ]]; then
-                for service in $(${DOCKER_COMMAND} config | yq -r '.services | keys()'); do
-                    echo "  $service:" >>"$filename"
-                    echo '    logging: *default-logging' >>"$filename"
-                done
-            else
-                for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
-                    echo "  $service:" >>"$filename"
-                    echo '    logging: *default-logging' >>"$filename"
-                done
-            fi
-        else
-            for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
-                echo "  $service:" >>"$filename"
-                echo '    logging: *default-logging' >>"$filename"
-            done
+
+        if [[ ${YQ_VERSION} == "old" ]]; then
+            YQ_COMMAND="yq -r '.services | keys()'"
+        elif [[ ${YQ_VERSION} == "new" ]]; then
+            YQ_COMMAND="yq -M '.services | keys' | sed -e 's/^- *//'"
         fi
+
+        for service in $(${DOCKER_COMMAND} config | ${YQ_COMMAND}); do
+            echo "  $service:" >>"$filename"
+            echo '    logging: *default-logging' >>"$filename"
+        done
 
         sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.host-integration.yaml/" "$BASE_PATH/.env"
     else
