@@ -1,3 +1,5 @@
+* BUG#24184 Initialize workers cache synchronization timeout to 0
+* FEA#24006 Configure application Timezone
 * FEA#22194 Remove flower from deployments
 * FEA#15743 Enable celery autoscaling
 BREAKING:

@@ -4,6 +4,7 @@
 ###############################################################################
 set -euo pipefail
 BASE_PATH=`realpath "$(dirname $0)/../.."`
+. "${BASE_PATH}/bin/helpers/docker-compose"
 
 tracebacker_enabled=$(. $BASE_PATH/.env && echo $COOG_UWSGI_TRACEBACKER)
 
@@ -12,14 +13,14 @@ if [[ "$tracebacker_enabled" != "1" ]]; then
     exit 2
 fi
 
-coog_running=$(docker-compose ps --services | grep "^coog$" || true)
+coog_running=$(${DOCKER_COMMAND} ps --services | grep "^coog$" || true)
 if [[ ! "$coog_running" ]]; then
     echo Coog service is not running >&2
     exit 2
 fi
 
-for path in $(docker-compose exec coog bash -c "ls /tmp/uwsgi_tracebacker*"); do
+for path in $(${DOCKER_COMMAND} exec coog bash -c "ls /tmp/uwsgi_tracebacker*"); do
     path=${path//[$'\t\r\n ']}
     echo "==> Traceback for process $path"
-    docker-compose exec coog uwsgi --connect-and-read $path
+    ${DOCKER_COMMAND} exec coog uwsgi --connect-and-read $path
 done

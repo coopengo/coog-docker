@@ -1,3 +1,5 @@
+* BUG#24184 Initialisation du délai de synchronisation du cache des workers à 0
+* FEA#24006 Configuration de la timezone de l'application
 * FEA#22194 Suppression de flower des déploiements
 * FEA#15743 Activation de l'autoscaling sur Celery
 BREAKING :

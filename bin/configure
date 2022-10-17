@@ -16,6 +16,7 @@ set -euo pipefail
 
 export BASE_PATH=$(realpath "$(dirname $0)/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/docker-compose"
 
 export YQ_VERSION="$(yq --version | grep -Eo '(([[:digit:]]{1,2}).([[:digit:]]{1,2}).([[:digit:]]{1,2}))')"
 
@@ -108,7 +109,7 @@ set_services() {
         key=${path#*compose/}
         service=${key%.yml}
 
-        if [[ "$service" = "back/common" ]]; then
+        if [[ "$service" =~ "common" ]]; then
             continue
         fi
         if [[ -f "$BASE_PATH/disabled_services" ]] &&
@@ -246,18 +247,18 @@ activate_logging() {
     echo "services:" >>"$filename"
     if (apt list --installed | grep "^dpkg/") 2>/dev/null; then
         if [[ "$(dpkg --compare-versions "${YQ_VERSION}" "lt" "4.18" && echo "found")" == "found" ]]; then
-            for service in $(docker-compose config | yq -r '.services | keys()'); do
+            for service in $(${DOCKER_COMMAND} config | yq -r '.services | keys()'); do
                 echo "  $service:" >>"$filename"
                 echo '    logging: *default-logging' >>"$filename"
             done
         else
-            for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+            for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
                 echo "  $service:" >>"$filename"
                 echo '    logging: *default-logging' >>"$filename"
             done
         fi
     else
-        for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+        for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
             echo "  $service:" >>"$filename"
             echo '    logging: *default-logging' >>"$filename"
         done
@@ -288,18 +289,18 @@ check_host_integration() {
         echo "services:" >"$filename"
         if (apt list --installed | grep "^dpkg/") 2>/dev/null; then
             if [[ "$(dpkg --compare-versions "${YQ_VERSION}" "lt" "4.18" && echo "found")" == "found" ]]; then
-                for service in $(docker-compose config | yq -r '.services | keys()'); do
+                for service in $(${DOCKER_COMMAND} config | yq -r '.services | keys()'); do
                     echo "  $service:" >>"$filename"
                     echo '    logging: *default-logging' >>"$filename"
                 done
             else
-                for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+                for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
                     echo "  $service:" >>"$filename"
                     echo '    logging: *default-logging' >>"$filename"
                 done
             fi
         else
-            for service in $(docker-compose config | yq -M '.services | keys' | sed -e 's/^- *//'); do
+            for service in $(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'); do
                 echo "  $service:" >>"$filename"
                 echo '    logging: *default-logging' >>"$filename"
             done
