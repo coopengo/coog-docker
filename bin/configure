@@ -115,6 +115,8 @@ set_services () {
                 cat $BASE_PATH/custom/disabled_services | grep -v "^#" | \
                 grep -E "^$service$" > /dev/null; then
             fail "Ignoring $service"
+        elif [[ "$(source $BASE_PATH/.env && echo "${ENABLE_SFTP:?}")" == "false" ]] && [[ "$service" =~ "tools/sftp" ]]; then
+            fail "Ignoring $service (set 'ENABLE_SFTP' to true to enable)"
         else
             check "Adding $service"
             SERVICES="$SERVICES:$path"

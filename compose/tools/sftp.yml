@@ -1,0 +1,12 @@
+services:
+  sftp:
+    image: atmoz/sftp:debian
+    command: ["${SFTP_USER}:${SFTP_PASSWORD}:1003:1003"]
+    volumes:
+      - /etc/ssh/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key
+      - /etc/ssh/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
+      - ${COOG_DATA_VOLUME:?}:/home/${SFTP_USER}/coog_data
+      - ${SFTP_VOLUME:?}:/home/${SFTP_USER}/input
+    ports:
+      - "${SFTP_PORT:?}:22"
+    restart: always
