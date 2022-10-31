@@ -1,3 +1,4 @@
+* FEA#24414 Add identity database name in API v2 variables
 * BUG#24184 Initialize workers cache synchronization timeout to 0
 BREAKING:
 * FEA#22379 Allow to globally configure logging. Default behaviour will add a logging rotation to avoid bloating on long running servers
