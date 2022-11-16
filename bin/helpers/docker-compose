@@ -11,7 +11,7 @@ compare_versions() {
   a=${1:${#a}+1}
   b=${2:${#b}+1}
   # terminal condition for recursion
-  [[ -z $a && -z $b ]] || compare_versions "$a" "$b"
+  [[ -z $a && -z $b ]] && return 1 || compare_versions "$a" "$b"
 }
 
 if docker-compose --version >/dev/null 2>&1; then
