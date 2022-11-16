@@ -6,6 +6,7 @@ services:
       - ../../env/back.env
     entrypoint: ['ep']
     environment:
+      - LANG=C.UTF-8
       - LOG_LEVEL=${COOG_LOG_LEVEL:?}
       - TRYTOND_WEB__CORS=${CORS_WHITELIST:?}
       - TRYTOND_DATABASE__URI=${POSTGRESQL_CONNECTION_STRING:?}
