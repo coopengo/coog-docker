@@ -17,7 +17,6 @@ services:
       - DATABASE_PASSWORD=${POSTGRES_B2C_PASSWORD:?}
       - URL=${B2C_BACKEND_URL:?}
       - STRAPI_PLUGIN_I18N_INIT_LOCALE_CODE=fr
+      - COOG_PASSWORD_TOKEN_SECRET=${PASSWORD_TOKEN_SECRET:?}
     volumes:
       - ${B2C_BACKEND_BUILD_VOLUME:?}:/workdir/build
-    extra_hosts:
-      - host.docker.internal:host-gateway
