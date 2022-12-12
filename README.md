@@ -365,6 +365,8 @@ reversible**.
 
 The script can be customized by changing the values of the variables
 declared in the anon_db function.
+A group of users in Coog named 'Coog Do Not Anonimyze' allow maintainers to
+keep also login for users who are in this group.
 
 ```shell
 ./bin/manage_db anonymize
