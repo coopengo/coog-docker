@@ -20,6 +20,7 @@ help() {
     echo "  reset                       Clear (or init) the database"
     echo "  load <file_name>            Load database from file on postgres"
     echo "  dump <file_name>            Dump the current database for safekeeping on postgres"
+    echo "  dump_all                    Dump all 'no system' databases on postgres"
     echo "  mongo_dump                  Dump all mongodb databases"
     echo "  mongo_restore <file_name>   Restore mongodb backup"
     echo "  update [modules]            Force an update of the database"
@@ -83,6 +84,20 @@ load() {
 
     echo " "
     section "Loading database done."
+}
+
+dump_all() {
+    _start_services postgres
+    DATABASES="$(${DOCKER_COMMAND} exec -T -- postgres bash -c "psql --username ${db_user} -t -c 'SELECT datname FROM pg_database;'" | sed 's/[ ]\+//g' | sed '/^$/d' | grep -Ev '(template[0-9]|postgres)$' | tr '\n' ' ')"
+
+    if [[ $(echo "${DATABASES}" | wc -w) -eq 1 ]]; then
+        dump "$@"
+    else
+        for CURRENT_DB in "${DATABASES}"; do
+            dump "${CURRENT_DB}"
+        done
+    fi
+
 }
 
 dump() {
@@ -306,6 +321,10 @@ load)
 dump)
     _load_configuration
     dump $*
+    ;;
+dump_all)
+    _load_configuration
+    dump_all
     ;;
 mongodb_dump)
     _mongo_dump
