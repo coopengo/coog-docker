@@ -89,8 +89,7 @@ load() {
 dump_all() {
     _start_services postgres
     format="${format:-sql}"
-    PROJECT_NAME="$(source "${BASE_PATH}/.env" && echo ${PROJECT_HOSTNAME})"
-    dump_file="/tmp/${PROJECT_NAME}-$(date '+%Y-%m-%d_%H_%M_%S').${format}"
+    dump_file=${1:-/tmp/$db_name-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
 
     ${DOCKER_COMMAND} exec -T -- postgres bash -c "pg_dumpall --no-owner -U $db_user --exclude-database=\"postgres|template0|template1\" > /tmp/dump" >/dev/null
     ${DOCKER_COMMAND} cp postgres:/tmp/dump "$dump_file"
@@ -321,7 +320,7 @@ dump)
     ;;
 dump_all)
     _load_configuration
-    dump_all
+    dump_all $*
     ;;
 mongodb_dump)
     _mongo_dump
