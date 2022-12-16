@@ -88,16 +88,13 @@ load() {
 
 dump_all() {
     _start_services postgres
-    DATABASES="$(${DOCKER_COMMAND} exec -T -- postgres bash -c "psql --username ${db_user} -t -c 'SELECT datname FROM pg_database;'" | sed 's/[ ]\+//g' | sed '/^$/d' | grep -Ev '(template[0-9]|postgres)$' | tr '\n' ' ')"
+    format="${format:-sql}"
+    PROJECT_NAME="$(source "${BASE_PATH}/.env" && echo ${PROJECT_HOSTNAME})"
+    dump_file="/tmp/${PROJECT_NAME}-$(date '+%Y-%m-%d_%H_%M_%S').${format}"
 
-    if [[ $(echo "${DATABASES}" | wc -w) -eq 1 ]]; then
-        dump "$@"
-    else
-        for CURRENT_DB in "${DATABASES}"; do
-            dump "${CURRENT_DB}"
-        done
-    fi
-
+    ${DOCKER_COMMAND} exec -T -- postgres bash -c "pg_dumpall --no-owner -U $db_user --exclude-database=\"postgres|template0|template1\" > /tmp/dump" >/dev/null
+    ${DOCKER_COMMAND} cp postgres:/tmp/dump "$dump_file"
+    ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
 }
 
 dump() {
