@@ -20,7 +20,7 @@ help() {
     echo "  reset                       Clear (or init) the database"
     echo "  load <file_name>            Load database from file on postgres"
     echo "  dump <file_name>            Dump the current database for safekeeping on postgres"
-    echo "  dump_all                    Dump all 'no system' databases on postgres"
+    echo "  dump_all <file name>        Dump all 'no system' databases on postgres"
     echo "  mongo_dump                  Dump all mongodb databases"
     echo "  mongo_restore <file_name>   Restore mongodb backup"
     echo "  update [modules]            Force an update of the database"
