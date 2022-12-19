@@ -89,7 +89,7 @@ load() {
 dump_all() {
     _start_services postgres
     format="${format:-sql}"
-    dump_file=${1:-/tmp/$full-backup-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
+    dump_file=${1:-/tmp/full-backup-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
 
     ${DOCKER_COMMAND} exec -T -- postgres bash -c "pg_dumpall --no-owner -U $db_user --exclude-database=\"postgres|template0|template1\" > /tmp/dump" >/dev/null
     ${DOCKER_COMMAND} cp postgres:/tmp/dump "$dump_file"
