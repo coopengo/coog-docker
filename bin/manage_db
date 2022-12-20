@@ -255,6 +255,7 @@ _db_wait() {
 }
 
 _mongo_dump() {
+    _start_services mongo
     PROJECT_NAME="$(source "${BASE_PATH}/.env" && echo ${PROJECT_HOSTNAME})"
     ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo ${MONGO_USER})" -p "$(source "${BASE_PATH}/.env" && echo ${MONGO_PASSWORD})" -o "/data/db/${PROJECT_NAME}"
     tar czvf "${BASE_PATH}/mongodb-${PROJECT_NAME}-$(date '+%d-%m-%Y').tar.gz" "/coog/coog/mongodb_data/${PROJECT_NAME}"
