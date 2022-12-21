@@ -258,19 +258,19 @@ _mongo_dump() {
     _start_services mongo
     PROJECT_NAME="$(source "${BASE_PATH}/.env" && echo ${PROJECT_HOSTNAME})"
     ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo ${MONGO_USER})" -p "$(source "${BASE_PATH}/.env" && echo ${MONGO_PASSWORD})" -o "/data/db/${PROJECT_NAME}"
-    tar czvf "${BASE_PATH}/mongodb-${PROJECT_NAME}-$(date '+%d-%m-%Y').tar.gz" "/coog/coog/mongodb_data/${PROJECT_NAME}"
-    rm -rf "/coog/coog/mongodb_data/${PROJECT_NAME}"
+    gzip "/coog/coog/mongodb_data/${PROJECT_NAME}"
+    mv "/coog/coog/mongodb_data/${PROJECT_NAME}.gz" "${BASE_PATH}/mongodb-${PROJECT_NAME}-$(date '+%d-%m-%Y').gz"
 }
 
 _mongo_restore() {
     MONGODB_FILE="$1"
-    if [[ ! "${MONGODB_FILE}" =~ (.*).tar.gz$ ]]; then
-        echo "File must be compressed in .tar.gz format"
+    if [[ ! "${MONGODB_FILE}" =~ ^mongodb-(.*).gz$ ]]; then
+        echo "File must be compressed with gzip in .gz format"
         exit 1
     fi
 
-    tar xzvf "${MONGODB_FILE}"
-    ${DOCKER_COMMAND} exec mongo mongorestore -u "$(source "$BASE_PATH/.env" && echo $MONGO_USER)" -p "$(source "$BASE_PATH/.env" && echo $MONGO_PASSWORD)" "${MONGODB_FILE%%.tar.gz}"
+    gzip -d "${MONGODB_FILE}"
+    ${DOCKER_COMMAND} exec mongo mongorestore -u "$(source "$BASE_PATH/.env" && echo $MONGO_USER)" -p "$(source "$BASE_PATH/.env" && echo $MONGO_PASSWORD)" "${MONGODB_FILE%%.gz}"
 }
 
 command=$1
