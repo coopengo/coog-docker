@@ -87,14 +87,14 @@ load() {
 
     if [[ "${format}" = "sql" ]]; then
         ${DOCKER_COMMAND} exec -T -- postgres \
-            bash -c "cat ${dump_file} | psql -U ${db_user} -d ${db_name}" \
+            bash -c "cat /tmp/dump | psql -U ${db_user} -d ${db_name}" \
             >/dev/null
     else
         ${DOCKER_COMMAND} exec -T -- postgres \
             pg_restore -U "${db_user}" --no-owner --role "${db_user}" -j 4 \
-            -d "${db_name}" "${dump_file}"
+            -d "${db_name}" "/tmp/dump"
     fi
-    ${DOCKER_COMMAND} exec -T -- postgres rm "${dump_file}"
+    ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
 
     if [[ "${archive_input}" == "true" ]]; then
         rm -rf "${dump_file}"
