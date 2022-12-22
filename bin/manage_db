@@ -31,7 +31,7 @@ help() {
     echo "--database <db_name>        The database to operate on"
     echo "--format <format>           The format to load from / dump database dumps."
     echo "                            For postgreSQL: sql(default),bin,zip,tar.gz"
-    echo "                            For MongoDB: default,zip,tar.gz"
+    echo "                            For MongoDB: zip,tar.gz"
 }
 
 if [[ "$#" -lt 1 ]]; then
@@ -118,12 +118,11 @@ _mongo_dump() {
 
     dump_file="${1:-/tmp/full-backup-$(date '+%Y-%m-%d').mongodb}"
     MONGODB_DATA_PATH="$(source "${BASE_PATH}/.env" && echo ${MONGODB_DATA_VOLUME})"
+    format="${format:-tar.gz}"
 
     ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo ${MONGO_USER})" -p "$(source "${BASE_PATH}/.env" && echo ${MONGO_PASSWORD})" -o "/data/db/tmp_backup"
 
-    if [[ "${format}" = "default" ]]; then
-        mv "${MONGODB_DATA_PATH}/tmp_backup" "${dump_file}"
-    elif [[ "${format}" = "tar.gz" ]]; then
+    if [[ "${format}" = "tar.gz" ]]; then
         tar -cvzf "${dump_file}.tar.gz" "${MONGODB_DATA_PATH}/tmp_backup"
         rm "${MONGODB_DATA_PATH}/tmp_backup"
     elif [[ "${format}" = "zip" ]]; then
@@ -139,7 +138,7 @@ _mongo_restore() {
 
     if [[ ! "${dump_file}" =~ (.*).mongodb(zip|.tar.gz)?$ ]]; then
         echo "No good format found."
-        echo "File / Directory must end with .mongodb (directory), .mongodb.zip or .mongodb.tar.gz"
+        echo "File / Directory must end with .mongodb.tar.gz or .mongodb.zip"
         exit 1
     fi
 
@@ -151,11 +150,10 @@ _mongo_restore() {
         tar -xvzf "${dump_file}"
     fi
 
-    ${DOCKER_COMMAND} exec mongo mongorestore -u "$(source "$BASE_PATH/.env" && echo $MONGO_USER)" -p "$(source "$BASE_PATH/.env" && echo $MONGO_PASSWORD)" "${MONGODB_UNCOMPRESS_DIR:-${dump_file}}"
+    ${DOCKER_COMMAND} exec mongo mongorestore -u "$(source "$BASE_PATH/.env" && echo $MONGO_USER)" -p "$(source "$BASE_PATH/.env" && echo $MONGO_PASSWORD)" "${MONGODB_UNCOMPRESS_DIR}"
 
-    if [[ -n "${MONGODB_UNCOMPRESS_DIR}" ]]; then
-        rm -rf "${MONGODB_UNCOMPRESS_DIR}"
-    fi
+    rm -rf "${MONGODB_UNCOMPRESS_DIR}"
+
 }
 
 dump_all() {
