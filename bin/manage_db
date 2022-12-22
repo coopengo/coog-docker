@@ -160,13 +160,16 @@ dump_all() {
     ${DOCKER_COMMAND} exec -T -- postgres rm -rf "/tmp/dump"
 
     if [[ "$format" = "tar.gz" ]]; then
-        tar_file="${dump_file##*/}"
-        tar_dir="${dump_file%$tar_file}"
-        
-        tar -cvzf "${dump_file}.tar.gz" -C "${tar_dir}" "${tar_file}.sql"
+        archive_file="${dump_file##*/}"
+        archive_dir="${dump_file%$archive_file}"
+
+        tar -cvzf "${dump_file}.tar.gz" -C "${archive_dir}" "${archive_file}.sql"
         rm "${dump_file}.sql"
     elif [[ "$format" = "zip" ]]; then
-        zip -r "${dump_file}.zip" "${dump_file}.sql"
+        archive_file="${dump_file##*/}"
+        archive_dir="${dump_file%$archive_file}"
+
+        (cd ${archive_dir} && zip -r "${dump_file}.zip" "${archive_file}.sql")
         rm "${dump_file}.sql"
     fi
 }
