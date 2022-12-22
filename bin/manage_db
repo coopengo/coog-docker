@@ -29,7 +29,9 @@ help() {
     echo " "
     echo "options:"
     echo "--database <db_name>        The database to operate on"
-    echo "--format <(sql,bin,zip)>    The format to load from / dump database dumps"
+    echo "--format <format>           The format to load from / dump database dumps."
+    echo "                            For postgreSQL: sql(default),bin,zip,tar.gz"
+    echo "                            For MongoDB: default,zip,tar.gz"
 }
 
 if [[ "$#" -lt 1 ]]; then
@@ -63,13 +65,17 @@ load() {
     section "Loading database from dump file"
 
     format="${format:-sql}"
-    if [[ "$format" = "zip" ]]; then
-        unzip -p "$dump_file" >/tmp/tmp_extracted_dump
+    if [[ "${dump_file}" =~ (.*).postgresql.zip$ ]]; then
+        unzip -p "${dump_file}" >/tmp/tmp_extracted_dump
         format=sql
         dump_file=/tmp/tmp_extracted_dump
+    elif [[ "${dump_file}" =~ (.*).postgresql.tar.gz$ ]]; then
+        tar -xvzf "${dump_file}" -C /tmp/postgresql_restore
+        format=sql
+        dump_file="/tmp/postgresql_restore/$(tar -tzf ${dump_file} | head -1)"
     fi
 
-    ${DOCKER_COMMAND} cp "$dump_file" postgres:/tmp/dump
+    ${DOCKER_COMMAND} cp "${dump_file}" postgres:/tmp/dump
 
     if [[ "$format" = "sql" ]]; then
         ${DOCKER_COMMAND} exec -T -- postgres \
@@ -86,14 +92,80 @@ load() {
     section "Loading database done."
 }
 
+_mongo_dump() {
+    echo " "
+    if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
+        echo Cannot use dump command for non dockerized database 1>&2
+        exit 1
+    fi
+
+    _start_services mongo
+
+    sleep 5
+
+    dump_file="${1:-/tmp/full-backup-$(date '+%Y-%m-%d').mongodb}"
+    MONGODB_DATA_PATH="$(source "${BASE_PATH}/.env" && echo ${MONGODB_DATA_VOLUME})"
+
+    ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo ${MONGO_USER})" -p "$(source "${BASE_PATH}/.env" && echo ${MONGO_PASSWORD})" -o "/data/db/tmp_backup"
+
+    if [[ "$format" = "default" ]]; then
+        mv "${MONGODB_DATA_PATH}/tmp_backup" "${dump_file}"
+    elif [[ "$format" = "tar.gz" ]]; then
+        tar -cvzf "${dump_file}.tar.gz" "${MONGODB_DATA_PATH}/tmp_backup"
+        rm "${MONGODB_DATA_PATH}/tmp_backup"
+    elif [[ "$format" = "zip" ]]; then
+        zip -r "${dump_file}.zip" "${MONGODB_DATA_PATH}/tmp_backup"
+        rm "${MONGODB_DATA_PATH}/tmp_backup"
+    fi
+
+    echo "The MongoDB backup is available on ${dump_file} path"
+}
+
+_mongo_restore() {
+    dump_file="$1"
+
+    if [[ ! "${dump_file}" =~ (.*).mongodb(zip|.tar.gz)$ ]]; then
+        echo "No good format found."
+        echo "File / Directory must end with .mongodb (directory), .mongodb.zip or .mongodb.tar.gz"
+        exit 1
+    fi
+
+    if [[ "${dump_file}" =~ (.*).mongodb.zip$ ]]; then
+        MONGODB_UNCOMPRESS_DIR="$(unzip -qql "${dump_file}" | head -n1 | tr -s ' ' | cut -d' ' -f5-)"
+        unzip "${dump_file}"
+    elif [[ "${dump_file}" =~ (.*).mongodb.tar.gz$  ]]; then
+        MONGODB_UNCOMPRESS_DIR="$(tar -tzf "${dump_file}" | head -1 | cut -f1 -d "/")"
+        tar -xvzf "${dump_file}"
+    fi
+
+    ${DOCKER_COMMAND} exec mongo mongorestore -u "$(source "$BASE_PATH/.env" && echo $MONGO_USER)" -p "$(source "$BASE_PATH/.env" && echo $MONGO_PASSWORD)" "${MONGODB_UNCOMPRESS_DIR:-${dump_file}}"
+
+    if [[ -n "${MONGODB_UNCOMPRESS_DIR}" ]]; then
+        rm -rf "${MONGODB_UNCOMPRESS_DIR}"
+    fi
+}
+
 dump_all() {
     _start_services postgres
+
+    sleep 5
+
     format="${format:-sql}"
-    dump_file=${1:-/tmp/full-backup-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
+    dump_file="${1:-/tmp/full-backup-$(date '+%Y-%m-%d').postgresql}"
+
+    section "Dumping all no-system databases to ${dump_file} (format $format)"
 
     ${DOCKER_COMMAND} exec -T -- postgres bash -c "pg_dumpall --no-owner -U $db_user --exclude-database=\"postgres|template0|template1\" > /tmp/dump" >/dev/null
-    ${DOCKER_COMMAND} cp postgres:/tmp/dump "$dump_file"
+    ${DOCKER_COMMAND} cp postgres:/tmp/dump "${dump_file}.sql"
     ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
+
+    if [[ "$format" = "tar.gz" ]]; then
+        tar -cvzf "${dump_file}.tar.gz" "${dump_file}.sql"
+        rm "${dump_file}.sql"
+    elif [[ "$format" = "zip" ]]; then
+        zip -r "${dump_file}.zip" "${dump_file}.sql"
+        rm "${dump_file}.sql"
+    fi
 }
 
 dump() {
@@ -105,23 +177,27 @@ dump() {
 
     _start_services postgres
 
+    sleep 5
+
     format="${format:-sql}"
-    dump_file=${1:-/tmp/$db_name-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
+    dump_file="${1:-/tmp/${db_name}-$(date '+%Y-%m-%d').postgresql}"
 
-    section "Dumping database $db_name to $dump_file (format $format)"
+    section "Dumping database $db_name to ${dump_file} (format $format)"
 
-    if [[ "$format" = "sql" ]] || [[ "$format" = "zip" ]]; then
+    if [[ "$format" = "sql" ]] || [[ "$format" = "zip" ]] || [[ "$format" = "tar.gz" ]]; then
         ${DOCKER_COMMAND} exec -T -- postgres bash -c "pg_dump -U $db_user $db_name > /tmp/dump" >/dev/null
     else
         ${DOCKER_COMMAND} exec -T -- postgres pg_dump -U "$db_user" -d "$db_name" -Fc -Z5 -f /tmp/dump >/dev/null
     fi
-    ${DOCKER_COMMAND} cp postgres:/tmp/dump "$dump_file"
+    ${DOCKER_COMMAND} cp postgres:/tmp/dump "${dump_file}.sql"
     ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
 
-    if [[ "$format" = "zip" ]]; then
-        mv "$dump_file" /tmp/tmp_extracted_dump
-        zip "$dump_file" /tmp/tmp_extracted_dump
-        rm /tmp/tmp_extracted_dump
+    if [[ "$format" = "tar.gz" ]]; then
+        tar -cvzf "${dump_file}.tar.gz" "${dump_file}.sql"
+        rm "${dump_file}.sql"
+    elif [[ "$format" = "zip" ]]; then
+        zip -r "${dump_file}.zip" "${dump_file}.sql"
+        rm "${dump_file}.sql"
     fi
 }
 
@@ -254,25 +330,6 @@ _db_wait() {
     done
 }
 
-_mongo_dump() {
-    _start_services mongo
-    PROJECT_NAME="$(source "${BASE_PATH}/.env" && echo ${PROJECT_HOSTNAME})"
-    ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo ${MONGO_USER})" -p "$(source "${BASE_PATH}/.env" && echo ${MONGO_PASSWORD})" -o "/data/db/${PROJECT_NAME}-$(date '+%d-%m-%Y')"
-    tar -czvf "${BASE_PATH}/${PROJECT_NAME}-$(date '+%d-%m-%Y').mongodb.tar.gz" "/coog/coog/mongodb_data/${PROJECT_NAME}-$(date '+%d-%m-%Y')"
-    rm -rf "/coog/coog/mongodb_data/${PROJECT_NAME}-$(date '+%d-%m-%Y')"
-}
-
-_mongo_restore() {
-    MONGODB_FILE="$1"
-    if [[ ! "${MONGODB_FILE}" =~ (.*).mongodb.tar.gz$ ]]; then
-        echo "File must be compressed in <db>.mongodb.tar.gz format"
-        exit 1
-    fi
-
-    tar -xzvf "${MONGODB_FILE}"
-    ${DOCKER_COMMAND} exec mongo mongorestore -u "$(source "$BASE_PATH/.env" && echo $MONGO_USER)" -p "$(source "$BASE_PATH/.env" && echo $MONGO_PASSWORD)" "${MONGODB_FILE%%.mongodb.tar.gz}"
-}
-
 command=$1
 shift
 
@@ -325,7 +382,7 @@ dump_all)
     dump_all $*
     ;;
 mongodb_dump)
-    _mongo_dump
+    _mongo_dump "$@"
     ;;
 mongodb_restore)
     _mongo_restore "$@"
