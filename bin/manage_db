@@ -343,8 +343,8 @@ while test $# -gt 0; do
     --format)
         shift
         format=$1
-        if [[ "$format" != "sql" ]] && [[ "$format" != "bin" ]] && [[ "$format" != "zip" ]]; then
-            echo "Invalid file format $format" >&2
+        if [[ ! "${format}" =~ ^(sql|bin|zip|tar.gz)$ ]]; then
+            echo "Invalid file format ${format}" >&2
             help
             exit 1
         fi
