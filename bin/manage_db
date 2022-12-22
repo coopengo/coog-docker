@@ -157,7 +157,7 @@ dump_all() {
 
     ${DOCKER_COMMAND} exec -T -- postgres bash -c "pg_dumpall --no-owner -U $db_user --exclude-database=\"postgres|template0|template1\" > /tmp/dump" >/dev/null
     ${DOCKER_COMMAND} cp postgres:/tmp/dump "${dump_file}.sql"
-    ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
+    ${DOCKER_COMMAND} exec -T -- postgres rm -rf "/tmp/dump"
 
     if [[ "$format" = "tar.gz" ]]; then
         tar -cvzf "${dump_file}.tar.gz" "${dump_file}.sql"
