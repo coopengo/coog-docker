@@ -68,7 +68,7 @@ load() {
     _db_wait
 
     echo " "
-    section "Loading database from dump file"
+    section "Loading postgresql database from dump file"
 
     format="${format:-sql}"
     if [[ "${dump_file}" =~ (.*).postgresql.zip$ ]]; then
@@ -87,16 +87,16 @@ load() {
 
     if [[ "${format}" = "sql" ]]; then
         ${DOCKER_COMMAND} exec -T -- postgres \
-            bash -c "cat /tmp/dump | psql -U ${db_user} -d ${db_name}" \
+            bash -c "cat ${dump_file} | psql -U ${db_user} -d ${db_name}" \
             >/dev/null
     else
         ${DOCKER_COMMAND} exec -T -- postgres \
             pg_restore -U "${db_user}" --no-owner --role "${db_user}" -j 4 \
-            -d "${db_name}" /tmp/dump
+            -d "${db_name}" "${dump_file}"
     fi
-    ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
+    ${DOCKER_COMMAND} exec -T -- postgres rm "${dump_file}"
 
-    if [[ "${dump_file}" =~ (.*).postgresql.(zip|tar.gz)$ ]]; then
+    if [[ "${archive_input}" == "true" ]]; then
         rm -rf "${dump_file}"
     fi
 
@@ -106,6 +106,7 @@ load() {
 
 _mongo_dump() {
     echo " "
+
     if [[ "${USE_LOCAL_POSTGRES}" = "0" ]]; then
         echo Cannot use dump command for non dockerized database 1>&2
         exit 1
@@ -136,7 +137,7 @@ _mongo_dump() {
 _mongo_restore() {
     dump_file="$1"
 
-    if [[ ! "${dump_file}" =~ (.*).mongodb(zip|.tar.gz)$ ]]; then
+    if [[ ! "${dump_file}" =~ (.*).mongodb(zip|.tar.gz)?$ ]]; then
         echo "No good format found."
         echo "File / Directory must end with .mongodb (directory), .mongodb.zip or .mongodb.tar.gz"
         exit 1
