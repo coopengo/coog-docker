@@ -51,6 +51,12 @@ reset() {
 load() {
     dump_file=$1
 
+    if [[ ! "${dump_file}" =~ .postgresql.(zip|tar.gz|sql|bin)$ ]]; then
+        echo "File name does not respect the wanted format, please check the file format."
+        echo "      <your file name>.postgresql.(zip|tar.gz|sql|bin)"
+        exit 1
+    fi
+
     if [[ "${USE_LOCAL_POSTGRES}" = "0" ]]; then
         echo Cannot use load command for non dockerized database 1>&2
         exit 1
@@ -66,10 +72,12 @@ load() {
 
     format="${format:-sql}"
     if [[ "${dump_file}" =~ (.*).postgresql.zip$ ]]; then
+        archive_input="true"
         unzip "${dump_file}" -d "/tmp/"
         format=sql
         dump_file="/tmp/$(unzip -qql "${dump_file}" | head -n1 | tr -s ' ' | cut -d' ' -f5-)"
     elif [[ "${dump_file}" =~ (.*).postgresql.tar.gz$ ]]; then
+        archive_input="true"
         tar -xvzf "${dump_file}" -C "/tmp/"
         format=sql
         dump_file="/tmp/$(tar -tzf ${dump_file} | head -1)"
