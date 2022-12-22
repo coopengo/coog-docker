@@ -88,6 +88,10 @@ load() {
     fi
     ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
 
+    if [[ "${dump_file}" =~ (.*).postgresql.(zip|tar.gz)$ ]]; then
+        rm -rf "${dump_file}"
+    fi
+
     echo " "
     section "Loading database done."
 }
