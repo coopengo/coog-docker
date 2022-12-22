@@ -199,10 +199,16 @@ dump() {
     ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
 
     if [[ "${format}" = "tar.gz" ]]; then
-        tar -cvzf "${dump_file}.tar.gz" "${dump_file}.sql"
+        ARCHIVE_FILE="${dump_file##*/}"
+        ARCHIVE_DIR="${dump_file%$ARCHIVE_FILE}"
+
+        tar -cvzf "${dump_file}.tar.gz" -C "${ARCHIVE_DIR}" "${ARCHIVE_FILE}.sql"
         rm "${dump_file}.sql"
     elif [[ "${format}" = "zip" ]]; then
-        zip -r "${dump_file}.zip" "${dump_file}.sql"
+        ARCHIVE_FILE="${dump_file##*/}"
+        ARCHIVE_DIR="${dump_file%$ARCHIVE_FILE}"
+
+        (cd "${ARCHIVE_DIR}" && zip -r "${dump_file}.zip" "${ARCHIVE_FILE}.sql")
         rm "${dump_file}.sql"
     fi
 }
