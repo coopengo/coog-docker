@@ -70,9 +70,9 @@ load() {
         format=sql
         dump_file=/tmp/tmp_extracted_dump
     elif [[ "${dump_file}" =~ (.*).postgresql.tar.gz$ ]]; then
-        tar -xvzf "${dump_file}" -C /tmp/postgresql_restore
+        tar -xvzf "${dump_file}" -C /tmp/
         format=sql
-        dump_file="/tmp/postgresql_restore/$(tar -tzf ${dump_file} | head -1)"
+        dump_file="/tmp/$(tar -tzf ${dump_file} | head -1)"
     fi
 
     ${DOCKER_COMMAND} cp "${dump_file}" postgres:/tmp/dump
