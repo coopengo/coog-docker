@@ -107,11 +107,6 @@ load() {
 _mongo_dump() {
     echo " "
 
-    if [[ "${USE_LOCAL_POSTGRES}" = "0" ]]; then
-        echo Cannot use dump command for non dockerized database 1>&2
-        exit 1
-    fi
-
     _start_services mongo
 
     sleep 5
