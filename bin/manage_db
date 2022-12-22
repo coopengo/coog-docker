@@ -66,11 +66,11 @@ load() {
 
     format="${format:-sql}"
     if [[ "${dump_file}" =~ (.*).postgresql.zip$ ]]; then
-        unzip -p "${dump_file}" >/tmp/tmp_extracted_dump
+        unzip "${dump_file}" -d "/tmp/"
         format=sql
-        dump_file=/tmp/tmp_extracted_dump
+        dump_file="/tmp/$(unzip -qql "${dump_file}" | head -n1 | tr -s ' ' | cut -d' ' -f5-)"
     elif [[ "${dump_file}" =~ (.*).postgresql.tar.gz$ ]]; then
-        tar -xvzf "${dump_file}" -C /tmp/
+        tar -xvzf "${dump_file}" -C "/tmp/"
         format=sql
         dump_file="/tmp/$(tar -tzf ${dump_file} | head -1)"
     fi
