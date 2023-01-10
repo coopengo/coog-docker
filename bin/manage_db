@@ -51,7 +51,9 @@ reset() {
 load() {
     dump_file=$1
 
-    if [[ ! "${dump_file}" =~ .postgresql.(zip|tar.gz|sql|bin)$ ]]; then
+    if [[ "${format}" ]]; then
+        echo "option --format used."
+    elif [[ ! "${dump_file}" =~ .postgresql.(zip|tar.gz|sql|bin)$ ]]; then
         echo "File name does not respect the wanted format, please check the file format."
         echo "      <your file name>.postgresql.(zip|tar.gz|sql|bin)"
         exit 1
@@ -80,7 +82,7 @@ load() {
         archive_input="true"
         tar -xvzf "${dump_file}" -C "/tmp/"
         format=sql
-        dump_file="/tmp/$(tar -tzf ${dump_file} | head -1)"
+        dump_file="/tmp/$(tar -tzf "${dump_file}" | head -1)"
     fi
 
     ${DOCKER_COMMAND} cp "${dump_file}" postgres:/tmp/dump
