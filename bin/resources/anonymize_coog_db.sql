@@ -15,9 +15,7 @@ DECLARE
 -- Do not modify variables under this comment
     anon_parties_where_clause text := 'id: not in :(select party from bank union select party from insurer)';
     anon_only_persons_where_clause text := 'id: not in :(select id from party_party where not is_person)';
-    anon_only_persons_interlocutor_where_clause text := 'party: not in :(select id from party_party where not is_person)';
     anon_party_names_where_clause text := '';
-    anon_party_interlocutor_names_where_clause text := '';
     col_test integer := 0;
 
 BEGIN
@@ -28,10 +26,8 @@ BEGIN
     PERFORM anon_table('party_party', 'first_name, commercial_name, birth_name, sepa_creditor_identifier', 'siren', anon_parties_where_clause);
     if keep_company_name then
         anon_party_names_where_clause := anon_party_names_where_clause || ';' || anon_only_persons_where_clause;
-        anon_party_interlocutor_names_where_clause := anon_party_interlocutor_names_where_clause || ';' || anon_only_persons_interlocutor_where_clause;
     end if;
     PERFORM anon_table('party_party', 'name', '', anon_party_names_where_clause);
-    PERFORM anon_table('party_interlocutor', 'name', '', anon_party_interlocutor_names_where_clause);
     -- Anonymize all parties which are subscribers regardless of  the previous rules
     PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, sepa_creditor_identifier', 'siren', 'id: in :(select subscriber from contract)');
     alter table party_party drop constraint if exists "party_party_SSN_uniq_all";
@@ -42,6 +38,7 @@ BEGIN
 
     PERFORM anon_table('party_contact_mechanism', 'value, value_compact');
     PERFORM anon_table('party_address', 'street, name, party_name', 'siret_nic');
+    PERFORM anon_table('party_interlocutor', 'name');
     PERFORM anon_table('contract_option_beneficiary', 'reference');
     PERFORM anon_table('contract_clause', 'text');
     PERFORM anon_table('contract_option', 'customized_beneficiary_clause');
