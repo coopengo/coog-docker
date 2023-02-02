@@ -219,6 +219,7 @@ _reset_database() {
     fi
 
     echo " "
+    _db_wait
     section "Dropping existing database"
     ${DOCKER_COMMAND} exec -T -- postgres dropdb -U "$db_user" --if-exists "$db_name"
 

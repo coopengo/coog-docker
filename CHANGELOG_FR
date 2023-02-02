@@ -1,3 +1,4 @@
+* FEA#PPOP-77 Ajout du support de MONDB_URI
 * BUG#PROCK-114 Le script d'anonymisation ne doit plus changer le login des users dans le groupe Coog A ne pas anonymiser
 * FEA#24414 Ajout de la base d'indentity-manager dans les variables d'API v2
 * BUG#24184 Initialisation du délai de synchronisation du cache des workers à 0
