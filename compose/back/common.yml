@@ -20,6 +20,8 @@ services:
       - TRYTOND_DOCUMENT_API__DOCUMENT_TOKEN_SECRET=${DOCUMENT_TOKEN_SECRET?}
       - TRYTOND_BATCH__ENABLE_CELERY_AUTO_SCALING=1
       - TRYTOND_TZ=${COOG_TIMEZONE:?}
+      - TRYTOND_CACHE__CLEAN_TIMEOUT=0
+      - TRYTOND_B2C_API__SHARED_SECRET=${TOKEN_SHARED_SECRET:?}
     volumes:
       # Do not enable this unless it does not trigger warnings when starting
       # the server up :)

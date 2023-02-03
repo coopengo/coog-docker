@@ -6,8 +6,9 @@ set -euo pipefail
 
 BASE_PATH=`realpath "$(dirname $0)/.."`
 . "${BASE_PATH}/bin/helpers/colors.sh"
+. "${BASE_PATH}/bin/helpers/docker-compose"
 
 ${BASE_PATH}/bin/configure
 
 section "Starting up"
-docker-compose --env-file $BASE_PATH/.env up $@
+${DOCKER_COMMAND} --env-file $BASE_PATH/.env up $@

@@ -365,6 +365,12 @@ reversible**.
 
 The script can be customized by changing the values of the variables
 declared in the anon_db function.
+Users in group 'Coog Do Not Anonymize' will not be encrypted. Meaning the 
+maintainer will be able to connect to their session and access their 
+informations.
+
+User 'Administrator' will not be encrypted either and will have its password set
+to 'admin' to facilitate testing by the maintainer.
 
 ```shell
 ./bin/manage_db anonymize
