@@ -12,6 +12,7 @@ services:
       - MONGO_DB_NAME=${IDENTITY_MANAGER_MAIN_DATABASE:?}
       - MONGO_USER=${MONGO_USER:?}
       - MONGO_PASSWORD=${MONGO_PASSWORD:?}
+      - MONGODB_URI=${MONGODB_URI:?}
     depends_on:
       - mongo
       - api
