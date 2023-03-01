@@ -38,6 +38,8 @@ BEGIN
 
     PERFORM anon_table('party_contact_mechanism', 'value, value_compact');
     PERFORM anon_table('party_address', 'street, name, party_name', 'siret_nic');
+    PERFORM anon_table('party_address', '', 'zip, city', anon_parties_where_clause);
+    PERFORM anon_table('health_party_complement', 'insurance_fund_number', '', anon_parties_where_clause);
     PERFORM anon_table('party_interlocutor', 'name');
     PERFORM anon_table('contract_option_beneficiary', 'reference');
     PERFORM anon_table('contract_clause', 'text');
@@ -52,6 +54,41 @@ BEGIN
     PERFORM anon_table('account_invoice_line', 'description');
     PERFORM anon_table('account_statement_line', '', 'description');
     PERFORM anon_table('account_payment', '', 'description');
+
+    PERFORM anon_endorsment('endorsement_contract');
+    PERFORM anon_endorsment('endorsement_contract_activation_history');
+    PERFORM anon_endorsment('endorsement_contract_beneficiary');
+    PERFORM anon_endorsment('endorsement_contract_benefit');
+    PERFORM anon_endorsment('endorsement_contract_billing_information');
+    PERFORM anon_endorsment('endorsement_contract_clause');
+    PERFORM anon_endorsment('endorsement_contract_contact');
+    PERFORM anon_endorsment('endorsement_contract_commission_rate');
+    PERFORM anon_endorsment('endorsement_contract_contact');
+    PERFORM anon_endorsment('endorsement_contract_covered_element');
+    PERFORM anon_endorsment('endorsement_contract_covered_element_option');
+    PERFORM anon_endorsment('endorsement_contract_covered_element_option_version');
+    PERFORM anon_endorsment('endorsement_contract_covered_element_version');
+    PERFORM anon_endorsment('endorsement_contract_dependent_party');
+    PERFORM anon_endorsment('endorsement_contract_extra_data');
+    PERFORM anon_endorsment('endorsement_contract_extra_premium');
+    PERFORM anon_endorsment('endorsement_contract_loan');
+    PERFORM anon_endorsment('endorsement_contract_option');
+    PERFORM anon_endorsment('endorsement_contract_option_exclusion');
+    PERFORM anon_endorsment('endorsement_contract_option_version');
+    PERFORM anon_endorsment('endorsement_contract_payment_information');
+    PERFORM anon_endorsment('endorsement_loan');
+    PERFORM anon_endorsment('endorsement_loan_increment');
+    PERFORM anon_endorsment('endorsement_loan_share');
+    PERFORM anon_endorsment('endorsement_party');
+    PERFORM anon_endorsment('endorsement_party_address');
+    PERFORM anon_endorsment('endorsement_party_contract_mechanism');
+    PERFORM anon_endorsment('endorsement_party_employment');
+    PERFORM anon_endorsment('endorsement_party_employment_version');
+    PERFORM anon_endorsment('endorsement_party_health_complement');
+    PERFORM anon_endorsment('endorsement_party_relation');
+
+    EXECUTE 'UPDATE report_production_request set context_=''{}''';
+    delete from ir_note;
 
 END
 $$ LANGUAGE plpgsql;
@@ -85,6 +122,21 @@ EXCEPTION
     WHEN undefined_table THEN
         RAISE NOTICE 'the table % does not exist, ignoring' , table_name;
         RETURN 0;
+END
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION anon_endorsment(table_name text) RETURNS integer as $$
+DECLARE
+    table_test int;
+    test text;
+BEGIN
+    table_test := table_exist(table_name);
+    if table_test < 1 then
+        RETURN 0;
+    end if;
+    EXECUTE 'UPDATE ' || table_name || ' set values=''{}''';
+    RAISE NOTICE  'anonymized table % ', table_name;
+    RETURN 0;
 END
 $$ LANGUAGE plpgsql;
 
@@ -198,3 +250,4 @@ drop function anon_db();
 drop function col_exist(text, text);
 drop function table_exist(text);
 drop function anon_table(text, text, text, text);
+drop function anon_endorsment(text);
