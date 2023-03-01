@@ -133,6 +133,7 @@ set_services () {
     fi
 
     echo "COMPOSE_FILE=$SERVICES" >> "$BASE_PATH/.env"
+    echo "BASE_PATH=$BASE_PATH" >> "$BASE_PATH/.env"
     echo ""
 }
 
