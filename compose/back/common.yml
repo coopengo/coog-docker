@@ -2,8 +2,8 @@ services:
   back-common:
     image: ${IMAGE_REGISTRY_COOG:?}/${IMAGE_NAME_COOG:?}:${IMAGE_VERSION_COOG:?}
     env_file:
-      # For some reason, we need to specify a relative path here
-      - ../../env/back.env
+      # The file is called from others .yml file, we must set full path
+      - ${BASE_PATH}/env/back.env
     entrypoint: ['ep']
     environment:
       - LOG_LEVEL=${COOG_LOG_LEVEL:?}
