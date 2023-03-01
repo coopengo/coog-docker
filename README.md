@@ -39,6 +39,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Celery error: PreconditionFailed](#celery-error-preconditionfailed)
     - [Purge logs](#purge-logs)
     - [B2C docker-compose files](#b2c-docker-compose-files)
+    - [Failed to load - no such file or directory](#failed-to-load)
 
 <!-- /TOC -->
 
@@ -522,3 +523,15 @@ CUSTOM_B2C_FRONTEND_BUILD_VOLUME=
 ```
 
 It only needs to be persistent when containers are running, as it will rebuild at each start.
+
+### Failed to load
+
+Since docker compose update 2.16.0, The environment won't start.
+
+You'll have a similar message :
+
+```
+Failed to load /home/user/Documents/coopengo/env/back.env: open /home/user/Documents/coopengo/env/back.env: no such file or directory
+```
+
+To fix this error, you will have to update the coog-docker project with the `git pull` command.
