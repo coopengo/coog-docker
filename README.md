@@ -35,6 +35,11 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Network error on configuration](#network-error-on-configuration)
     - [Configuration error](#configuration-error)
     - [PORTAL Error: Not allowed by CORS](#portal-error-not-allowed-by-cors)
+    - [Celery error: PreconditionFailed](#celery-error-preconditionfailed)
+    - [Purge logs](#purge-logs)
+    - [Deploying on multiple IPs at once](#deploying-on-multiple-ips-at-once)
+    - [B2C docker-compose files](#b2c-docker-compose-files)
+    - [Failed to load - no such file or directory](#failed-to-load)
 
 <!-- /TOC -->
 
@@ -453,3 +458,85 @@ Updating .env contents
 ### [PORTAL][B2B] Error: Not allowed by CORS
 
 By default, you should not be able to use the protocol https:// because it is not configured. You must therefore use the protocol http://.
+
+### Celery error: PreconditionFailed
+
+In some cases (long jobs or batch panifications), recent (> 3.8.16) versions of
+rabbitmq may raise a "PreconditionFailed" error, which triggers a celery node
+restart. Sample log:
+
+```
+# Node is up
+2022-01-25T17:09:44.540530415Z [2022-01-25 17:09:44,540: INFO/MainProcess] celery@9268f28e1bd4 ready.
+...
+# Some job exceeds the timeout
+2022-01-25T17:43:46.900229245Z amqp.exceptions.PreconditionFailed: (0, 0): (406) PRECONDITION_FAILED - delivery acknowledgement on channel 1 timed out. Timeout value used: 1800000 ms. This timeout value can be configured, see consumers doc guide to learn more
+# Celery node restarts
+2022-01-25T17:43:49.370191389Z Welcome on board, Coog Celery is preparing to start
+...
+```
+
+Default timeout is increased to 48 hours (up from 30 minutes), and can be
+further increased by copying the `defaults/rabbitmq` folder somewhere,
+modifying the value in `timeout.conf`, and setting the path to the folder in
+the `CUSTOM_RABBITMQ_FOLDER` environment variable.
+
+### Purge logs
+
+If no log rotation is configured (it should on production servers), you can use
+the following command to purge a container logs:
+
+```bash
+truncate -s 0 $(docker inspect --format='{{.LogPath}}' <container_name_or_id>)
+```
+
+*Note: if you are unlucky (the command was executed at the same time that a log
+was written), you may end up in a state where the log file is unusable. In that
+case, you can try truncating again*
+
+Reference [here](https://stackoverflow.com/questions/42510002/docker-how-to-clear-the-logs-properly-for-a-docker-container)
+
+### Deploying on multiple IPs at once
+
+This can be achieved by fine tuning the labels of the services. The easiest way
+to do that is by using the `override.yml` file (creating it if necessary).
+Then, to additionaly expose on ip `1.2.3.4`:
+
+```yml
+services:
+  coog:
+    labels:
+      - traefik.http.routers.coog.rule=Host(`${PROJECT_HOSTNAME:?}`) || Host(`1.2.3.4`)
+  static:
+    labels:
+      - traefik.http.routers.static.rule=(Host(`${PROJECT_HOSTNAME:?}`) || Host(`1.2.3.4`)) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
+```
+
+### B2C docker-compose files
+
+B2C has multiples .yml files (`{back/front}_common.yml`, `{back/front}_init.yml` and `{back/front}.yml`) because frontend and backend are built on separated containers.
+
+- `{back/front}_common.yml` has shared data between init and run container.
+- `{back/front}_init.yml` build the app.
+- `{back/front}.yml` run the app after init container has ended successfully (on `service_completed_successfully` condition)
+
+Build data are saved on persistent volumes:
+
+```
+CUSTOM_B2C_BACKEND_BUILD_VOLUME=
+CUSTOM_B2C_FRONTEND_BUILD_VOLUME=
+```
+
+It only needs to be persistent when containers are running, as it will rebuild at each start.
+
+### Failed to load
+
+Since docker compose update 2.16.0, The environment won't start.
+
+You'll have a similar message :
+
+```
+Failed to load /home/user/Documents/coopengo/env/back.env: open /home/user/Documents/coopengo/env/back.env: no such file or directory
+```
+
+To fix this error, you will have to update the coog-docker project with the `git pull` command.
