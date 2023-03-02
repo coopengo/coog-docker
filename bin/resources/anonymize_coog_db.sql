@@ -29,11 +29,13 @@ BEGIN
     end if;
     PERFORM anon_table('party_party', 'name', '', anon_party_names_where_clause);
     -- Anonymize all parties which are subscribers regardless of  the previous rules
-    PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, sepa_creditor_identifier', 'siren', 'id: in :(select subscriber from contract)');
+    PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, sepa_creditor_identifier, ssn', 'siren', 'id: in :(select subscriber from contract)');
     alter table party_party drop constraint if exists "party_party_SSN_uniq_all";
     col_test := col_exist('party_party', 'ssn');
     if col_test > 0 then
-        update party_party set ssn = '160754612101120';
+        with sub_p as (
+           select id, ('x'||substr(ssn,1,16))::bit(64)::bigint/1000 as ssn from party_party where ssn is not null)
+        update party_party set ssn = sub_p.ssn::varchar || (97 - sub_p.ssn % 97)::varchar from sub_p where party_party.id = sub_p.id;
     end if;
 
     PERFORM anon_table('party_contact_mechanism', 'value, value_compact');
