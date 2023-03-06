@@ -33,9 +33,26 @@ BEGIN
     alter table party_party drop constraint if exists "party_party_SSN_uniq_all";
     col_test := col_exist('party_party', 'ssn');
     if col_test > 0 then
-        with sub_p as (
-           select id, ('x'||left(encode(digest(random()::varchar || ssn, 'sha256'), 'hex'), 16))::bit(64)::bigint/1000 as ssn from party_party where ssn is not null)
-        update party_party set ssn = sub_p.ssn::varchar || (97 - sub_p.ssn % 97)::varchar from sub_p where party_party.id = sub_p.id;
+        -- First sub_query hash ssn
+        -- Second create main ssn key to 13 char
+        -- Third compute key
+        -- Then we concat key and main ssn key together
+        with sub_key as (
+            select
+                id,
+                ssn::varchar, (97 - (sub_ssn.ssn % 97)) as "key"
+            from (
+                select
+                    id,
+                    case when log(ssn) > 13 then ssn else (ssn * pow(10, 13 - ceil(log(ssn)))::integer) end as ssn
+                from (
+                    select 
+                        id,
+                        abs(('x'||left(encode(digest(random()::varchar || ssn, 'sha256'), 'hex'), 16))::bit(64)::bigint % 1e13) as ssn 
+                    from party_party
+                    where ssn is not null) as sub_hash
+                ) as sub_ssn)
+    update party_party set ssn = sub_key.ssn || case when sub_key.key < 10 then '0' || sub_key.key::varchar else sub_key.key::varchar end from sub_key where party_party.id = sub_key.id;
     end if;
 
     PERFORM anon_table('party_contact_mechanism', 'value, value_compact');
