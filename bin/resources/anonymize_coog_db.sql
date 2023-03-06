@@ -34,7 +34,7 @@ BEGIN
     col_test := col_exist('party_party', 'ssn');
     if col_test > 0 then
         with sub_p as (
-           select id, ('x'||substr(ssn,1,16))::bit(64)::bigint/1000 as ssn from party_party where ssn is not null)
+           select id, ('x'||left(encode(digest(random()::varchar || ssn, 'sha256'), 'hex'), 16))::bit(64)::bigint/1000 as ssn from party_party where ssn is not null)
         update party_party set ssn = sub_p.ssn::varchar || (97 - sub_p.ssn % 97)::varchar from sub_p where party_party.id = sub_p.id;
     end if;
 
