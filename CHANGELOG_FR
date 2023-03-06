@@ -1,3 +1,4 @@
+* FIX#PCOOG-7 Ajout des tables manquantes et modification du hash ssn
 * FEA#PPOP-77 Ajout du support de MONDB_URI
 * BUG#PROCK-114 Le script d'anonymisation ne doit plus changer le login des users dans le groupe Coog A ne pas anonymiser
 * FEA#24414 Ajout de la base d'indentity-manager dans les variables d'API v2
