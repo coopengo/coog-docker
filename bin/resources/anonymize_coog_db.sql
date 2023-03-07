@@ -52,13 +52,13 @@ BEGIN
                     from party_party
                     where ssn is not null) as sub_hash
                 ) as sub_ssn)
-    update party_party set ssn = sub_key.ssn || case when sub_key.key < 10 then '0' || sub_key.key::varchar else sub_key.key::varchar end from sub_key where party_party.id = sub_key.id;
+        update party_party set ssn = sub_key.ssn || case when sub_key.key < 10 then '0' || sub_key.key::varchar else sub_key.key::varchar end from sub_key where party_party.id = sub_key.id;
     end if;
 
     PERFORM anon_table('party_contact_mechanism', 'value, value_compact');
     PERFORM anon_table('party_address', 'street, name, party_name', 'siret_nic');
     PERFORM anon_table('party_address', '', 'zip, city', anon_parties_where_clause);
-    PERFORM anon_table('health_party_complement', 'insurance_fund_number', '', anon_parties_where_clause);
+    PERFORM anon_table('health_party_complement', '', 'insurance_fund_number', anon_parties_where_clause);
     PERFORM anon_table('party_interlocutor', 'name');
     PERFORM anon_table('contract_option_beneficiary', 'reference');
     PERFORM anon_table('contract_clause', 'text');
