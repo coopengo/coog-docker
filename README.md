@@ -425,8 +425,7 @@ Coog backoffice service.
 To do so, you must:
 
 - Ensure your local Coog server listen on all addresses (0.0.0.0)
-- Use the special "host.docker.internal" hostname for your
-CUSTOM_COOG_INTERNAL_URL
+- Set `CUSTOM_COOG_INTERNAL_URL` to `http://host.docker.internal:8000`
 - Enable host integration for the project, by setting the
 "ENABLE_HOST_NETWORK_INTEGRATION" variable to "1" in your `env.custom` file
 
