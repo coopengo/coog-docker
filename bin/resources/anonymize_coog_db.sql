@@ -29,7 +29,7 @@ BEGIN
     end if;
     PERFORM anon_table('party_party', 'name', '', anon_party_names_where_clause);
     -- Anonymize all parties which are subscribers regardless of  the previous rules
-    PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, sepa_creditor_identifier, ssn', 'siren', 'id: in :(select subscriber from contract)');
+    PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, sepa_creditor_identifier', 'siren', 'id: in :(select subscriber from contract)');
     alter table party_party drop constraint if exists "party_party_SSN_uniq_all";
     col_test := col_exist('party_party', 'ssn');
     if col_test > 0 then
@@ -73,6 +73,7 @@ BEGIN
     PERFORM anon_table('account_invoice_line', 'description');
     PERFORM anon_table('account_statement_line', '', 'description');
     PERFORM anon_table('account_payment', '', 'description');
+    PERFORM anon_table('event_log', '', 'description');
 
     PERFORM anon_endorsment('endorsement_contract');
     PERFORM anon_endorsment('endorsement_contract_activation_history');
