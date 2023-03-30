@@ -57,7 +57,6 @@ BEGIN
 
     PERFORM anon_table('party_contact_mechanism', 'value, value_compact');
     PERFORM anon_table('party_address', 'street, name, party_name', 'siret_nic');
-    PERFORM anon_table('party_address', '', 'zip, city', anon_parties_where_clause);
     PERFORM anon_table('health_party_complement', '', 'insurance_fund_number', anon_parties_where_clause);
     PERFORM anon_table('party_interlocutor', 'name');
     PERFORM anon_table('contract_option_beneficiary', 'reference');
