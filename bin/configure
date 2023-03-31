@@ -47,6 +47,15 @@ if [[ -f "$BASE_PATH"/override.yml ]]; then
 fi
 echo ""
 
+if [[ -e "$BASE_PATH/compose/custom" ]]; then
+    echo Will load extra services from "$BASE_PATH/compose/custom"
+elif [[ -e "$BASE_PATH/custom/compose" ]]; then
+    ln -s "$BASE_PATH/custom/compose" "$BASE_PATH/compose/custom"
+    echo Will load extra services from "$BASE_PATH/compose/custom"
+fi
+
+echo ""
+
 generate () {
     # We want that variables defined in sub-files to be available in this
     # process
@@ -99,7 +108,7 @@ set_services () {
     SERVICES="docker-compose.yml"
 
     shopt -s nullglob
-    for path in $(cd $BASE_PATH && ls compose/**/*.yml custom/compose/**/*.yml); do
+    for path in $(cd $BASE_PATH && ls compose/**/*.yml); do
         # Remove the "custom/", "compose/" and the ".yml"
         key=${path#*compose/}
         service=${key%.yml}
