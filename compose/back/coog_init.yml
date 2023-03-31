@@ -6,6 +6,7 @@ services:
     command: ["admin", "-cu", "ir", "res", "--activate-dependencies"]
     environment:
       - LOG_LEVEL=INFO
+      - TRYTOND_OPENTELEMETRY__SERVICE_NAME=${OPEN_TELEMETRY_SERVICE_NAME_ADMIN:?}
     restart: on-failure
     deploy:
       restart_policy:
