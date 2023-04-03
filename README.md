@@ -41,6 +41,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Deploying on multiple IPs at once](#deploying-on-multiple-ips-at-once)
     - [B2C docker-compose files](#b2c-docker-compose-files)
     - [Failed to load - no such file or directory](#failed-to-load)
+    - [Setting up a jaeger instance for tracing](#setting-up-a-jaeger-instance-for-tracing)
 
 <!-- /TOC -->
 
@@ -513,7 +514,7 @@ This can be achieved by fine tuning the labels of the services. The easiest way
 to do that is by using the `override.yml` file (creating it if necessary).
 Then, to additionaly expose on ip `1.2.3.4`:
 
-```yml
+```yaml
 services:
   coog:
     labels:
@@ -551,3 +552,50 @@ Failed to load /home/user/Documents/coopengo/env/back.env: open /home/user/Docum
 ```
 
 To fix this error, you will have to update the coog-docker project with the `git pull` command.
+
+### Setting up a jaeger instance for tracing
+
+Coog supports [OpenTelemetry](https://opentelemetry.io/) for tracing. You can
+include a [Jaeger](https://www.jaegertracing.io/) instance in the project by
+adding a custom service and configure the project to use it.
+
+Sample service (save it as `custom/compose/jaeger.yml`):
+
+```yaml
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.41.0
+    hostname: jaeger
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.jaeger.loadbalancer.server.port=16686
+
+      - traefik.http.routers.jaeger.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/jaeger`)
+      - traefik.http.routers.jaeger.entrypoints=http
+      - traefik.http.routers.jaeger.service=jaeger@docker
+
+      - traefik.http.routers.jaeger_s.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/jaeger`)
+      - traefik.http.routers.jaeger_s.entrypoints=https
+      - traefik.http.routers.jaeger_s.service=jaeger@docker
+      - traefik.http.routers.jaeger_s.tls=true
+    environment:
+      - MEMORY_MAX_TRACES=100000
+      - SPAN_STORAGE_TYPE=badger
+      - BADGER_EPHEMERAL=false
+      - BADGER_DIRECTORY_VALUE=/badger/data
+      - BADGER_DIRECTORY_KEY=/badger/key
+      - COLLECTOR_OTLP_ENABLED=true
+      - QUERY_BASE_PATH=/jaeger
+    volumes:
+      - ${FILESYSTEM_ROOT}/jaeger:/badger
+    networks:
+      - backend
+```
+
+Configuration variables (in `custom/env.custom`):
+```bash
+OPEN_TELEMETRY_TRACING_ENABLED=1
+OPEN_TELEMETRY_TRACING_URL=http://jaeger:4318/v1/traces
+```
+
+The Jaeger instance will be available under the `/jaeger` route.
