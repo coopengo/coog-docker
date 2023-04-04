@@ -20,3 +20,6 @@ docker-compose.host-integration.yaml
 
 # Auto-generated for logging configuration
 docker-compose.logging.yaml
+
+# Contains custom services
+/compose/custom

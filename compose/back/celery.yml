@@ -12,4 +12,6 @@ services:
     env_file:
       - env/back.env
       - env/celery.env
+    environment:
+      - TRYTOND_OPENTELEMETRY__SERVICE_NAME=${OPEN_TELEMETRY_SERVICE_NAME_CELERY:?}
     restart: always
