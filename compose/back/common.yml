@@ -1,6 +1,7 @@
 services:
   back-common:
     image: ${IMAGE_REGISTRY_COOG:?}/${IMAGE_NAME_COOG:?}:${IMAGE_VERSION_COOG:?}
+    user: "1003:1003"
     env_file:
       # The file is called from others .yml file, we must set full path
       - ${BASE_PATH}/env/back.env
