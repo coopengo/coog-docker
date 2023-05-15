@@ -93,6 +93,19 @@ _mongo_restore() {
         exit 1
     fi
 
+    _start_services mongo
+
+    sleep 5
+
+    ${DOCKER_COMMAND} exec mongo mongosh --authenticationDatabase admin -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" <<EOF
+use admin;
+db.getMongo().getDBNames().forEach(function (dbName) {
+    if (['admin', 'config', 'local'].indexOf(dbName) < 0) {
+        db.getSiblingDB(dbName).dropDatabase();
+    }
+});
+EOF
+
     MONGODB_UNCOMPRESS_DIR="$(unzip -qql "${dump_file}" | head -n1 | tr -s ' ' | cut -d' ' -f5-)"
     unzip "${dump_file}"
 
