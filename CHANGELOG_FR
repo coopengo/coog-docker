@@ -1,3 +1,4 @@
+* FEA#PINTE-24735 Mise à jour de l'ID utilisateur pour correspondre à celui dans le dockerfile de coog
 * FEA#PPOP-77 Ajout du support de MONDB_URI
 * BUG#PROCK-114 Le script d'anonymisation ne doit plus changer le login des users dans le groupe Coog A ne pas anonymiser
 * FEA#24414 Ajout de la base d'indentity-manager dans les variables d'API v2
