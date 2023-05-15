@@ -97,7 +97,7 @@ _mongo_restore() {
 
     sleep 5
 
-    ${DOCKER_COMMAND} exec mongo mongosh --authenticationDatabase admin -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" <<EOF
+    ${DOCKER_COMMAND} exec -T mongo mongosh --authenticationDatabase admin -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" <<EOF
 use admin;
 db.getMongo().getDBNames().forEach(function (dbName) {
     if (['admin', 'config', 'local'].indexOf(dbName) < 0) {
@@ -106,12 +106,20 @@ db.getMongo().getDBNames().forEach(function (dbName) {
 });
 EOF
 
+    echo "Decompressing zip file..."
     MONGODB_UNCOMPRESS_DIR="$(unzip -qql "${dump_file}" | head -n1 | tr -s ' ' | cut -d' ' -f5-)"
     unzip "${dump_file}"
+    ${DOCKER_COMMAND} exec mongo mkdir -p /tmp/dump
+    ${DOCKER_COMMAND} cp "${MONGODB_UNCOMPRESS_DIR}" "mongo:/tmp/dump/."
 
-    ${DOCKER_COMMAND} exec mongo mongorestore -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" "${MONGODB_UNCOMPRESS_DIR}"
+    echo "Restoration in progress..."
+    ${DOCKER_COMMAND} exec mongo mongorestore -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" "/tmp/dump"
 
+    ${DOCKER_COMMAND} exec mongo rm -rf /tmp/dump
     rm -rf "${MONGODB_UNCOMPRESS_DIR}"
+
+    echo " "
+    section "Restore database done."
 }
 
 dump() {
@@ -153,10 +161,14 @@ _mongo_dump() {
     dump_file="${1:-/tmp/mongo-full-backup-$(date '+%Y-%m-%d')}"
     MONGODB_DATA_PATH="$(source "${BASE_PATH}/.env" && echo "${MONGODB_DATA_VOLUME}")"
 
-    ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" --excludeCollectionsWithPrefix system -o "/data/db/tmp_backup"
+    ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" -o "/data/db/tmp_backup"
 
-    zip -r "${dump_file}.zip" "${MONGODB_DATA_PATH}/tmp_backup"
-    rm "${MONGODB_DATA_PATH}/tmp_backup"
+    echo "Deleting admin database from backup..."
+    ${DOCKER_COMMAND} exec mongo bash -c "chmod 777 -R '/data/db/tmp_backup' && rm -rf '/data/db/tmp_backup/admin'"
+
+    echo "Compressing backup in zip..."
+    (cd "${MONGODB_DATA_PATH}/tmp_backup" && zip -r "${dump_file}.zip" ".")
+    rm -rf "${MONGODB_DATA_PATH}/tmp_backup/*"
 
     echo "\033[1;32m%s\033[0m" "The MongoDB backup is available on ${dump_file} path"
 }
@@ -338,10 +350,10 @@ dump)
     _load_configuration
     dump $*
     ;;
-mongodb_dump)
+mongo_dump)
     _mongo_dump "$@"
     ;;
-mongodb_restore)
+mongo_restore)
     _mongo_restore "$@"
     ;;
 update)
