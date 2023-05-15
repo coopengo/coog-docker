@@ -153,7 +153,7 @@ _mongo_dump() {
     dump_file="${1:-/tmp/mongo-full-backup-$(date '+%Y-%m-%d')}"
     MONGODB_DATA_PATH="$(source "${BASE_PATH}/.env" && echo "${MONGODB_DATA_VOLUME}")"
 
-    ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" -o "/data/db/tmp_backup"
+    ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" --excludeCollectionsWithPrefix system -o "/data/db/tmp_backup"
 
     zip -r "${dump_file}.zip" "${MONGODB_DATA_PATH}/tmp_backup"
     rm "${MONGODB_DATA_PATH}/tmp_backup"
