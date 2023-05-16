@@ -70,9 +70,8 @@ _postgres_restore() {
 
     if [[ "${format}" = "sql" ]]; then
         unzip -p "${dump_file}" >/tmp/tmp_postgres_dump.sql
+        dump_file="/tmp/tmp_postgres_dump.${format}"
     fi
-
-    dump_file="/tmp/tmp_postgres_dump.${format}"
 
     ${DOCKER_COMMAND} cp "${dump_file}" "postgres:/tmp/dump"
 
