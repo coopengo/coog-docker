@@ -43,13 +43,22 @@ reset() {
     update
 }
 
-load() {
+_postgres_restore() {
     dump_file=$1
 
-    if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
-        echo Cannot use load command for non dockerized database 1>&2
+    if [[ "${USE_LOCAL_POSTGRES}" = "0" ]]; then
+        fail "Cannot use load command for non dockerized database" 1>&2
         exit 1
     fi
+    if [[ "${dump_file}" =~ (.*).zip$ ]]; then
+        format="sql"
+    elif [[ "${dump_file}" =~ (.*).bin$ ]]; then
+        format="bin"
+    else
+        fail "The file must be in .zip or .bin format."
+        exit 1
+    fi
+
     _start_services postgres
     _db_wait
     sleep 20
@@ -57,58 +66,60 @@ load() {
     _db_wait
 
     echo " "
-    section "Loading database from dump file"
+    section "Restoring PostgreSQL database from ${dump_file}"
 
-    format="${format:-sql}"
-    if [[ "$format" = "zip" ]]; then
-        unzip -p "$dump_file" >/tmp/tmp_extracted_dump
-        format=sql
-        dump_file=/tmp/tmp_extracted_dump
+    if [[ "${format}" = "sql" ]]; then
+        unzip -p "${dump_file}" >/tmp/tmp_postgres_dump.sql
     fi
 
-    ${DOCKER_COMMAND} cp "$dump_file" postgres:/tmp/dump
+    dump_file="/tmp/tmp_postgres_dump.${format}"
 
-    if [[ "$format" = "sql" ]]; then
+    ${DOCKER_COMMAND} cp "${dump_file}" "postgres:/tmp/dump"
+
+    if [[ "${format}" = "sql" ]]; then
         ${DOCKER_COMMAND} exec -T -- postgres \
-            bash -c "cat /tmp/dump | psql -U $db_user -d $db_name" \
+            bash -c "cat /tmp/dump | psql -U ${db_user} -d ${db_name}" \
             >/dev/null
     else
         ${DOCKER_COMMAND} exec -T -- postgres \
-            pg_restore -U "$db_user" --no-owner --role "$db_user" -j 4 \
-            -d "$db_name" /tmp/dump
+            pg_restore -U "${db_user}" --no-owner --role "${db_user}" -j 4 \
+            -d "${db_name}" /tmp/dump
     fi
+
+    echo "Delete temporary files."
     ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
+    rm "${dump_file}"
 
     echo " "
-    section "Loading database done."
+    check "PostgreSQL database restored."
 }
 
-dump() {
+_postgres_dump() {
     echo " "
-    if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
-        echo Cannot use dump command for non dockerized database 1>&2
+    if [[ "${USE_LOCAL_POSTGRES}" = "0" ]]; then
+        fail "Cannot use dump command for non dockerized database" 1>&2
         exit 1
     fi
 
     _start_services postgres
 
-    format="${format:-sql}"
-    dump_file=${1:-/tmp/$db_name-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
+    dump_file="${1:-/tmp/${db_name}-${DB_TYPE}-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}"
 
-    section "Dumping database $db_name to $dump_file (format $format)"
+    section "Dumping database ${db_name} to ${dump_file} (format ${format})"
 
-    if [[ "$format" = "sql" ]] || [[ "$format" = "zip" ]]; then
-        ${DOCKER_COMMAND} exec -T -- postgres bash -c "pg_dump -U $db_user $db_name > /tmp/dump" >/dev/null
+    if [[ "${format}" = "sql" ]]; then
+        ${DOCKER_COMMAND} exec -T -- postgres bash -c "pg_dump -U ${db_user} ${db_name} > /tmp/dump" >/dev/null
     else
-        ${DOCKER_COMMAND} exec -T -- postgres pg_dump -U "$db_user" -d "$db_name" -Fc -Z5 -f /tmp/dump >/dev/null
+        ${DOCKER_COMMAND} exec -T -- postgres pg_dump -U "${db_user}" -d "${db_name}" -Fc -Z5 -f /tmp/dump >/dev/null
     fi
-    ${DOCKER_COMMAND} cp postgres:/tmp/dump "$dump_file"
+    ${DOCKER_COMMAND} cp "postgres:/tmp/dump" "${dump_file}"
     ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
 
-    if [[ "$format" = "zip" ]]; then
-        mv "$dump_file" /tmp/tmp_extracted_dump
-        zip "$dump_file" /tmp/tmp_extracted_dump
-        rm /tmp/tmp_extracted_dump
+    if [[ "${format}" = "sql" ]]; then
+        echo "Compressing database..."
+        zip "${dump_file/%${format}/zip}" "${dump_file}"
+        rm "${dump_file}"
+        echo "Compression complete"
     fi
 }
 
@@ -174,16 +185,22 @@ _load_configuration() {
         echo "Project name: $project_name"
     fi
 
-    if [[ "${db_name:-not_set}" = "not_set" ]]; then
-        db_name=$(source $BASE_PATH/.env && echo $COOG_MAIN_DATABASE)
-        if [[ ! "$db_name" ]]; then
-            echo "Could not extract database name from .env file"
+    if [[ -z "${db_name}" ]]; then
+        DB_TYPE="coog"
+        db_name=$(source "${BASE_PATH}/.env" && echo "${COOG_MAIN_DATABASE}")
+        if [[ -z "${db_name}" ]]; then
+            fail "Could not extract database name from .env file"
             exit 1
         else
-            echo "Target database: $db_name"
+            echo "Target database: ${db_name}"
         fi
     else
-        echo "Target database: $db_name"
+        if [[ "${db_name}" == $(source "${BASE_PATH}/.env" && echo "${POSTGRES_B2C_DB}") ]]; then
+            DB_TYPE="strapi"
+        else
+            DB_TYPE="coog"
+        fi
+        echo "Target database: ${db_name}"
     fi
 
     db_user=$(source $BASE_PATH/.env && echo $POSTGRES_USER)
@@ -254,9 +271,9 @@ while test $# -gt 0; do
         ;;
     --format)
         shift
-        format=$1
-        if [[ "$format" != "sql" ]] && [[ "$format" != "bin" ]] && [[ "$format" != "zip" ]]; then
-            echo "Invalid file format $format" >&2
+        format="${1:-sql}"
+        if [[ ! "${format}" =~ ^(sql|bin)$ ]]; then
+            fail "The --format option must be sql (default) or bin." >&2
             help
             exit 1
         fi
@@ -282,12 +299,12 @@ reset)
 load)
     _load_configuration
     _stop_everything
-    load $*
+    _postgres_restore "$@"
     _restart
     ;;
 dump)
     _load_configuration
-    dump $*
+    _postgres_dump "$@"
     ;;
 update)
     _load_configuration
