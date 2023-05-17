@@ -18,15 +18,16 @@ help() {
     echo "actions:"
     echo "  help                      Show this help"
     echo "  reset                     Clear (or init) the database"
-    echo "  load <file_name>          Load database from file"
-    echo "  dump <file_name>          Dump the current database for safekeeping"
+    echo "  load <file_name>          Restore PostgreSQL backup from file"
+    echo "  dump <file_name>          Backup PostgreSQL database (default: main database coog)"
     echo "  update [modules]          Force an update of the database"
     echo "  change_admin_password     Change the admin password of the database"
     echo "  anonymize [level]         Anonymize the database"
     echo " "
     echo "options:"
-    echo "--database <db_name>        The database to operate on"
-    echo "--format <(sql,bin,zip)>    The format to load from / dump database dumps"
+    echo "--database <db_name>        To override the PostgreSQL database to backup."
+    echo "--format <(sql,bin)>        The output format of the PostgreSQL backup file to be saved."
+    echo "                            For postgreSQL, the sql file is compressed in .zip archive file"
 }
 
 if [[ "$#" -lt 1 ]]; then
