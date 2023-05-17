@@ -45,7 +45,7 @@ reset() {
 }
 
 _postgres_restore() {
-    dump_file=$1
+    dump_file="${1:-}"
 
     if [[ "${USE_LOCAL_POSTGRES}" = "0" ]]; then
         fail "Cannot use load command for non dockerized database" 1>&2
@@ -55,7 +55,12 @@ _postgres_restore() {
         format="sql"
     elif [[ "${dump_file}" =~ (.*).bin$ ]]; then
         format="bin"
+    elif [[ -z "${dump_file}" ]]; then
+        echo "  "
+        fail "The path of the backup to restore is missing, please add it in the command"
+        exit 1
     else
+        echo "  "
         fail "The file must be in .zip or .bin format."
         exit 1
     fi
@@ -68,6 +73,8 @@ _postgres_restore() {
 
     echo " "
     section "Restoring PostgreSQL database from ${dump_file}"
+
+    format="${format:-sql}"
 
     if [[ "${format}" = "sql" ]]; then
         unzip -p "${dump_file}" >/tmp/tmp_postgres_dump.sql
@@ -102,8 +109,8 @@ _postgres_dump() {
     fi
 
     _start_services postgres
-
-    dump_file="${1:-/tmp/${db_name}-${DB_TYPE}-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}"
+    format="${format:-sql}"
+    dump_file="${1:-/tmp/postgres-${DB_TYPE}-${db_name}-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}"
 
     section "Dumping database ${db_name} to ${dump_file} (format ${format})"
 
@@ -119,7 +126,7 @@ _postgres_dump() {
         echo "Compressing database..."
         zip "${dump_file/%${format}/zip}" "${dump_file}"
         rm "${dump_file}"
-        echo "Compression complete"
+        check "Compression completed"
     fi
 }
 
@@ -185,7 +192,7 @@ _load_configuration() {
         echo "Project name: $project_name"
     fi
 
-    if [[ -z "${db_name}" ]]; then
+    if [[ -z "${db_name:-}" ]]; then
         DB_TYPE="coog"
         db_name=$(source "${BASE_PATH}/.env" && echo "${COOG_MAIN_DATABASE}")
         if [[ -z "${db_name}" ]]; then
@@ -271,10 +278,11 @@ while test $# -gt 0; do
         ;;
     --format)
         shift
-        format="${1:-sql}"
+        format="${1}"
         if [[ ! "${format}" =~ ^(sql|bin)$ ]]; then
-            fail "The --format option must be sql (default) or bin." >&2
             help
+            echo "  "
+            fail "The --format option must be sql (default) or bin." >&2
             exit 1
         fi
         shift
