@@ -109,8 +109,15 @@ _postgres_dump() {
     fi
 
     _start_services postgres
+
     format="${format:-sql}"
-    dump_file="${1:-/tmp/postgres-${DB_TYPE}-${db_name}-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}"
+    dump_file="${1:-/tmp/postgres-${DB_TYPE}-${db_name}-$(date '+%Y-%m-%d_%H_%M_%S').${format}}"
+
+    if [[ ! "${dump_file}" =~ (.*).(sql|bin)$ ]]; then
+        echo "  "
+        fail "The file must be in .sql or .bin format."
+        exit 1
+    fi
 
     section "Dumping database ${db_name} to ${dump_file} (format ${format})"
 
@@ -122,12 +129,15 @@ _postgres_dump() {
     ${DOCKER_COMMAND} cp "postgres:/tmp/dump" "${dump_file}"
     ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
 
-    if [[ "${format}" = "sql" ]]; then
+    if [[ "${format}" = "sql" && "${dump_file}" =~ (.*).sql$ ]]; then
         echo "Compressing database..."
         zip "${dump_file/%${format}/zip}" "${dump_file}"
         rm "${dump_file}"
         check "Compression completed"
     fi
+
+    echo "  "
+    check "PostgreSQL Backup done."
 }
 
 update() {
