@@ -86,10 +86,11 @@ load() {
 }
 
 _mongo_restore() {
+    ${BASE_PATH}/bin/configure
     dump_file="$1"
 
     if [[ ! "${dump_file}" =~ (.*).zip$ ]]; then
-        printf "\033[1;31m%s\033[0m" "The file must be compressed in zip format."
+        fail "The file must be compressed in zip format."
         exit 1
     fi
 
@@ -158,6 +159,7 @@ _mongo_dump() {
 
     sleep 5
 
+    ${BASE_PATH}/bin/configure
     dump_file="${1:-/tmp/mongo-full-backup-$(date '+%Y-%m-%d')}"
     MONGODB_DATA_PATH="$(source "${BASE_PATH}/.env" && echo "${MONGODB_DATA_VOLUME}")"
 
@@ -170,7 +172,7 @@ _mongo_dump() {
     (cd "${MONGODB_DATA_PATH}/tmp_backup" && zip -r "${dump_file}.zip" ".")
     rm -rf "${MONGODB_DATA_PATH}/tmp_backup/*"
 
-    echo "\033[1;32m%s\033[0m" "The MongoDB backup is available on ${dump_file} path"
+    check "The MongoDB backup is available on ${dump_file} path"
 }
 
 update() {
