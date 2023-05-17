@@ -27,7 +27,7 @@ help() {
     echo "options:"
     echo "--database <db_name>        To override the PostgreSQL database to backup."
     echo "--format <(sql,bin)>        The output format of the PostgreSQL backup file to be saved."
-    echo "                            For postgreSQL, the sql file is compressed in .zip archive file"
+    echo "                            The SQL file is compressed in .zip archive file"
 }
 
 if [[ "$#" -lt 1 ]]; then
