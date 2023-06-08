@@ -42,6 +42,7 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [B2C docker-compose files](#b2c-docker-compose-files)
     - [Failed to load - no such file or directory](#failed-to-load)
     - [Setting up a jaeger instance for tracing](#setting-up-a-jaeger-instance-for-tracing)
+    - [Enabling HTTPS](#enabling-https)
 
 <!-- /TOC -->
 
@@ -599,3 +600,45 @@ OPEN_TELEMETRY_TRACING_URL=http://jaeger:4318/v1/traces
 ```
 
 The Jaeger instance will be available under the `/jaeger` route.
+
+### Enabling HTTPS
+
+Switching from an initially configured `http` instance to `https` is rather
+straightforward.
+
+**Prerequisite: a domain name, and a valid matching certificate**
+
+The certificate must be for the domain name configured in `$PROJECT_HOSTNAME`
+
+The first thing to do, unless already done, is to use a custom folder for the
+traefik configuration.
+
+From a default deployment, this usually boils down to:
+
+```bash
+cp -r defaults/traefik custom/traefik
+```
+In order to copy the default configuration in the `custom` folder (though it
+can be anywhere on the filesystem).
+
+Copy the certificate files in the `certs` sub-directory of the copied folder.
+So by default (this is configured in `traefik/traefik.toml@providers.docker.tls`),
+that will be:
+```bash
+cp /path/to/certfile /path/to/coog-docker/custom/traefik/certs/cert.pem
+cp /path/to/keyfile /path/to/coog-docker/custom/traefik/certs/key.pem
+```
+
+Now update the `custom/env.custom` file with the following variables:
+```bash
+# The path to the custom traefik configuration
+TRAEFIK_CONFIGURATION_FOLDER=/path/to/coog-docker/custom/traefik
+
+# Indicate that urls must be https
+MAIN_URL_SCHEME=https
+```
+In this particular case, a full restart is then recommended:
+```bash
+./bin/down
+./bin/up -d
+```
