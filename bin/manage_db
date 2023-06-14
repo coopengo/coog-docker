@@ -188,7 +188,7 @@ _mongo_dump() {
     sleep 5
 
     ${BASE_PATH}/bin/configure
-    dump_file="${1:-/tmp/mongo-full-backup-$(date '+%Y-%m-%d')}"
+    dump_file="${1:-/tmp/mongodb-full-backup-$(date '+%Y-%m-%d')}"
     MONGODB_DATA_PATH="$(source "${BASE_PATH}/.env" && echo "${MONGODB_DATA_VOLUME}")"
 
     ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" -o "/data/db/tmp_backup"
