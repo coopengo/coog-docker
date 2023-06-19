@@ -16,17 +16,20 @@ help() {
     echo "manage_db action [options] [arguments]"
     echo " "
     echo "actions:"
-    echo "  help                      Show this help"
-    echo "  reset                     Clear (or init) the database"
-    echo "  load <file_name>          Load database from file"
-    echo "  dump <file_name>          Dump the current database for safekeeping"
-    echo "  update [modules]          Force an update of the database"
-    echo "  change_admin_password     Change the admin password of the database"
-    echo "  anonymize [level]         Anonymize the database"
+    echo "  help                        Show this help"
+    echo "  reset                       Clear (or init) the database"
+    echo "  load <file_name>            Restore PostgreSQL backup from file"
+    echo "  dump <file_name>            Backup PostgreSQL database (default: main database coog)"
+    echo "  mongo_dump                  Dump all mongodb databases"
+    echo "  mongo_restore <file_name>   Restore mongodb backup"
+    echo "  update [modules]            Force an update of the database"
+    echo "  change_admin_password       Change the admin password of the database"
+    echo "  anonymize [level]           Anonymize the database"
     echo " "
     echo "options:"
-    echo "--database <db_name>        The database to operate on"
-    echo "--format <(sql,bin,zip)>    The format to load from / dump database dumps"
+    echo "--database <db_name>        To override the PostgreSQL database to backup."
+    echo "--format <(sql,bin)>        The output format of the PostgreSQL backup file to be saved."
+    echo "                            The SQL file is compressed in .zip archive file"
 }
 
 if [[ "$#" -lt 1 ]]; then
@@ -43,13 +46,27 @@ reset() {
     update
 }
 
-load() {
-    dump_file=$1
+_postgres_restore() {
+    dump_file="${1:-}"
 
-    if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
-        echo Cannot use load command for non dockerized database 1>&2
+    if [[ "${USE_LOCAL_POSTGRES}" = "0" ]]; then
+        fail "Cannot use load command for non dockerized database" 1>&2
         exit 1
     fi
+    if [[ "${dump_file}" =~ (.*).zip$ ]]; then
+        format="sql"
+    elif [[ "${dump_file}" =~ (.*).bin$ ]]; then
+        format="bin"
+    elif [[ -z "${dump_file}" ]]; then
+        echo "  "
+        fail "The path of the backup to restore is missing, please add it in the command"
+        exit 1
+    else
+        echo "  "
+        fail "The file must be in .zip or .bin format."
+        exit 1
+    fi
+
     _start_services postgres
     _db_wait
     sleep 20
@@ -57,59 +74,133 @@ load() {
     _db_wait
 
     echo " "
-    section "Loading database from dump file"
+    section "Restoring PostgreSQL database from ${dump_file}"
 
     format="${format:-sql}"
-    if [[ "$format" = "zip" ]]; then
-        unzip -p "$dump_file" >/tmp/tmp_extracted_dump
-        format=sql
-        dump_file=/tmp/tmp_extracted_dump
+
+    if [[ "${format}" = "sql" ]]; then
+        unzip -p "${dump_file}" >/tmp/tmp_postgres_dump.sql
+        dump_file="/tmp/tmp_postgres_dump.${format}"
     fi
 
-    ${DOCKER_COMMAND} cp "$dump_file" postgres:/tmp/dump
+    ${DOCKER_COMMAND} cp "${dump_file}" "postgres:/tmp/dump"
 
-    if [[ "$format" = "sql" ]]; then
+    if [[ "${format}" = "sql" ]]; then
         ${DOCKER_COMMAND} exec -T -- postgres \
-            bash -c "cat /tmp/dump | psql -U $db_user -d $db_name" \
+            bash -c "cat /tmp/dump | psql -U ${db_user} -d ${db_name}" \
             >/dev/null
     else
         ${DOCKER_COMMAND} exec -T -- postgres \
-            pg_restore -U "$db_user" --no-owner --role "$db_user" -j 4 \
-            -d "$db_name" /tmp/dump
+            pg_restore -U "${db_user}" --no-owner --role "${db_user}" -j 4 \
+            -d "${db_name}" /tmp/dump
     fi
+
+    echo "Delete temporary files."
     ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
+    rm "${dump_file}"
 
     echo " "
-    section "Loading database done."
+    check "PostgreSQL database restored."
 }
 
-dump() {
+_mongo_restore() {
+    ${BASE_PATH}/bin/configure
+    dump_file="$1"
+
+    if [[ ! "${dump_file}" =~ (.*).zip$ ]]; then
+        fail "The file must be compressed in zip format."
+        exit 1
+    fi
+
+    _start_services mongo
+
+    sleep 5
+
+    ${DOCKER_COMMAND} exec -T mongo mongosh --authenticationDatabase admin -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" <<EOF
+use admin;
+db.getMongo().getDBNames().forEach(function (dbName) {
+    if (['admin', 'config', 'local'].indexOf(dbName) < 0) {
+        db.getSiblingDB(dbName).dropDatabase();
+    }
+});
+EOF
+
+    echo "Decompressing zip file..."
+    MONGODB_UNCOMPRESS_DIR="$(unzip -qql "${dump_file}" | head -n1 | tr -s ' ' | cut -d' ' -f5-)"
+    unzip "${dump_file}"
+    ${DOCKER_COMMAND} exec mongo mkdir -p /tmp/dump
+    ${DOCKER_COMMAND} cp "${MONGODB_UNCOMPRESS_DIR}" "mongo:/tmp/dump/."
+
+    echo "Restoration in progress..."
+    ${DOCKER_COMMAND} exec mongo mongorestore -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" "/tmp/dump"
+
+    ${DOCKER_COMMAND} exec mongo rm -rf /tmp/dump
+    rm -rf "${MONGODB_UNCOMPRESS_DIR}"
+
     echo " "
-    if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
-        echo Cannot use dump command for non dockerized database 1>&2
+    section "Restore database done."
+}
+
+_postgres_dump() {
+    echo " "
+    if [[ "${USE_LOCAL_POSTGRES}" = "0" ]]; then
+        fail "Cannot use dump command for non dockerized database" 1>&2
         exit 1
     fi
 
     _start_services postgres
 
     format="${format:-sql}"
-    dump_file=${1:-/tmp/$db_name-$(date '+%Y-%m-%d_%H_%M_%S')}.${format}
+    dump_file="${1:-/tmp/postgres-${DB_TYPE}-${db_name}-$(date '+%Y-%m-%d_%H_%M_%S').${format}}"
 
-    section "Dumping database $db_name to $dump_file (format $format)"
-
-    if [[ "$format" = "sql" ]] || [[ "$format" = "zip" ]]; then
-        ${DOCKER_COMMAND} exec -T -- postgres bash -c "pg_dump -U $db_user $db_name > /tmp/dump" >/dev/null
-    else
-        ${DOCKER_COMMAND} exec -T -- postgres pg_dump -U "$db_user" -d "$db_name" -Fc -Z5 -f /tmp/dump >/dev/null
+    if [[ ! "${dump_file}" =~ (.*).(sql|bin)$ ]]; then
+        echo "  "
+        fail "The file must be in .sql or .bin format."
+        exit 1
     fi
-    ${DOCKER_COMMAND} cp postgres:/tmp/dump "$dump_file"
+
+    section "Dumping database ${db_name} to ${dump_file} (format ${format})"
+
+    if [[ "${format}" = "sql" ]]; then
+        ${DOCKER_COMMAND} exec -T -- postgres bash -c "pg_dump -U ${db_user} ${db_name} > /tmp/dump" >/dev/null
+    else
+        ${DOCKER_COMMAND} exec -T -- postgres pg_dump -U "${db_user}" -d "${db_name}" -Fc -Z5 -f /tmp/dump >/dev/null
+    fi
+    ${DOCKER_COMMAND} cp "postgres:/tmp/dump" "${dump_file}"
     ${DOCKER_COMMAND} exec -T -- postgres rm "/tmp/dump"
 
-    if [[ "$format" = "zip" ]]; then
-        mv "$dump_file" /tmp/tmp_extracted_dump
-        zip "$dump_file" /tmp/tmp_extracted_dump
-        rm /tmp/tmp_extracted_dump
+    if [[ "${format}" = "sql" && "${dump_file}" =~ (.*).sql$ ]]; then
+        echo "Compressing database..."
+        zip "${dump_file/%${format}/zip}" "${dump_file}"
+        rm "${dump_file}"
+        check "Compression completed"
     fi
+
+    echo "  "
+    check "PostgreSQL Backup done."
+}
+
+_mongo_dump() {
+    echo " "
+
+    _start_services mongo
+
+    sleep 5
+
+    ${BASE_PATH}/bin/configure
+    dump_file="${1:-/tmp/mongodb-full-backup-$(date '+%Y-%m-%d')}"
+    MONGODB_DATA_PATH="$(source "${BASE_PATH}/.env" && echo "${MONGODB_DATA_VOLUME}")"
+
+    ${DOCKER_COMMAND} exec mongo mongodump -u "$(source "${BASE_PATH}/.env" && echo "${MONGO_USER}")" -p "$(source "${BASE_PATH}/.env" && echo "${MONGO_PASSWORD}")" -o "/data/db/tmp_backup"
+
+    echo "Deleting admin database from backup..."
+    ${DOCKER_COMMAND} exec mongo bash -c "chmod 777 -R '/data/db/tmp_backup' && rm -rf '/data/db/tmp_backup/admin'"
+
+    echo "Compressing backup in zip..."
+    (cd "${MONGODB_DATA_PATH}/tmp_backup" && zip -r "${dump_file}.zip" ".")
+    rm -rf "${MONGODB_DATA_PATH}/tmp_backup/*"
+
+    check "The MongoDB backup is available on ${dump_file} path"
 }
 
 update() {
@@ -174,16 +265,22 @@ _load_configuration() {
         echo "Project name: $project_name"
     fi
 
-    if [[ "${db_name:-not_set}" = "not_set" ]]; then
-        db_name=$(source $BASE_PATH/.env && echo $COOG_MAIN_DATABASE)
-        if [[ ! "$db_name" ]]; then
-            echo "Could not extract database name from .env file"
+    if [[ -z "${db_name:-}" ]]; then
+        DB_TYPE="coog"
+        db_name=$(source "${BASE_PATH}/.env" && echo "${COOG_MAIN_DATABASE}")
+        if [[ -z "${db_name}" ]]; then
+            fail "Could not extract database name from .env file"
             exit 1
         else
-            echo "Target database: $db_name"
+            echo "Target database: ${db_name}"
         fi
     else
-        echo "Target database: $db_name"
+        if [[ "${db_name}" == $(source "${BASE_PATH}/.env" && echo "${POSTGRES_B2C_DB}") ]]; then
+            DB_TYPE="strapi"
+        else
+            DB_TYPE="coog"
+        fi
+        echo "Target database: ${db_name}"
     fi
 
     db_user=$(source $BASE_PATH/.env && echo $POSTGRES_USER)
@@ -254,10 +351,11 @@ while test $# -gt 0; do
         ;;
     --format)
         shift
-        format=$1
-        if [[ "$format" != "sql" ]] && [[ "$format" != "bin" ]] && [[ "$format" != "zip" ]]; then
-            echo "Invalid file format $format" >&2
+        format="${1}"
+        if [[ ! "${format}" =~ ^(sql|bin)$ ]]; then
             help
+            echo "  "
+            fail "The --format option must be sql (default) or bin." >&2
             exit 1
         fi
         shift
@@ -282,12 +380,18 @@ reset)
 load)
     _load_configuration
     _stop_everything
-    load $*
+    _postgres_restore "$@"
     _restart
     ;;
 dump)
     _load_configuration
-    dump $*
+    _postgres_dump "$@"
+    ;;
+mongo_dump)
+    _mongo_dump "$@"
+    ;;
+mongo_restore)
+    _mongo_restore "$@"
     ;;
 update)
     _load_configuration

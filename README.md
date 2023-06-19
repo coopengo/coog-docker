@@ -41,6 +41,8 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Deploying on multiple IPs at once](#deploying-on-multiple-ips-at-once)
     - [B2C docker-compose files](#b2c-docker-compose-files)
     - [Failed to load - no such file or directory](#failed-to-load)
+    - [Setting up a jaeger instance for tracing](#setting-up-a-jaeger-instance-for-tracing)
+    - [Enabling HTTPS](#enabling-https)
 
 <!-- /TOC -->
 
@@ -425,8 +427,7 @@ Coog backoffice service.
 To do so, you must:
 
 - Ensure your local Coog server listen on all addresses (0.0.0.0)
-- Use the special "host.docker.internal" hostname for your
-CUSTOM_COOG_INTERNAL_URL
+- Set `CUSTOM_COOG_INTERNAL_URL` to `http://host.docker.internal:8000`
 - Enable host integration for the project, by setting the
 "ENABLE_HOST_NETWORK_INTEGRATION" variable to "1" in your `env.custom` file
 
@@ -514,7 +515,7 @@ This can be achieved by fine tuning the labels of the services. The easiest way
 to do that is by using the `override.yml` file (creating it if necessary).
 Then, to additionaly expose on ip `1.2.3.4`:
 
-```yml
+```yaml
 services:
   coog:
     labels:
@@ -552,3 +553,92 @@ Failed to load /home/user/Documents/coopengo/env/back.env: open /home/user/Docum
 ```
 
 To fix this error, you will have to update the coog-docker project with the `git pull` command.
+
+### Setting up a jaeger instance for tracing
+
+Coog supports [OpenTelemetry](https://opentelemetry.io/) for tracing. You can
+include a [Jaeger](https://www.jaegertracing.io/) instance in the project by
+adding a custom service and configure the project to use it.
+
+Sample service (save it as `custom/compose/jaeger.yml`):
+
+```yaml
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.41.0
+    hostname: jaeger
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.jaeger.loadbalancer.server.port=16686
+
+      - traefik.http.routers.jaeger.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/jaeger`)
+      - traefik.http.routers.jaeger.entrypoints=http
+      - traefik.http.routers.jaeger.service=jaeger@docker
+
+      - traefik.http.routers.jaeger_s.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/jaeger`)
+      - traefik.http.routers.jaeger_s.entrypoints=https
+      - traefik.http.routers.jaeger_s.service=jaeger@docker
+      - traefik.http.routers.jaeger_s.tls=true
+    environment:
+      - MEMORY_MAX_TRACES=100000
+      - SPAN_STORAGE_TYPE=badger
+      - BADGER_EPHEMERAL=false
+      - BADGER_DIRECTORY_VALUE=/badger/data
+      - BADGER_DIRECTORY_KEY=/badger/key
+      - COLLECTOR_OTLP_ENABLED=true
+      - QUERY_BASE_PATH=/jaeger
+    volumes:
+      - ${FILESYSTEM_ROOT}/jaeger:/badger
+    networks:
+      - backend
+```
+
+Configuration variables (in `custom/env.custom`):
+```bash
+OPEN_TELEMETRY_TRACING_ENABLED=1
+OPEN_TELEMETRY_TRACING_URL=http://jaeger:4318/v1/traces
+```
+
+The Jaeger instance will be available under the `/jaeger` route.
+
+### Enabling HTTPS
+
+Switching from an initially configured `http` instance to `https` is rather
+straightforward.
+
+**Prerequisite: a domain name, and a valid matching certificate**
+
+The certificate must be for the domain name configured in `$PROJECT_HOSTNAME`
+
+The first thing to do, unless already done, is to use a custom folder for the
+traefik configuration.
+
+From a default deployment, this usually boils down to:
+
+```bash
+cp -r defaults/traefik custom/traefik
+```
+In order to copy the default configuration in the `custom` folder (though it
+can be anywhere on the filesystem).
+
+Copy the certificate files in the `certs` sub-directory of the copied folder.
+So by default (this is configured in `traefik/traefik.toml@providers.docker.tls`),
+that will be:
+```bash
+cp /path/to/certfile /path/to/coog-docker/custom/traefik/certs/cert.pem
+cp /path/to/keyfile /path/to/coog-docker/custom/traefik/certs/key.pem
+```
+
+Now update the `custom/env.custom` file with the following variables:
+```bash
+# The path to the custom traefik configuration
+TRAEFIK_CONFIGURATION_FOLDER=/path/to/coog-docker/custom/traefik
+
+# Indicate that urls must be https
+MAIN_URL_SCHEME=https
+```
+In this particular case, a full restart is then recommended:
+```bash
+./bin/down
+./bin/up -d
+```

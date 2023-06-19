@@ -1,6 +1,7 @@
 services:
   back-common:
     image: ${IMAGE_REGISTRY_COOG:?}/${IMAGE_NAME_COOG:?}:${IMAGE_VERSION_COOG:?}
+    user: "1003:1003"
     env_file:
       # The file is called from others .yml file, we must set full path
       - ${BASE_PATH}/env/back.env
@@ -9,6 +10,7 @@ services:
       - LOG_LEVEL=${COOG_LOG_LEVEL:?}
       - TRYTOND_WEB__CORS=${CORS_WHITELIST:?}
       - TRYTOND_DATABASE__URI=${POSTGRESQL_CONNECTION_STRING:?}
+      - TRYTOND_DATABASE__LANGUAGE=fr
       - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
       - COOG_DB_HOST=${POSTGRES_HOST:?}
       - COOG_DB_PORT=${POSTGRES_PORT:?}
@@ -22,6 +24,9 @@ services:
       - TRYTOND_TZ=${COOG_TIMEZONE:?}
       - TRYTOND_CACHE__CLEAN_TIMEOUT=0
       - TRYTOND_B2C_API__SHARED_SECRET=${TOKEN_SHARED_SECRET:?}
+      - TRYTOND_OPENTELEMETRY__ENABLED=${OPEN_TELEMETRY_TRACING_ENABLED:?}
+      - TRYTOND_OPENTELEMETRY__OTLP_ENDPOINT=${OPEN_TELEMETRY_TRACING_URL:-}
+      - TRYTOND_OPENTELEMETRY__OTLP_TOKEN=${OPEN_TELEMETRY_TRACING_TOKEN:-}
     volumes:
       # Do not enable this unless it does not trigger warnings when starting
       # the server up :)

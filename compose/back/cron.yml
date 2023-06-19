@@ -9,6 +9,7 @@ services:
         condition: service_started
     environment:
       - LOG_LEVEL=INFO
+      - TRYTOND_OPENTELEMETRY__SERVICE_NAME=${OPEN_TELEMETRY_SERVICE_NAME_CRON:?}
     env_file:
       - env/back.env
       - env/celery.env
