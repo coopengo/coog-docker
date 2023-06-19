@@ -33,11 +33,31 @@ BEGIN
     alter table party_party drop constraint if exists "party_party_SSN_uniq_all";
     col_test := col_exist('party_party', 'ssn');
     if col_test > 0 then
-        update party_party set ssn = '160754612101120';
+        -- First sub_query hash ssn
+        -- Second create main ssn key to 13 char
+        -- Third compute key
+        -- Then we concat key and main ssn key together
+        with sub_key as (
+            select
+                id,
+                ssn::varchar, (97 - (sub_ssn.ssn % 97)) as "key"
+            from (
+                select
+                    id,
+                    case when log(ssn) > 13 then ssn else (ssn * pow(10, 13 - ceil(log(ssn)))::integer) end as ssn
+                from (
+                    select 
+                        id,
+                        abs(('x'||left(encode(digest(random()::varchar || ssn, 'sha256'), 'hex'), 16))::bit(64)::bigint % 1e13) as ssn 
+                    from party_party
+                    where ssn is not null) as sub_hash
+                ) as sub_ssn)
+        update party_party set ssn = sub_key.ssn || case when sub_key.key < 10 then '0' || sub_key.key::varchar else sub_key.key::varchar end from sub_key where party_party.id = sub_key.id;
     end if;
 
     PERFORM anon_table('party_contact_mechanism', 'value, value_compact');
     PERFORM anon_table('party_address', 'street, name, party_name', 'siret_nic');
+    PERFORM anon_table('health_party_complement', '', 'insurance_fund_number', anon_parties_where_clause);
     PERFORM anon_table('party_interlocutor', 'name');
     PERFORM anon_table('contract_option_beneficiary', 'reference');
     PERFORM anon_table('contract_clause', 'text');
@@ -52,6 +72,42 @@ BEGIN
     PERFORM anon_table('account_invoice_line', 'description');
     PERFORM anon_table('account_statement_line', '', 'description');
     PERFORM anon_table('account_payment', '', 'description');
+    PERFORM anon_table('event_log', '', 'description');
+
+    PERFORM anon_endorsment('endorsement_contract');
+    PERFORM anon_endorsment('endorsement_contract_activation_history');
+    PERFORM anon_endorsment('endorsement_contract_beneficiary');
+    PERFORM anon_endorsment('endorsement_contract_benefit');
+    PERFORM anon_endorsment('endorsement_contract_billing_information');
+    PERFORM anon_endorsment('endorsement_contract_clause');
+    PERFORM anon_endorsment('endorsement_contract_contact');
+    PERFORM anon_endorsment('endorsement_contract_commission_rate');
+    PERFORM anon_endorsment('endorsement_contract_contact');
+    PERFORM anon_endorsment('endorsement_contract_covered_element');
+    PERFORM anon_endorsment('endorsement_contract_covered_element_option');
+    PERFORM anon_endorsment('endorsement_contract_covered_element_option_version');
+    PERFORM anon_endorsment('endorsement_contract_covered_element_version');
+    PERFORM anon_endorsment('endorsement_contract_dependent_party');
+    PERFORM anon_endorsment('endorsement_contract_extra_data');
+    PERFORM anon_endorsment('endorsement_contract_extra_premium');
+    PERFORM anon_endorsment('endorsement_contract_loan');
+    PERFORM anon_endorsment('endorsement_contract_option');
+    PERFORM anon_endorsment('endorsement_contract_option_exclusion');
+    PERFORM anon_endorsment('endorsement_contract_option_version');
+    PERFORM anon_endorsment('endorsement_contract_payment_information');
+    PERFORM anon_endorsment('endorsement_loan');
+    PERFORM anon_endorsment('endorsement_loan_increment');
+    PERFORM anon_endorsment('endorsement_loan_share');
+    PERFORM anon_endorsment('endorsement_party');
+    PERFORM anon_endorsment('endorsement_party_address');
+    PERFORM anon_endorsment('endorsement_party_contract_mechanism');
+    PERFORM anon_endorsment('endorsement_party_employment');
+    PERFORM anon_endorsment('endorsement_party_employment_version');
+    PERFORM anon_endorsment('endorsement_party_health_complement');
+    PERFORM anon_endorsment('endorsement_party_relation');
+
+    EXECUTE 'UPDATE report_production_request set context_=''{}''';
+    delete from ir_note;
 
 END
 $$ LANGUAGE plpgsql;
@@ -85,6 +141,21 @@ EXCEPTION
     WHEN undefined_table THEN
         RAISE NOTICE 'the table % does not exist, ignoring' , table_name;
         RETURN 0;
+END
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION anon_endorsment(table_name text) RETURNS integer as $$
+DECLARE
+    table_test int;
+    test text;
+BEGIN
+    table_test := table_exist(table_name);
+    if table_test < 1 then
+        RETURN 0;
+    end if;
+    EXECUTE 'UPDATE ' || table_name || ' set values=''{}''';
+    RAISE NOTICE  'anonymized table % ', table_name;
+    RETURN 0;
 END
 $$ LANGUAGE plpgsql;
 
@@ -198,3 +269,4 @@ drop function anon_db();
 drop function col_exist(text, text);
 drop function table_exist(text);
 drop function anon_table(text, text, text, text);
+drop function anon_endorsment(text);

@@ -1,3 +1,4 @@
+* FIX#PCLAS-19 Add missing table and change ssn hash method
 * FEA#PINTE-24735 Change user ID to match with the user ID in coog dockerfile
 * FEA#PPOP-77 Add support of mongodb_uri
 * BUG#PROCK-114 Anonymization script must not change login for users in group Coog Do not anonymize
