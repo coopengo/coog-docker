@@ -21,5 +21,8 @@ docker-compose.host-integration.yaml
 # Auto-generated for logging configuration
 docker-compose.logging.yaml
 
+# Auto-generated for integrated postgres configuration
+docker-compose.postgres.yaml
+
 # Contains custom services
 /compose/custom
