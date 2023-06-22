@@ -4,8 +4,6 @@ services:
       file: compose/b2c/back_common.yml
       service: b2c-back-common
     depends_on:
-      postgres:
-        condition: service_started
       b2c-back-init:
         condition: service_completed_successfully
     entrypoint: ["yarn", "start"]

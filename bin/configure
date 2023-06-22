@@ -56,10 +56,8 @@ fi
 
 echo ""
 
-generate () {
-    # We want that variables defined in sub-files to be available in this
-    # process
-    set -o allexport
+_load_configuration () {
+    # Loads the configuration in the current shell
 
     # Load configuration value from custom folder first, in case the local
     # env.custom wants to override it
@@ -71,10 +69,31 @@ generate () {
     if [[ -f "$BASE_PATH/env.custom" ]]; then
         . "$BASE_PATH/env.custom"
     fi
-
+    #
     # Load base values, applying modifications based on previously loaded
     # (env.custom) values
     . "$BASE_PATH/env.base"
+}
+
+_get_services () {
+    if [[ ! "$(command -v yq)" ]]; then
+        >&2 echo "Host integration requires yq >= 4.18 to work properly"
+        exit 1
+    fi
+    cd "$BASE_PATH"
+    if [[ ${YQ_VERSION} == "old" ]]; then
+        ${DOCKER_COMMAND} config | yq -r '.services | keys()' | sed -e 's/^- *//'
+    elif [[ ${YQ_VERSION} == "new" ]]; then
+        ${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//'
+    fi
+}
+
+generate () {
+    # We want that variables defined in sub-files to be available in this
+    # process
+    set -o allexport
+
+    _load_configuration
 
     # A little intimdating, but what is actually done here is looking for all
     # the variables defined in env.base or env.custom, and printing them to
@@ -224,7 +243,7 @@ init_service_env_files () {
         rm -rf "$BASE_PATH/env"  # clean up
         ln -s "$BASE_PATH/custom/env" "$BASE_PATH/env"
     fi
-    echo ""
+    echo " "
 }
 
 activate_logging() {
@@ -243,65 +262,83 @@ activate_logging() {
         exit 1
     fi
 
-    if [[ ! "$(command -v yq)" ]]; then
-        warning "Logging configuration requires yq >= 4.18"
-        exit
-    fi
-
     section "Logging configuration"
     cp "$logging_configuration_template" "$filename"
     echo "" >> "$filename"
     echo "services:" >> "$filename"
-    pwd
 
-    if [[ ${YQ_VERSION} == "old" ]]; then
-        YQ_COMMAND="$(${DOCKER_COMMAND} config | yq -r '.services | keys()' | sed -e 's/^- *//')"
-    elif [[ ${YQ_VERSION} == "new" ]]; then
-        YQ_COMMAND="$(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//')"
-    fi
-
-    for service in ${YQ_COMMAND}; do
+    for service in $(_get_services); do
         echo "  $service:" >> "$filename"
         echo '    logging: *default-logging' >> "$filename"
     done
 
     sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.logging.yaml/" "$BASE_PATH/.env"
+    echo " "
+}
+
+check_external_databases() {
+    section "Checking external databases configuration"
+    _load_configuration
+
+    local filename="${BASE_PATH}"/docker-compose.postgres.yaml
+    local must_remove=1
+    rm -f "${filename}"
+    echo "services:" > "$filename"
+
+    if [[ "${POSTGRES_HOST}" = "postgres" ]]; then
+        warning "Dockerized postgres detected, this is not recommended for a production environment"
+        local depend=" coog init celery cron "
+        for service in $(_get_services); do
+            if [[ "$depend" == *" $service "* ]]; then
+                echo "  $service:" >> "$filename"
+                echo "    depends_on:" >> "$filename"
+                echo "      postgres:" >> "$filename"
+                echo '        condition: service_started' >> "$filename"
+            fi
+            must_remove=0
+        done
+    fi
+
+    if [[ "${POSTGRES_B2C_HOST}" = "postgres" ]]; then
+        warning "Dockerized postgres detected for B2C, this is not recommended for a production environment"
+        local depend=" b2c-back b2c-back-init "
+        for service in $(_get_services); do
+            if [[ "$depend" == *" $service "* ]]; then
+                echo "  $service:" >> "$filename"
+                echo "    depends_on:" >> "$filename"
+                echo "      postgres:" >> "$filename"
+                echo '        condition: service_started' >> "$filename"
+            fi
+            must_remove=0
+        done
+    fi
+
+    if [[ "${must_remove}" = 1 ]]; then
+        rm "${filename}"
+    else
+        sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.postgres.yaml/" "$BASE_PATH/.env"
+    fi
+    echo " "
 }
 
 check_host_integration() {
     filename="$BASE_PATH/docker-compose.host-integration.yaml"
 
-    if [[ -f "$BASE_PATH/custom/env.custom" ]]; then
-        . "$BASE_PATH/custom/env.custom"
-    fi
-
-    # Load custom values
-    if [[ -f "$BASE_PATH/env.custom" ]]; then
-        . "$BASE_PATH/env.custom"
-    fi
+    _load_configuration
 
     if [[ "${ENABLE_HOST_NETWORK_INTEGRATION:-}" = "1" ]]; then
-        if [[ ! "$(command -v yq)" ]]; then
-            >&2 echo "Host integration requires yq >= 4.18 to work properly"
-            exit 1
-        fi
         section "Enabling Host network integration"
 
         echo "services:" > "$filename"
 
-        if [[ ${YQ_VERSION} == "old" ]]; then
-            YQ_COMMAND="$(${DOCKER_COMMAND} config | yq -r '.services | keys()' | sed -e 's/^- *//')"
-        elif [[ ${YQ_VERSION} == "new" ]]; then
-            YQ_COMMAND="$(${DOCKER_COMMAND} config | yq -M '.services | keys' | sed -e 's/^- *//')"
-        fi
-
-        for service in ${YQ_COMMAND}; do
+        for service in $(_get_services); do
             echo "  $service:" >> "$filename"
             echo "    extra_hosts:" >> "$filename"
             echo '      - "host.docker.internal:host-gateway"' >> "$filename"
         done
 
         sed -i "s/^\\(COMPOSE_FILE=.*\\)/\\1:docker-compose.host-integration.yaml/" "$BASE_PATH/.env"
+        echo " "
     else
         rm -f "$filename"
     fi
@@ -360,6 +397,7 @@ init_service_env_files
 
 (activate_logging)
 
+(check_external_databases)
 (check_host_integration)
 
 section "Checking configuration"
