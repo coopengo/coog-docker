@@ -197,7 +197,7 @@ _mongo_dump() {
     ${DOCKER_COMMAND} exec mongo bash -c "chmod 777 -R '/data/db/tmp_backup' && rm -rf '/data/db/tmp_backup/admin'"
 
     echo "Compressing backup in zip..."
-    (cd "${MONGODB_DATA_PATH}/tmp_backup" && zip -r "${dump_file}.zip" ".")
+    (cd "${MONGODB_DATA_PATH}/tmp_backup" && zip -r "${dump_file}.zip" "." || echo "Nothing to backup.")
     rm -rf "${MONGODB_DATA_PATH}/tmp_backup/*"
 
     check "The MongoDB backup is available on ${dump_file} path"
