@@ -99,8 +99,8 @@ set_services () {
     SERVICES="docker-compose.yml"
 
     shopt -s nullglob
-    for path in $(cd $BASE_PATH && ls compose/**/*.yml custom/compose/**/*.yml); do
-        # Remove the "custom/", "compose/" and the ".yml"
+    for path in $(cd $BASE_PATH && ls compose/**/*.yml custom/compose/**/*.yml 2>/dev/null || 1); do
+        # Remove the "compose/" and the ".yml"
         key=${path#*compose/}
         service=${key%.yml}
 
