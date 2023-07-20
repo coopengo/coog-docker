@@ -1,3 +1,4 @@
+* BUG#PROCK-541 Add configuration for maximum mongo db cache size
 * FEA#PPOP-77 Add support of mongodb_uri
 * BUG#PROCK-114 Anonymization script must not change login for users in group Coog Do not anonymize
 * FEA#24414 Add identity database name in API v2 variables
