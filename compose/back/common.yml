@@ -27,6 +27,8 @@ services:
       - TRYTOND_OPENTELEMETRY__ENABLED=${OPEN_TELEMETRY_TRACING_ENABLED:?}
       - TRYTOND_OPENTELEMETRY__OTLP_ENDPOINT=${OPEN_TELEMETRY_TRACING_URL:-}
       - TRYTOND_OPENTELEMETRY__OTLP_TOKEN=${OPEN_TELEMETRY_TRACING_TOKEN:-}
+      - TRYTOND_ACCOUNT_PAYMENT_SEPA__FILESTORE=true
+      - TRYTOND_ACCOUNT_PAYMENT_SEPA__STORE_PREFIX=sepa_message
     volumes:
       # Do not enable this unless it does not trigger warnings when starting
       # the server up :)
