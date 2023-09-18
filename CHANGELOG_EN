@@ -1,3 +1,4 @@
+* FIX#PPOP-242 Add env vars in compose to manage max file size to be handled
 * BUG#PROCK-541 Add configuration for maximum mongo db cache size
 * FIX#PCLAS-19 Add missing table and change ssn hash method
 * FEA#PINTE-24735 Change user ID to match with the user ID in coog dockerfile
