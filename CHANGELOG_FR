@@ -1,3 +1,4 @@
+* FIX#PPOP-242 Ajout des variables d'environnement dans les fichiers compose pour gérer la taille maximales des fichiers pouvant être upload
 * BUG#PROCK-541 Ajout d'une configuration / limite sur la taille maximum du cache de mongo db
 * FIX#PCLAS-19 Ajout des tables manquantes et modification du hash ssn
 * FEA#PINTE-24735 Mise à jour de l'ID utilisateur pour correspondre à celui dans le dockerfile de coog
