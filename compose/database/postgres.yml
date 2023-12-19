@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:12-alpine
+    command: -c max_locks_per_transaction=1024
     env_file:
       - env/postgres.env
     environment:
