@@ -52,6 +52,7 @@ BEGIN
     PERFORM anon_table('account_invoice_line', 'description');
     PERFORM anon_table('account_statement_line', '', 'description');
     PERFORM anon_table('account_payment', '', 'description');
+    PERFORM anon_table('event_log', '', 'description', 'event_type: in:(select id from event_type where code in (''noemie_rejet'', ''noemie_signalements'', ''noemie_acquitements'', ''resend_noemie_informations''))');
 
 END
 $$ LANGUAGE plpgsql;
