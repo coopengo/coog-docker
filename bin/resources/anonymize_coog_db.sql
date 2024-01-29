@@ -52,6 +52,7 @@ BEGIN
     PERFORM anon_table('account_invoice_line', 'description');
     PERFORM anon_table('account_statement_line', '', 'description');
     PERFORM anon_table('account_payment', '', 'description');
+    PERFORM anon_table('event_log', '', 'description');
 
 END
 $$ LANGUAGE plpgsql;
