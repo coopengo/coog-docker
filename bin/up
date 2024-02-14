@@ -23,7 +23,10 @@ sleep 2
 for DATABASE in ${DB_NAME};
 do
   echo "Working on the ${DATABASE}'s database"
+  for EXTENTION in pg_trgm unaccent;
+  do
   ${DOCKER_COMMAND} exec -T -- postgres \
-    psql -U "${DB_USER}" -d "${DATABASE}" -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" > /dev/null;
+    psql -U "${DB_USER}" -d "${DATABASE}" -c "CREATE EXTENSION IF NOT EXISTS ${EXTENTION};" > /dev/null
+  done
   echo " "
 done
