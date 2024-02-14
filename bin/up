@@ -24,6 +24,6 @@ for DATABASE in ${DB_NAME};
 do
   echo "Working on the ${DATABASE}'s database"
   ${DOCKER_COMMAND} exec -T -- postgres \
-    psql -U "${DB_USER}" -d "${DATABASE}" -c "CREATE EXTENSION IF NOT EXISTS pg_trgm" > /dev/null;
+    psql -U "${DB_USER}" -d "${DATABASE}" -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" > /dev/null;
   echo " "
 done
