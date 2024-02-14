@@ -18,6 +18,8 @@ section "Enable extension"
 DB_USER=$(source "${BASE_PATH}/.env" && echo "${POSTGRES_USER}")
 DB_NAME=$(source "${BASE_PATH}/.env" && echo "${COOG_DATABASES}")
 
+sleep 2
+
 for DATABASE in ${DB_NAME};
 do
   echo "Working on the ${DATABASE}'s database"
