@@ -4,11 +4,24 @@
 ###############################################################################
 set -euo pipefail
 
-BASE_PATH=`realpath "$(dirname $0)/.."`
+BASE_PATH=$(realpath "$(dirname "$0")/..")
 . "${BASE_PATH}/bin/helpers/colors.sh"
 . "${BASE_PATH}/bin/helpers/docker-compose"
 
-${BASE_PATH}/bin/configure
+"${BASE_PATH}/bin/configure"
 
 section "Starting up"
-${DOCKER_COMMAND} --env-file $BASE_PATH/.env up $@
+${DOCKER_COMMAND} --env-file "${BASE_PATH}/.env" up "$@"
+
+echo " "
+section "Enable extension"
+DB_USER=$(source "${BASE_PATH}/.env" && echo "${POSTGRES_USER}")
+DB_NAME=$(source "${BASE_PATH}/.env" && echo "${COOG_DATABASES}")
+
+for DATABASE in ${DB_NAME};
+do
+  echo "Working on the ${DATABASE}'s database"
+  ${DOCKER_COMMAND} exec -T -- postgres \
+    psql -U "${DB_USER}" -d "${DATABASE}" -c "CREATE EXTENSION IF NOT EXISTS pg_trgm" > /dev/null;
+  echo " "
+done
