@@ -17,6 +17,9 @@ echo " "
 section "Enable extension"
 DB_USER=$(source "${BASE_PATH}/.env" && echo "${POSTGRES_USER}")
 DB_NAME=$(source "${BASE_PATH}/.env" && echo "${COOG_DATABASES}")
+DB_HOST=$(source "${BASE_PATH}/.env" && echo "${POSTGRES_HOST}")
+DB_PORT=$(source "${BASE_PATH}/.env" && echo "${POSTGRES_PORT}")
+
 
 sleep 2
 
@@ -25,8 +28,13 @@ do
   echo "Working on the ${DATABASE}'s database"
   for EXTENTION in pg_trgm unaccent;
   do
-    ${DOCKER_COMMAND} exec -T -- postgres \
-      psql -U "${DB_USER}" -d "${DATABASE}" -c "CREATE EXTENSION IF NOT EXISTS ${EXTENTION};" > /dev/null
+    if [[ ${DB_HOST} == "postgres" ]];
+    then
+      ${DOCKER_COMMAND} exec -T -- postgres \
+        psql -U "${DB_USER}" -d "${DATABASE}" -c "CREATE EXTENSION IF NOT EXISTS ${EXTENTION};" > /dev/null
+    else
+      psql -U "${DB_USER}" -h "${DB_HOST}" -p "${DB_PORT}" -d "${DATABASE}" -c "CREATE EXTENSION IF NOT EXISTS ${EXTENTION};" > /dev/null
+    fi
   done
   echo " "
 done
