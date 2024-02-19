@@ -20,10 +20,9 @@ DB_NAME=$(source "${BASE_PATH}/.env" && echo "${COOG_DATABASES}")
 DB_HOST=$(source "${BASE_PATH}/.env" && echo "${POSTGRES_HOST}")
 DB_PORT=$(source "${BASE_PATH}/.env" && echo "${POSTGRES_PORT}")
 
-
 sleep 2
 
-for DATABASE in ${DB_NAME};
+for DATABASE in ${DB_NAME//,/ };
 do
   echo "Working on the ${DATABASE}'s database"
   for EXTENTION in pg_trgm unaccent;
