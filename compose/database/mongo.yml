@@ -1,6 +1,6 @@
 services:
   mongo:
-    image: mongo
+    image: mongo:5.0.24
     command: ['--wiredTigerCacheSizeGB', "${MONGO_MAX_CACHE_SIZE:?}"]
     env_file:
       - env/mongo.env
