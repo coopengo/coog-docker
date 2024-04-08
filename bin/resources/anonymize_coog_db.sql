@@ -108,6 +108,8 @@ BEGIN
 
     EXECUTE 'UPDATE report_production_request set context_=''{}''';
     delete from ir_note;
+    delete from rule_engine_log;
+    delete from ir_coog_error;
 
 END
 $$ LANGUAGE plpgsql;
