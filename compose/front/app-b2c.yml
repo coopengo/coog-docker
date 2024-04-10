@@ -4,11 +4,23 @@ services:
     env_file:
       - env/app-b2c.env
     environment:
-      - COOG_URL=${COOG_INTERNAL_URL:?}
-      - COOG_DB_NAME=${COOG_MAIN_DATABASE:?}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:?}
       - JWT_INTERNAL_ENCRYPTION=${JWT_INTERNAL_ENCRYPTION:?}
     depends_on:
       - mongo
       - api
     networks:
       - backend
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.app_b2c.rule=Host(`${PROJECT_HOSTNAME}`) && PathPrefix(`/${APP_B2C_SUB_ROUTE:?}`)
+      - traefik.http.routers.app_b2c.entrypoints=http
+      - traefik.http.routers.app_b2c.middlewares=portal
+      - traefik.http.middlewares.app_b2c.replacepathregex.regex=/${APP_B2C_SUB_ROUTE:?}(/|$$)(.*)
+      - traefik.http.middlewares.app_b2c.replacepathregex.replacement=/$${2}
+      - traefik.http.routers.app_b2c_s.rule=Host(`${PROJECT_HOSTNAME}`) && PathPrefix(`/${APP_B2C_SUB_ROUTE:?}`)
+      - traefik.http.routers.app_b2c_s.middlewares=portal_s
+      - traefik.http.middlewares.app_b2c_s.replacepathregex.regex=/${APP_B2C_SUB_ROUTE:?}(/|$$)(.*)
+      - traefik.http.middlewares.app_b2c_s.replacepathregex.replacement=/$${2}
+      - traefik.http.routers.app_b2c_s.entrypoints=https
+      - traefik.http.routers.app_b2c_s.tls=true
