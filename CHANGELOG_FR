@@ -1,3 +1,4 @@
+* BUG#PJAZZ-2054 Suppression des données complémentaires liées aux tiers lors de l'anonymisation d'une base de données
 * BUG#PJAZZ-2010 Suppression des traces du moteur de règles et des traces d'erreur lors de l'anonymisation d'une base de données 
 * BUG#PROCK-541 Ajout d'une configuration / limite sur la taille maximum du cache de mongo db
 * FIX#PCLAS-19 Ajout des tables manquantes et modification du hash ssn
