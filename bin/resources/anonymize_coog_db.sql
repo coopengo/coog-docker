@@ -270,7 +270,7 @@ BEGIN
         else
             col_test := col_exist(table_name, empty_cols_list[l]);
             if col_test > 0 then
-                empty_cols_statement := empty_cols_statement || empty_cols_list[l]   || ' =''{}'',';
+                empty_cols_statement := empty_cols_statement || empty_cols_list[l] || ' =''{}'',';
             end if;
             l := l + 1;
         end if;
