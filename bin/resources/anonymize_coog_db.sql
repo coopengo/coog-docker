@@ -76,8 +76,8 @@ BEGIN
     PERFORM anon_table('party_party', '', '', '', 'extra_data');
     PERFORM anon_table('contract_covered_element_version', '', '', '', 'extra_data, shared_options');
     PERFORM anon_table('contract_option_version', '', '', '', 'extra_data, extra_details');
-    PERFORM anon_table('api_token', 'name, key', 'request_hash', '"user": not in :(select id from res_user where login = ''admin'');"user": not in :(select "user" from "res_user-res_group" where "group" in (select id from res_group where name=''Coog Do Not Anonymize''))');
-    PERFORM anon_table('ir_api_identity', 'identifier', '', '"user": not in :(select id from res_user where "login" = ''admin'');"user": not in :(select "user" from "res_user-res_group" where "group" in (select id from res_group where name=''Coog Do Not Anonymize''))');
+    PERFORM anon_table('api_token', 'name, key', 'request_hash');
+    PERFORM anon_table('ir_api_identity', 'identifier');
 
     PERFORM anon_endorsment('endorsement_contract');
     PERFORM anon_endorsment('endorsement_contract_activation_history');
