@@ -3,7 +3,7 @@ services:
     extends:
       file: compose/back/common.yml
       service: back-common
-    command: ["celery", "1", "ir.model.index_maintenance"]
+    command: ["celery_maintenance"]
     depends_on:
       coog:
         condition: service_started
