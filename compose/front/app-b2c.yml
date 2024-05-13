@@ -15,11 +15,11 @@ services:
       - traefik.enable=true
       - traefik.http.routers.app_b2c.rule=Host(`${PROJECT_HOSTNAME}`) && PathPrefix(`/${APP_B2C_SUB_ROUTE:?}`)
       - traefik.http.routers.app_b2c.entrypoints=http
-      - traefik.http.routers.app_b2c.middlewares=portal
+      - traefik.http.routers.app_b2c.middlewares=app_b2c
       - traefik.http.middlewares.app_b2c.replacepathregex.regex=/${APP_B2C_SUB_ROUTE:?}(/|$$)(.*)
       - traefik.http.middlewares.app_b2c.replacepathregex.replacement=/$${2}
       - traefik.http.routers.app_b2c_s.rule=Host(`${PROJECT_HOSTNAME}`) && PathPrefix(`/${APP_B2C_SUB_ROUTE:?}`)
-      - traefik.http.routers.app_b2c_s.middlewares=portal_s
+      - traefik.http.routers.app_b2c_s.middlewares=app_b2c_s
       - traefik.http.middlewares.app_b2c_s.replacepathregex.regex=/${APP_B2C_SUB_ROUTE:?}(/|$$)(.*)
       - traefik.http.middlewares.app_b2c_s.replacepathregex.replacement=/$${2}
       - traefik.http.routers.app_b2c_s.entrypoints=https
