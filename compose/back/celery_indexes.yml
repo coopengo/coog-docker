@@ -1,11 +1,11 @@
 services:
-  celery_indexes:
+  celery-indexes:
     extends:
       file: compose/back/common.yml
       service: back-common
     command: ["celery_maintenance"]
     depends_on:
-      coog:
+      postgres:
         condition: service_started
       rabbitmq:
         condition: service_started
