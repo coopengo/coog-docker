@@ -73,6 +73,11 @@ BEGIN
     PERFORM anon_table('account_statement_line', '', 'description');
     PERFORM anon_table('account_payment', '', 'description');
     PERFORM anon_table('event_log', '', 'description');
+    PERFORM anon_table('party_party', '', '', '', 'extra_data');
+    PERFORM anon_table('contract_covered_element_version', '', '', '', 'extra_data, shared_options');
+    PERFORM anon_table('contract_option_version', '', '', '', 'extra_data, extra_details');
+    PERFORM anon_table('api_token', 'name, key', 'request_hash');
+    PERFORM anon_table('ir_api_identity', 'identifier');
 
     PERFORM anon_endorsment('endorsement_contract');
     PERFORM anon_endorsment('endorsement_contract_activation_history');
@@ -98,7 +103,7 @@ BEGIN
     PERFORM anon_endorsment('endorsement_loan');
     PERFORM anon_endorsment('endorsement_loan_increment');
     PERFORM anon_endorsment('endorsement_loan_share');
-    PERFORM anon_endorsment('endorsement_party');
+    PERFORM anon_endorsment('endorsement_party', 'new_extra_data');
     PERFORM anon_endorsment('endorsement_party_address');
     PERFORM anon_endorsment('endorsement_party_contract_mechanism');
     PERFORM anon_endorsment('endorsement_party_employment');
@@ -108,6 +113,8 @@ BEGIN
 
     EXECUTE 'UPDATE report_production_request set context_=''{}''';
     delete from ir_note;
+    delete from rule_engine_log;
+    delete from ir_coog_error;
 
 END
 $$ LANGUAGE plpgsql;
@@ -144,14 +151,19 @@ EXCEPTION
 END
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION anon_endorsment(table_name text) RETURNS integer as $$
+CREATE OR REPLACE FUNCTION anon_endorsment(table_name text, extra_data_column text default 'extra_data') RETURNS integer as $$
 DECLARE
     table_test int;
     test text;
+    col_test integer;
 BEGIN
     table_test := table_exist(table_name);
     if table_test < 1 then
         RETURN 0;
+    end if;
+    col_test := col_exist(table_name, extra_data_column);
+    if col_test > 0 then
+        EXECUTE 'UPDATE ' || table_name || ' SET ' || extra_data_column || '=''{}''';
     end if;
     EXECUTE 'UPDATE ' || table_name || ' set values=''{}''';
     RAISE NOTICE  'anonymized table % ', table_name;
@@ -166,15 +178,18 @@ $$ LANGUAGE plpgsql;
     * where clause ("field_name:operator:value")
 */
 
-CREATE OR REPLACE FUNCTION anon_table(table_name text, cols text default '', nulcolls text DEFAULT '', where_meta text DEFAULT '') RETURNS integer as $$
+CREATE OR REPLACE FUNCTION anon_table(table_name text, cols text default '', nulcolls text DEFAULT '', where_meta text DEFAULT '', empty_cols text DEFAULT '') RETURNS integer as $$
 DECLARE
     cols_list text[];
     cols_hashed_statement text := '';
     null_cols_list text[];
     null_cols_statement text := '';
+    empty_cols_list text[];
+    empty_cols_statement text := '';
     i int;
     j int;
     k int;
+    l int;
     col_test integer;
     table_test integer;
     history_table text := table_name || '__history';
@@ -191,6 +206,7 @@ BEGIN
     end if;
     select string_to_array(cols, ',') into cols_list;
     select string_to_array(nulcolls, ',') into null_cols_list;
+    select string_to_array(empty_cols, ',') into empty_cols_list;
     select string_to_array(where_meta, ';') into where_tab;
     k := 1;
     loop
@@ -246,8 +262,23 @@ BEGIN
             j := j + 1;
         end if;
     end loop;
-    if char_length(null_cols_statement) > 0 or char_length(cols_hashed_statement) > 0 then
-        set_cols_statement := ' set ' || cols_hashed_statement || null_cols_statement;
+    l := 1;
+    loop
+        if empty_cols_list = '{}' then
+            EXIT;
+        end if;
+        if l > array_upper(empty_cols_list, 1) then
+            EXIT;
+        else
+            col_test := col_exist(table_name, empty_cols_list[l]);
+            if col_test > 0 then
+                empty_cols_statement := empty_cols_statement || empty_cols_list[l] || ' =''{}'',';
+            end if;
+            l := l + 1;
+        end if;
+    end loop;
+    if char_length(null_cols_statement) > 0 or char_length(cols_hashed_statement) > 0  or char_length(empty_cols_statement) > 0 then
+        set_cols_statement := ' set ' || cols_hashed_statement || null_cols_statement || empty_cols_statement;
         set_cols_statement := trim(trailing ',' from set_cols_statement);
         EXECUTE 'update ' || table_name || set_cols_statement || where_statement || ';';
         if history_exist > 0 then
@@ -268,5 +299,5 @@ $$;
 drop function anon_db();
 drop function col_exist(text, text);
 drop function table_exist(text);
-drop function anon_table(text, text, text, text);
-drop function anon_endorsment(text);
+drop function anon_table(text, text, text, text, text);
+drop function anon_endorsment(text, text);
