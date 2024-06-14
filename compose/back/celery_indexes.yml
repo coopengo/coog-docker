@@ -1,0 +1,17 @@
+services:
+  celery-indexes:
+    extends:
+      file: compose/back/common.yml
+      service: back-common
+    command: ["celery_maintenance"]
+    depends_on:
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    env_file:
+      - env/back.env
+      - env/celery.env
+    environment:
+      - TRYTOND_OPENTELEMETRY__SERVICE_NAME=${OPEN_TELEMETRY_SERVICE_NAME_CELERY:?}
+    restart: always
