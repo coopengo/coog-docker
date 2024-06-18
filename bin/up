@@ -11,7 +11,7 @@ BASE_PATH=$(realpath "$(dirname "$0")/..")
 "${BASE_PATH}/bin/configure"
 
 section "Starting up"
-${DOCKER_COMMAND} up "$@"
+${DOCKER_COMMAND} --env-file "${BASE_PATH}/.env" up "$@"
 
 echo " "
 section "Enable extension"
