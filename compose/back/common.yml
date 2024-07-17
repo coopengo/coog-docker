@@ -29,7 +29,7 @@ services:
       - TRYTOND_OPENTELEMETRY__OTLP_TOKEN=${OPEN_TELEMETRY_TRACING_TOKEN:-}
       - TRYTOND_ACCOUNT_PAYMENT_SEPA__FILESTORE=true
       - TRYTOND_ACCOUNT_PAYMENT_SEPA__STORE_PREFIX=sepa_message
-      - TRYTOND_GATEWAY__URL=http://gateway
+      - TRYTOND_GATEWAY__URL=${TRYTOND_GATEWAY__URL}
     volumes:
       # Do not enable this unless it does not trigger warnings when starting
       # the server up :)
