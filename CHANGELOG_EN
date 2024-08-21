@@ -1,3 +1,4 @@
+* BUG#PROCK-1841 Add missing anonymization on contract_life_agira module
 * BUG#PJAZZ-2092 Anonymise API tokens and identities in the database anonymisation script
 * BUG#PJAZZ-2054 Delete party extra data during database anonymisation
 * BUG#PJAZZ-2010 Delete rule engine logs and error logs during database anonymisation
