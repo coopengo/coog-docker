@@ -78,8 +78,8 @@ BEGIN
     PERFORM anon_table('contract_option_version', '', '', '', 'extra_data, extra_details');
     PERFORM anon_table('api_token', 'name, key', 'request_hash');
     PERFORM anon_table('ir_api_identity', 'identifier');
-    PERFORM anon_table('contract_agira_request', 'applicant, deceased_person');
-    PERFORM anon_table('contract_agira_beneficiary', 'beneficiary');
+    PERFORM anon_table('contract_agira_request', '', '', '', 'applicant, deceased_person');
+    PERFORM anon_table('contract_agira_beneficiary', '', '', '', 'beneficiary');
 
     PERFORM anon_endorsment('endorsement_contract');
     PERFORM anon_endorsment('endorsement_contract_activation_history');
