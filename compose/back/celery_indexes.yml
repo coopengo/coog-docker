@@ -5,7 +5,7 @@ services:
       service: back-common
     command: ["celery_maintenance"]
     depends_on:
-      postgres:
+      coog:
         condition: service_started
       rabbitmq:
         condition: service_started
