@@ -19,6 +19,7 @@ services:
       - TRYTOND_SESSION__PASSPHRASE=${COOG_PASSPHRASE:-}
       - TRYTOND_DOCUMENT_API__DOCUMENT_TOKEN_SECRET=${DOCUMENT_TOKEN_SECRET?}
       - TRYTOND_CACHE__CLEAN_TIMEOUT=0
+      - TRYTOND_GATEWAY__URL=${API_GATEWAY_INTERNAL_URL}
     volumes:
       # Do not enable this unless it does not trigger warnings when starting
       # the server up :)
