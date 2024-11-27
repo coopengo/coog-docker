@@ -242,7 +242,7 @@ BEGIN
             if col_test > 0 then
                 -- md5 is faster, but less safe
                 col_hashed_statement := cols_list[i] || '=left(encode(digest(random()::varchar || ' || cols_list[i] || ', ''sha256''),''hex''), 16)';
-                col_where_statement := cols_list[i] || ' IS NOT NULL ' || 'AND ' || cols_list[i] || ' !=''''' || ';';
+                col_where_statement := cols_list[i] || ' IS NOT NULL AND ' || cols_list[i] || ' !='''';';
                 if char_length(where_statement) > 0 then
                     var_where_statement = where_statement || ' AND ' || col_where_statement;
                 else
