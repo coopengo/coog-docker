@@ -244,9 +244,9 @@ BEGIN
                 col_hashed_statement := cols_list[i] || '=left(encode(digest(random()::varchar || ' || cols_list[i] || ', ''sha256''),''hex''), 16)';
                 col_where_statement := cols_list[i] || ' IS NOT NULL AND ' || cols_list[i] || ' !='''';';
                 if char_length(where_statement) > 0 then
-                    var_where_statement = where_statement || ' AND ' || col_where_statement;
+                    var_where_statement := where_statement || ' AND ' || col_where_statement;
                 else
-                    var_where_statement = ' WHERE ' || col_where_statement;
+                    var_where_statement := ' WHERE ' || col_where_statement;
                 end if;
                 EXECUTE 'UPDATE ' || table_name || ' SET ' || col_hashed_statement || var_where_statement;
                 if history_exist > 0 then
