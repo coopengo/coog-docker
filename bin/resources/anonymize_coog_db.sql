@@ -192,7 +192,7 @@ DECLARE
     table_test integer;
     history_table text := table_name || '__history';
     history_exist integer;
-    base_where_statement text := '';
+    col_where_statement text := '';
     var_where_statement text := '';
     where_statement text := '';
     where_tab text[];
@@ -219,16 +219,16 @@ BEGIN
             select string_to_array(where_tab[k], ':') into where_values;
             col_test := col_exist(table_name, where_values[1]);
             if col_test > 0 then
-                if char_length(base_where_statement) > 0 then
-                    base_where_statement := base_where_statement || ' and ';
+                if char_length(where_statement) > 0 then
+                    where_statement := where_statement || ' and ';
                 end if;
-                base_where_statement := base_where_statement || where_values[1] || where_values[2] || where_values[3];
+                where_statement := where_statement || where_values[1] || where_values[2] || where_values[3];
             end if;
             k := k+1;
         end if;
     end loop;
-    if char_length(base_where_statement) > 0 then
-        where_statement = ' WHERE ' || base_where_statement;
+    if char_length(where_statement) > 0 then
+        where_statement = ' WHERE ' || where_statement;
     end if;
     i := 1;
     loop
@@ -242,15 +242,15 @@ BEGIN
             if col_test > 0 then
                 -- md5 is faster, but less safe
                 col_hashed_statement := cols_list[i] || '=left(encode(digest(random()::varchar || ' || cols_list[i] || ', ''sha256''),''hex''), 16)';
-                if char_length(base_where_statement) > 0 then
-                    var_where_statement = ' WHERE ' || base_where_statement || ' AND ';
+                col_where_statement := cols_list[i] || ' IS NOT NULL ' || 'AND ' || cols_list[i] || ' !=''''' || ';';
+                if char_length(where_statement) > 0 then
+                    var_where_statement = where_statement || ' AND ' || col_where_statement;
                 else
-                    var_where_statement = ' WHERE ';
+                    var_where_statement = ' WHERE ' || col_where_statement;
                 end if;
-                var_where_statement = var_where_statement || cols_list[i] || ' IS NOT NULL ' || 'AND ' || cols_list[i] || ' !=''''' || ';';
                 EXECUTE 'UPDATE ' || table_name || ' SET ' || col_hashed_statement || var_where_statement;
                 if history_exist > 0 then
-                    EXECUTE 'UPDATE ' || history_table || ' SET ' || col_hashed_statement || var_where_statement || ';';
+                    EXECUTE 'UPDATE ' || history_table || ' SET ' || col_hashed_statement || var_where_statement;
                 end if;
             end if;
             i := i + 1;
