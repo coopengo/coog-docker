@@ -12,7 +12,7 @@ networks:
 
 services:
   reverse-proxy:
-    image: traefik:2.3.4
+    image: traefik:3.4.0
     ports:
       - ${TRAEFIK_HTTP_PORT:?}:80
       - ${TRAEFIK_HTTPS_PORT:?}:443
