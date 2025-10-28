@@ -3,7 +3,9 @@ services:
     extends:
       file: compose/back/common.yml
       service: back-common
-    command: ["server", "${COOG_SERVER_WORKERS:?}"]
+    command:
+      - server
+      - ${COOG_SERVER_WORKERS:?}
     depends_on:
       init:
         condition: service_completed_successfully
@@ -18,4 +20,10 @@ services:
       - ENABLE_UWSGI_STATS=${COOG_UWSGI_STATS:?}
       - ENABLE_UWSGI_TRACEBACKER=${COOG_UWSGI_TRACEBACKER:?}
       - TRYTOND_OPENTELEMETRY__SERVICE_NAME=${OPEN_TELEMETRY_SERVICE_NAME_COOG:?}
+      - TRYTOND_WEB__NUM_PROXIES=1
+      - TRYTOND_WEB__LISTEN=${PROJECT_HOSTNAME:?}:8000
+      - TRYTOND_BUS__ALLOW_SUBSCRIBE=1
+      # "/placeholder" because in javascript, "Url(..., base)" removes the last
+      # part of "base"
+      - TRYTOND_BUS__URL_HOST=${BASE_URL:?}/bus/placeholder
     restart: always
