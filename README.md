@@ -520,9 +520,6 @@ services:
   coog:
     labels:
       - traefik.http.routers.coog.rule=Host(`${PROJECT_HOSTNAME:?}`) || Host(`1.2.3.4`)
-  static:
-    labels:
-      - traefik.http.routers.static.rule=(Host(`${PROJECT_HOSTNAME:?}`) || Host(`1.2.3.4`)) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/bench`) )
 ```
 
 ### B2C docker-compose files
