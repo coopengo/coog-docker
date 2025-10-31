@@ -8,10 +8,13 @@ services:
       - init
     labels:
       - traefik.enable=true
-      - traefik.http.routers.coog.rule=Host(`${PROJECT_HOSTNAME:?}`)
+      - traefik.http.middlewares.replace_sao_route.stripprefix.prefixes=/sao
+      - traefik.http.routers.coog.rule=Host(`${PROJECT_HOSTNAME:?}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/`))
       - traefik.http.routers.coog.entrypoints=http
-      - traefik.http.routers.coog_s.rule=Host(`${PROJECT_HOSTNAME:?}`)
+      - traefik.http.routers.coog.middlewares=replace_sao_route@docker
+      - traefik.http.routers.coog_s.rule=Host(`${PROJECT_HOSTNAME:?}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/`))
       - traefik.http.routers.coog_s.entrypoints=https
+      - traefik.http.routers.coog_s.middlewares=replace_sao_route@docker
       - traefik.http.routers.coog_s.tls=true
     environment:
       - ENABLE_UWSGI_STATS=${COOG_UWSGI_STATS:?}
