@@ -1,0 +1,32 @@
+services:
+  bus:
+    image: ${IMAGE_REGISTRY_COOG:?}/${IMAGE_NAME_COOG:?}:${IMAGE_VERSION_COOG:?}
+    user: 1003:1003
+    entrypoint:
+      - ep
+    command:
+      - bus
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.replace_bus_route.replacepathregex.regex=^/bus/(.*)
+      - traefik.http.middlewares.replace_bus_route.replacepathregex.replacement=/$$1
+      - traefik.http.routers.bus.rule=Host(`${PROJECT_HOSTNAME:?}`) && ( PathPrefix(`/bus`) )
+      - traefik.http.routers.bus.entrypoints=http
+      - traefik.http.routers.bus.middlewares=replace_bus_route@docker
+      - traefik.http.routers.bus_s.rule=Host(`${PROJECT_HOSTNAME:?}`) && ( PathPrefix(`/bus`) )
+      - traefik.http.routers.bus_s.entrypoints=https
+      - traefik.http.routers.bus_s.tls=true
+      - traefik.http.routers.bus_s.middlewares=replace_bus_route@docker
+    environment:
+      - LOG_LEVEL=${COOG_LOG_LEVEL:?}
+      - TRYTOND_WEB__LISTEN=*:8000
+      - TRYTOND_WEB__CORS=${CORS_WHITELIST:?}
+      - TRYTOND_BUS__ALLOW_SUBSCRIBE=1
+      - TRYTOND_DATABASE__URI=${POSTGRESQL_CONNECTION_STRING:?}
+      - TRYTOND_WEB__NUM_PROXIES=1
+    restart: always
+    networks:
+      - backend
