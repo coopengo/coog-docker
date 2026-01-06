@@ -73,7 +73,7 @@ BEGIN
     PERFORM anon_table('account_payment', '', 'description');
     PERFORM anon_table('event_log', '', 'description');
     PERFORM anon_table('api_token', 'name, key', 'request_hash');
-    PERFORM anon_table('ir_api_identity', 'identifier', '', 'id: NOT IN :(select a.id from ir_api_identity a inner join res_user b ON b.id = a.user inner join "res_user-res_group" c ON c.user = b.id inner join res_group d ON d.id = c.group WHERE d.name = ''Coog Do Not Anonymize'')');
+    PERFORM anon_table('ir_api_identity', 'identifier', '', 'id: NOT IN :(select iai.id from ir_api_identity iai inner join res_user ru ON ru.id = iai.user inner join "res_user-res_group" rurg ON rurg.user = ru.id inner join res_group rg ON rg.id = rurg.group WHERE rg.name = ''Coog Do Not Anonymize'')');
     PERFORM anon_table('contract_agira_request', '', '', '', 'applicant, deceased_person');
     PERFORM anon_table('contract_agira_beneficiary', '', '', '', 'beneficiary');
 
