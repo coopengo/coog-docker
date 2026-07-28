@@ -23,13 +23,13 @@ BEGIN
     if not anonymize_companies then
         anon_parties_where_clause := anon_only_persons_where_clause;
     end if;
-    PERFORM anon_table('party_party', 'first_name, commercial_name, birth_name, birth_date, code, sepa_creditor_identifier', 'siren', anon_parties_where_clause);
+    PERFORM anon_table('party_party', 'first_name, commercial_name, birth_name, birth_date, birth_city, birth_zip, code, sepa_creditor_identifier', 'siren', anon_parties_where_clause);
     if keep_company_name then
         anon_party_names_where_clause := anon_party_names_where_clause || ';' || anon_only_persons_where_clause;
     end if;
     PERFORM anon_table('party_party', 'name', '', anon_party_names_where_clause);
     -- Anonymize all parties which are subscribers regardless of  the previous rules
-    PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, birth_date, code, sepa_creditor_identifier', 'siren', 'id: in :(select subscriber from contract)');
+    PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, birth_date, birth_city, birth_zip, code, sepa_creditor_identifier', 'siren', 'id: in :(select subscriber from contract)');
     alter table party_party drop constraint if exists "party_party_SSN_uniq_all";
     col_test := col_exist('party_party', 'ssn');
     if col_test > 0 then
@@ -56,9 +56,9 @@ BEGIN
     end if;
 
     PERFORM anon_table('party_contact_mechanism', 'value, value_compact, name, comment');
-    PERFORM anon_table('party_address', 'street, name, party_name, siret_nic, building_name, building_number, floor_number, room_number, strret_name, street_unstructured, unit_number', 'siret_nic');
+    PERFORM anon_table('party_address', 'street, name, party_name, building_name, building_number, floor_number, room_number, strret_name, street_unstructured, unit_number, post_box, post_office, city, postal_code', 'siret_nic');
     PERFORM anon_table('health_party_complement', '', 'insurance_fund_number', anon_parties_where_clause);
-    PERFORM anon_table('party_interlocutor', 'name, siren');
+    PERFORM anon_table('party_interlocutor', 'name, siren, code');
     PERFORM anon_table('contract_option_beneficiary', 'reference');
     PERFORM anon_table('contract_clause', 'text');
     PERFORM anon_table('contract_option', 'customized_beneficiary_clause');
@@ -70,7 +70,7 @@ BEGIN
     PERFORM anon_table('account_invoice', '', 'comment, description');
     PERFORM anon_table('account_invoice_line', 'description, note');
     PERFORM anon_table('account_statement_line', '', 'description');
-    PERFORM anon_table('account_payment', 'reference, monetico_check', 'description');
+    PERFORM anon_table('account_payment', 'reference, monetico_check, monetico_checkout_id, sepa_info_id', 'description');
     PERFORM anon_table('event_log', '', 'description');
     PERFORM anon_table('api_token', 'name, key', 'request_hash');
     PERFORM anon_table('ir_api_identity', 'identifier', '', 'id: NOT IN :(SELECT iai.id FROM ir_api_identity iai INNER JOIN res_user ru ON ru.id = iai.user INNER JOIN "res_user-res_group" rurg ON rurg.user = ru.id INNER JOIN res_group rg ON rg.id = rurg.group WHERE rg.name = ''Coog Do Not Anonymize'')');
@@ -88,6 +88,39 @@ BEGIN
     PERFORM anon_table('ir_email_address', 'address');
     PERFORM anon_table('ir_note', 'message');
     PERFORM anon_table('pasrau_crm_return', 'ssn');
+    PERFORM anon_table('api_middleware_identity', 'emails, identifier, name, token');
+    PERFORM anon_table('api_middleware_salesroute', 'description');
+    PERFORM anon_table('api_middleware_user', 'azureId, coogToken, coogUser, facebookId, googleId, salesForceId');
+    PERFORM anon_table('claim_indemnification', 'beneficiary_as_text');
+    PERFORM anon_table('claim_loss', 'pasrau_right_id');
+    PERFORM anon_table('claim_loss_health', 'almerys_num_dent');
+    PERFORM anon_table('contract_agira_request', 'decease_city, decease_zip');
+    PERFORM anon_table('contract_identifier', 'code');
+    PERFORM anon_table('contract_noemization_image', 'error_408_description, sent_affiliated_party_birth_name, sent_affiliated_party_first_name, sent_affiliated_party_name, sent_affiliated_party_ssn, sent_insured_birth_name, sent_insured_first_name, sent_insured_name, sent_insured_ssn');
+    PERFORM anon_table('contract_noemization_image_log', 'ssn');
+    PERFORM anon_table('contract_option_extra_premium', 'comment');
+    PERFORM anon_table('contract_set', 'number');
+    PERFORM anon_table('contract_underwriting_option', 'decision_complement');
+    PERFORM anon_table('dsn_declaration', 'contact_mail, contact_phone, contact_name, declarant_mail');
+    PERFORM anon_table('dsn_declaration_enrollment', 'party_dsn_number');
+    PERFORM anon_table('dsn_declaration_party', 'birth_country, birth_date, birth_place, building_complement, dsn_number, email, first_names, location, name, ntt, postal_code, ssn, street, street_complement, usage_name');
+    PERFORM anon_table('file_extract_dsn_payment_primer', 'dsn_bic_003, dsn_iban_004');
+    PERFORM anon_table('ir_api_trace', 'identifier');
+    PERFORM anon_table('ir_session', 'ip_address');
+    PERFORM anon_table('loan', 'number');
+    PERFORM anon_table('loan_identifier', 'code');
+    PERFORM anon_table('noemie_return', 'chunk, new_data');
+    PERFORM anon_table('party_aml_risk', 'external_id');
+    PERFORM anon_table('party_employment', 'employment_identifier');
+    PERFORM anon_table('party_identifier', 'code, sepa_es_suffix');
+    PERFORM anon_table('party_pasrau_change', 'right_id');
+    PERFORM anon_table('party_pasrau_changes_snapshot', 'ssn, name, birth_name, first_name');
+    PERFORM anon_table('party_pasrau_changes_snapshot_right', 'right_end_date, right_start_date');
+    PERFORM anon_table('party_web_identity', 'email, transaction_id');
+    PERFORM anon_table('return_almerys', 'error_label');
+    PERFORM anon_table('rule_engine_log', 'context, low_level_debug');
+    PERFORM anon_table('task', 'summary');
+    PERFORM anon_table('withhold_request', 'employment_identifier');
 
     PERFORM anon_endorsment('endorsement_contract');
     PERFORM anon_endorsment('endorsement_contract_activation_history');
