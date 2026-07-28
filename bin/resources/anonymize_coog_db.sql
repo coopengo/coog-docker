@@ -23,13 +23,13 @@ BEGIN
     if not anonymize_companies then
         anon_parties_where_clause := anon_only_persons_where_clause;
     end if;
-    PERFORM anon_table('party_party', 'first_name, commercial_name, birth_name, birth_date, birth_city, birth_zip, code, sepa_creditor_identifier', 'siren', anon_parties_where_clause);
+    PERFORM anon_table('party_party', 'first_name, commercial_name, birth_name, birth_city, birth_zip, code, sepa_creditor_identifier', 'siren', anon_parties_where_clause);
     if keep_company_name then
         anon_party_names_where_clause := anon_party_names_where_clause || ';' || anon_only_persons_where_clause;
     end if;
     PERFORM anon_table('party_party', 'name', '', anon_party_names_where_clause);
     -- Anonymize all parties which are subscribers regardless of  the previous rules
-    PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, birth_date, birth_city, birth_zip, code, sepa_creditor_identifier', 'siren', 'id: in :(select subscriber from contract)');
+    PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, birth_city, birth_zip, code, sepa_creditor_identifier', 'siren', 'id: in :(select subscriber from contract)');
     alter table party_party drop constraint if exists "party_party_SSN_uniq_all";
     col_test := col_exist('party_party', 'ssn');
     if col_test > 0 then
@@ -103,7 +103,7 @@ BEGIN
     PERFORM anon_table('contract_underwriting_option', 'decision_complement');
     PERFORM anon_table('dsn_declaration', 'contact_mail, contact_phone, contact_name, declarant_mail');
     PERFORM anon_table('dsn_declaration_enrollment', 'party_dsn_number');
-    PERFORM anon_table('dsn_declaration_party', 'birth_country, birth_date, birth_place, building_complement, dsn_number, email, first_names, location, name, ntt, postal_code, ssn, street, street_complement, usage_name');
+    PERFORM anon_table('dsn_declaration_party', 'birth_country, birth_place, building_complement, dsn_number, email, first_names, location, name, ntt, postal_code, ssn, street, street_complement, usage_name');
     PERFORM anon_table('file_extract_dsn_payment_primer', 'dsn_bic_003, dsn_iban_004');
     PERFORM anon_table('ir_api_trace', 'identifier');
     PERFORM anon_table('ir_session', 'ip_address');
