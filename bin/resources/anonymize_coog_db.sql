@@ -56,7 +56,7 @@ BEGIN
     end if;
 
     PERFORM anon_table('party_contact_mechanism', 'value, value_compact, name, comment');
-    PERFORM anon_table('party_address', 'street, name, party_name, building_name, building_number, floor_number, room_number, strret_name, street_unstructured, unit_number, post_box, post_office, city, postal_code', 'siret_nic');
+    PERFORM anon_table('party_address', 'street, name, party_name, building_name, building_number, floor_number, room_number, street_name, street_unstructured, unit_number, post_box, post_office, city, postal_code', 'siret_nic');
     PERFORM anon_table('health_party_complement', '', 'insurance_fund_number', anon_parties_where_clause);
     PERFORM anon_table('party_interlocutor', 'name, siren, code');
     PERFORM anon_table('contract_option_beneficiary', 'reference');
