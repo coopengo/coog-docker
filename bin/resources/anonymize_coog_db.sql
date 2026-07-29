@@ -23,13 +23,13 @@ BEGIN
     if not anonymize_companies then
         anon_parties_where_clause := anon_only_persons_where_clause;
     end if;
-    PERFORM anon_table('party_party', 'first_name, commercial_name, birth_name, birth_city, birth_zip, code, sepa_creditor_identifier', 'siren', anon_parties_where_clause);
+    PERFORM anon_table('party_party', 'first_name, commercial_name, birth_name, birth_city, birth_zip, sepa_creditor_identifier', 'siren', anon_parties_where_clause);
     if keep_company_name then
         anon_party_names_where_clause := anon_party_names_where_clause || ';' || anon_only_persons_where_clause;
     end if;
     PERFORM anon_table('party_party', 'name', '', anon_party_names_where_clause);
     -- Anonymize all parties which are subscribers regardless of  the previous rules
-    PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, birth_city, birth_zip, code, sepa_creditor_identifier', 'siren', 'id: in :(select subscriber from contract)');
+    PERFORM anon_table('party_party', 'name, first_name, commercial_name, birth_name, birth_city, birth_zip, sepa_creditor_identifier', 'siren', 'id: in :(select subscriber from contract)');
     alter table party_party drop constraint if exists "party_party_SSN_uniq_all";
     col_test := col_exist('party_party', 'ssn');
     if col_test > 0 then
