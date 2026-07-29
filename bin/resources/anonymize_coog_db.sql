@@ -121,6 +121,7 @@ BEGIN
     PERFORM anon_table('rule_engine_log', 'context, low_level_debug');
     PERFORM anon_table('task', 'summary');
     PERFORM anon_table('withhold_request', 'employment_identifier');
+    PERFORM anon_table('batch_job', '', 'parameters', 'id: IN :(SELECT bj.id FROM batch_job bj JOIN batch_run br ON bj.run = br.id WHERE br.batch_model = ''contract.noemie.flow.batch'')');
 
     PERFORM anon_endorsment('endorsement_contract');
     PERFORM anon_endorsment('endorsement_contract_activation_history');
