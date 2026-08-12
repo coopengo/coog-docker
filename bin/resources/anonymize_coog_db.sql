@@ -96,7 +96,7 @@ BEGIN
     PERFORM anon_table('claim_loss_health', 'almerys_num_dent');
     PERFORM anon_table('contract_agira_request', 'decease_city, decease_zip');
     PERFORM anon_table('contract_identifier', 'code');
-    PERFORM anon_table('contract_noemization_image', 'error_408_description, sent_affiliated_party_birth_name, sent_affiliated_party_first_name, sent_affiliated_party_name, sent_affiliated_party_ssn, sent_insured_birth_name, sent_insured_first_name, sent_insured_name, sent_insured_ssn');
+    PERFORM anon_table('contract_noemization_image', 'sent_affiliated_party_birth_name, sent_affiliated_party_first_name, sent_affiliated_party_name, sent_affiliated_party_ssn, sent_insured_birth_name, sent_insured_first_name, sent_insured_name, sent_insured_ssn', 'error_408_description');
     PERFORM anon_table('contract_noemization_image_log', 'ssn');
     PERFORM anon_table('contract_option_extra_premium', 'comment');
     PERFORM anon_table('contract_set', 'number');
