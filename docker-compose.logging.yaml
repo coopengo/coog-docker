@@ -1,0 +1,29 @@
+x-logging: &default-logging
+  options:
+    max-size: "100m"
+    max-file: "5"
+  driver: local
+
+services:
+  api:
+    logging: *default-logging
+  api-identity-manager:
+    logging: *default-logging
+  bus:
+    logging: *default-logging
+  celery:
+    logging: *default-logging
+  coog:
+    logging: *default-logging
+  gateway:
+    logging: *default-logging
+  init:
+    logging: *default-logging
+  mongo:
+    logging: *default-logging
+  postgres:
+    logging: *default-logging
+  rabbitmq:
+    logging: *default-logging
+  reverse-proxy:
+    logging: *default-logging

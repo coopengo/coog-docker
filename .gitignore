@@ -1,28 +1,16 @@
-# .env file is auto-generated
-.env
-
-# Will be modified by the user
-disabled_services
-env.custom
-override.yml
-
-# custom folder can contain all custom configuration for source controlling it
+unip
+coog-customer-*
+backup*
 custom
+.env
+env
+# Local database files and dumps
+*.dump
+*.dump.sql
+*.dump.sql.gz
+*.db
+*.sqlite
+*.sqlite3
 
-# Will be created / filled-up if needed by the user
-certs
-
-# Contains service env files, contents will be modified by the user
-/env
-
-# Auto-generated for host integration
-docker-compose.host-integration.yaml
-
-# Auto-generated for logging configuration
-docker-compose.logging.yaml
-
-# Auto-generated for integrated postgres configuration
-docker-compose.postgres.yaml
-
-# Contains custom services
-/compose/custom
+# Local archive
+/coog-dv.tar

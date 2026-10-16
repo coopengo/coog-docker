@@ -43,6 +43,7 @@ services:
       - OPENTELEMETRY_URL=${OPEN_TELEMETRY_TRACING_URL:-}
       - OPENTELEMETRY_TOKEN=${OPEN_TELEMETRY_TRACING_TOKEN:-}
       - OPENTELEMETRY_SERVICE_NAME=${OPEN_TELEMETRY_SERVICE_NAME_GATEWAY:?}
+      - ENABLE_API_KEY_AUTH=${ENABLE_API_KEY_AUTHENTICATION:?}
     labels:
       - traefik.enable=true
       - traefik.http.routers.gateway.rule=Host(`${PROJECT_HOSTNAME:?}`) && PathPrefix(`/gateway`)

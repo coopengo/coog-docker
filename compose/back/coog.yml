@@ -15,10 +15,12 @@ services:
       - traefik.http.routers.coog.rule=Host(`${PROJECT_HOSTNAME:?}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/`))
       - traefik.http.routers.coog.entrypoints=http
       - traefik.http.routers.coog.middlewares=replace_sao_route@docker
+      - traefik.http.routers.coog.priority=1
       - traefik.http.routers.coog_s.rule=Host(`${PROJECT_HOSTNAME:?}`) && ( PathPrefix(`/sao`) || PathPrefix(`/doc`) || PathPrefix(`/`))
       - traefik.http.routers.coog_s.entrypoints=https
       - traefik.http.routers.coog_s.middlewares=replace_sao_route@docker
       - traefik.http.routers.coog_s.tls=true
+      - traefik.http.routers.coog_s.priority=1
     environment:
       - ENABLE_UWSGI_STATS=${COOG_UWSGI_STATS:?}
       - ENABLE_UWSGI_TRACEBACKER=${COOG_UWSGI_TRACEBACKER:?}
