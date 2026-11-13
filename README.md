@@ -27,7 +27,6 @@ Configuration and tooling for a `docker-compose`-based Coog deployment
     - [Create a backup](#create-a-backup)
     - [Load from a backup](#load-from-a-backup)
     - [Modify admin password](#modify-admin-password)
-    - [Anonymize a database](#anonymize-a-database)
   - [Creating custom services](#creating-custom-services)
   - [Debug tools](#debug-tools)
   - [FAQ](#faq)
@@ -356,27 +355,6 @@ The admin password for the database can be modifid using the following command:
 
 ```shell
 ./bin/manage_db change_admin_password
-```
-
-As is the case for the `reset` command, this command can be run on another
-database by using the `--database` parameter.
-
-### Anonymize a database
-
-The following command can be used to anonymize the database. **This is not
-reversible**.
-
-The script can be customized by changing the values of the variables
-declared in the anon_db function.
-Users in group 'Coog Do Not Anonymize' will not be encrypted. Meaning the 
-maintainer will be able to connect to their session and access their 
-informations.
-
-User 'Administrator' will not be encrypted either and will have its password set
-to 'admin' to facilitate testing by the maintainer.
-
-```shell
-./bin/manage_db anonymize
 ```
 
 As is the case for the `reset` command, this command can be run on another
