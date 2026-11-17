@@ -1,3 +1,4 @@
+* BUG#PJAZZ-4479 Suppression du script d'anonymisation, utilisez le wizard intégré à Coog à la place
 * BUG#PROCK-5930 Ajout de la variable d'environnement COOG_DB_NAME au service gateway
 * BUG#PROCK-1841 Ajout de l'anonymisation sur les données de contract_life_agira
 * BUG#PJAZZ-2092 Anonymisation des jetons et des identités API dans le script d'anonymisation de bases de données
