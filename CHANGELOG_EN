@@ -1,3 +1,4 @@
+* BUG#PJAZZ-4479 Remove deprecated anonymization script, use the built-in Coog Wizard instead
 * BUG#PROCK-1841 Add missing anonymization on contract_life_agira module
 * BUG#PJAZZ-2092 Anonymise API tokens and identities in the database anonymisation script
 * BUG#PJAZZ-2054 Delete party extra data during database anonymisation
