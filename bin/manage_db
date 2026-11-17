@@ -24,7 +24,6 @@ help() {
     echo "  mongo_restore <file_name>   Restore mongodb backup"
     echo "  update [modules]            Force an update of the database"
     echo "  change_admin_password       Change the admin password of the database"
-    echo "  anonymize [level]           Anonymize the database"
     echo " "
     echo "options:"
     echo "--database <db_name>        To override the PostgreSQL database to backup."
@@ -237,21 +236,6 @@ change_admin_password() {
     ${DOCKER_COMMAND} exec -T -- coog ep admin -d "$db_name" -p
 }
 
-anonymize() {
-    echo " "
-
-    if [[ "$USE_LOCAL_POSTGRES" = "0" ]]; then
-        echo Cannot use anonymize command for non dockerized database 1>&2
-        exit 1
-    fi
-    _start_services postgres
-
-    ${DOCKER_COMMAND} cp "$BASE_PATH/bin/resources/anonymize_coog_db.sql" postgres:/tmp/anonymize.sql
-
-    ${DOCKER_COMMAND} exec -T -- postgres psql -U "$db_user" -d "$db_name" \
-        --file /tmp/anonymize.sql
-}
-
 _load_configuration() {
     ${BASE_PATH}/bin/configure
 
@@ -402,10 +386,6 @@ update)
 change_admin_password)
     _load_configuration
     change_admin_password $*
-    ;;
-anonymize)
-    _load_configuration
-    anonymize $*
     ;;
 *)
     echo "Invalid action" >&2
